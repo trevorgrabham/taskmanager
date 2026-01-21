@@ -1,0 +1,154 @@
+[
+  {
+    "title": "Clean bathroom",
+    "category": "life",
+    "description": "Clean toilet and shower",
+    "due-date": "Tue Jan 20 2026 12:00 AM",
+    "done": false,
+    "completion-date": ""
+  },
+  {
+    "title": "FHSA",
+    "category": "life",
+    "description": "Deposit into FHSA",
+    "due-date": "Tue Jan 20 2026 12:00 AM",
+    "done": true,
+    "completion-date": "Tue Jan 20 2026 2:28 PM"
+  },
+  {
+    "title": "Allow for users to push a due date",
+    "category": "taskmanager",
+    "description": "",
+    "due-date": "Mon Jan 19 2026 2:17 AM",
+    "done": true,
+    "completion-date": "Tue Jan 20 2026 2:28 PM"
+  },
+  {
+    "title": "add categories",
+    "category": "taskmanager",
+    "description": "can sort on categories when filtering",
+    "due-date": "Mon Jan 19 2026 8:33 PM",
+    "done": true,
+    "completion-date": "Mon Jan 19 2026 9:56 PM"
+  },
+  {
+    "title": "Filter by category",
+    "category": "taskmanager",
+    "description": "",
+    "due-date": "Mon Jan 19 2026 9:21 PM",
+    "done": true,
+    "completion-date": "Mon Jan 19 2026 9:47 PM"
+  },
+  {
+    "title": "-d flag",
+    "category": "taskmanager",
+    "description": "Add support for deleting tasks",
+    "due-date": "Mon Jan 19 2026 10:19 PM",
+    "done": false,
+    "completion-date": ""
+  },
+  {
+    "title": "Flush out the search feature",
+    "category": "taskmanager",
+    "description": "Give a menu for the user to select the filter options",
+    "due-date": "Mon Jan 19 2026 10:20 PM",
+    "done": true,
+    "completion-date": "Tue Jan 20 2026 3:21 PM"
+  },
+  {
+    "title": "Remove the -l flag",
+    "category": "taskmanager",
+    "description": "Make it so that it prints by default if no flags are present. Can probably print it at the end regardless of flags",
+    "due-date": "Mon Jan 19 2026 10:21 PM",
+    "done": true,
+    "completion-date": "Tue Jan 20 2026 3:37 PM"
+  },
+  {
+    "title": "Restructure main.go",
+    "category": "taskmanager",
+    "description": "Move structs and methods to other folders and files",
+    "due-date": "Tue Jan 20 2026 12:00 AM",
+    "done": true,
+    "completion-date": "Tue Jan 20 2026 3:21 PM"
+  },
+  {
+    "title": "Add comments",
+    "category": "taskmanager",
+    "description": "Go through and add some comments. Should do this after I finish the restructuring",
+    "due-date": "Tue Jan 20 2026 2:18 AM",
+    "done": false,
+    "completion-date": ""
+  },
+  {
+    "title": "Coloured output",
+    "category": "taskmanager",
+    "description": "Add colour coding so that the category stands out more. Also add colour coding depending on the completion/upcoming status of the task",
+    "due-date": "Wed Jan 21 2026 12:00 AM",
+    "done": false,
+    "completion-date": ""
+  },
+  {
+    "title": "Test",
+    "category": "",
+    "description": "testing",
+    "due-date": "Tue Jan 20 2026 3:41 PM",
+    "done": false,
+    "completion-date": ""
+  },
+  {
+    "title": "Test",
+    "category": "life",
+    "description": "Testing",
+    "due-date": "Sat Jan 2 2027 3:57 PM",
+    "done": false,
+    "completion-date": ""
+  },
+  {
+    "title": "DueDate bug fix",
+    "category": "taskmanager",
+    "description": "'Coloured output' task is showing up as due at '20/01 4:00 PM' even though it should be due the day after. Also need to fix the increment for the year in the addtask.go file for when the day and month are the same, but the time is after",
+    "due-date": "Tue Jan 20 2026 4:02 PM",
+    "done": false,
+    "completion-date": ""
+  },
+  {
+    "title": "Go to burb",
+    "category": "life",
+    "description": "Just for me",
+    "due-date": "Tue Jan 20 2026 7:15 PM",
+    "done": false,
+    "completion-date": ""
+  },
+  {
+    "title": "Empty cans",
+    "category": "life",
+    "description": "Get them all together from the basement",
+    "due-date": "Wed Jan 21 2026 12:00 AM",
+    "done": false,
+    "completion-date": ""
+  },
+  {
+    "title": "Laundry",
+    "category": "life",
+    "description": "Work stuff",
+    "due-date": "Wed Jan 21 2026 12:00 AM",
+    "done": false,
+    "completion-date": ""
+  },
+  {
+    "title": "Cancel novus",
+    "category": "life",
+    "description": "Call in, see if they have a place where I can go in person to return the router and cancel my plan",
+    "due-date": "Mon Jan 26 2026 12:00 AM",
+    "done": false,
+    "completion-date": ""
+  },
+  {
+    "title": "Update TaskList.Sort()",
+    "category": "taskmanager",
+    "description": "Sort by category, type, duedate, title. In that order",
+    "due-date": "Tue Jan 20 2026 7:23 PM",
+    "done": false,
+    "completion-date": ""
+  }
+]

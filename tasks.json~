@@ -44,8 +44,8 @@
     "category": "taskmanager",
     "description": "Add support for deleting tasks",
     "due-date": "Mon Jan 19 2026 10:19 PM",
-    "done": true,
-    "completion-date": "Wed Jan 21 2026 1:17 AM"
+    "done": false,
+    "completion-date": ""
   },
   {
     "title": "Flush out the search feature",
@@ -88,6 +88,22 @@
     "completion-date": ""
   },
   {
+    "title": "Test",
+    "category": "",
+    "description": "testing",
+    "due-date": "Tue Jan 20 2026 3:41 PM",
+    "done": false,
+    "completion-date": ""
+  },
+  {
+    "title": "Test",
+    "category": "life",
+    "description": "Testing",
+    "due-date": "Sat Jan 2 2027 3:57 PM",
+    "done": false,
+    "completion-date": ""
+  },
+  {
     "title": "DueDate bug fix",
     "category": "taskmanager",
     "description": "'Coloured output' task is showing up as due at '20/01 4:00 PM' even though it should be due the day after. Also need to fix the increment for the year in the addtask.go file for when the day and month are the same, but the time is after",
@@ -100,8 +116,8 @@
     "category": "life",
     "description": "Just for me",
     "due-date": "Tue Jan 20 2026 7:15 PM",
-    "done": true,
-    "completion-date": "Wed Jan 21 2026 1:18 AM"
+    "done": false,
+    "completion-date": ""
   },
   {
     "title": "Empty cans",
@@ -132,30 +148,6 @@
     "category": "taskmanager",
     "description": "Sort by category, type, duedate, title. In that order",
     "due-date": "Tue Jan 20 2026 7:23 PM",
-    "done": true,
-    "completion-date": "Wed Jan 21 2026 1:49 PM"
-  },
-  {
-    "title": "Fix file write",
-    "category": "taskmanager",
-    "description": "Change the flow of how we are writing to the save file. Screenshot saved with further instructions",
-    "due-date": "Wed Jan 21 2026 1:14 AM",
-    "done": false,
-    "completion-date": ""
-  },
-  {
-    "title": "Haircut",
-    "category": "life",
-    "description": "",
-    "due-date": "Wed Jan 21 2026 12:53 PM",
-    "done": false,
-    "completion-date": ""
-  },
-  {
-    "title": "Groceries",
-    "category": "life",
-    "description": "Save-on with mom",
-    "due-date": "Wed Jan 21 2026 12:55 PM",
     "done": false,
     "completion-date": ""
   }

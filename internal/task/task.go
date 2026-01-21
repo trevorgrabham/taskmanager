@@ -8,14 +8,14 @@ import (
 	"time"
 )
 
-var SaveFileName = "test.json"
+var SaveFileName = "tasks.json"
 
-type TaskType string
+type TaskType int
 
 const (
-	Due      TaskType = "Due"
-	Upcoming TaskType = "Upcoming"
-	Done     TaskType = "Done"
+	Due TaskType = iota
+	Upcoming
+	Done
 )
 
 type Task struct {
@@ -30,12 +30,13 @@ type Task struct {
 
 func (t Task) String() string {
 	var status string
-	if t.Done {
-		status = "Done!"
-	} else if time.Time(t.DueDate).After(time.Now()) {
-		status = "Upcoming"
-	} else {
+	switch t.Type {
+	case Due:
 		status = "Due"
+	case Upcoming:
+		status = "Upcoming"
+	case Done:
+		status = "Done"
 	}
 	var formattedString string
 	if t.Category == "" {
@@ -86,7 +87,7 @@ func UnmarshalTasks() (tasks TaskList, err error) {
 			tasks[i].Type = Done
 			continue
 		}
-		if !time.Now().After(time.Time(tasks[i].DueDate)) {
+		if time.Now().After(time.Time(tasks[i].DueDate)) {
 			tasks[i].Type = Due
 			continue
 		}

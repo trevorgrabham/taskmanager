@@ -8,9 +8,9 @@ import (
 func GetTaskSelection(prompt string, tasks task.TaskList) (*task.Task, error) {
 	fmt.Println(prompt)
 	for i := range tasks {
-		fmt.Printf("%d. %.80s\n", i+1, tasks[i].Title)
+		fmt.Printf("%-3s \033[%s%.80s\033[0m\n", fmt.Sprintf("%d.", (i+1)), tasks[i].Type.ANSICode(), tasks[i].Title)
 	}
-	fmt.Printf("0. Cancel\n")
+	fmt.Printf("\n0.  Cancel\n")
 	var selection int
 	_, err := fmt.Scan(&selection)
 	if err != nil {

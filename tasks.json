@@ -167,14 +167,14 @@
     "title": "Add priorities for categories",
     "category": "taskmanager",
     "description": "Add a way for users to give priorities for categories so that certain categories will appear higher up the task list",
-    "due-date": "Wed Jan 21 2026 3:30 PM",
+    "due-date": "Wed Jan 28 2026 3:30 PM",
     "done": false
   },
   {
     "title": "Allow for repeating actions",
     "category": "taskmanager",
     "description": "Prompt users if they would like to continue when adding, removing, pushing back, and completing tasks",
-    "due-date": "Wed Jan 21 2026 5:05 PM",
+    "due-date": "Wed Jan 28 2026 5:05 PM",
     "done": false
   },
   {

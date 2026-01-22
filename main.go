@@ -85,55 +85,17 @@ func main() {
 			fmt.Println()
 			fmt.Println()
 		case "-d":
-		removeLoop:
-			for {
-				err = userinput.DeleteTask(tasks)
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				tasks = tasks.FilterDeleted()
-
-				fmt.Print("Anything else to remove? (y/n)\t")
-				var more string
-				_, err = fmt.Scan(&more)
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				switch more {
-				case "y", "Y", "YES", "Yes", "yes":
-					fmt.Println()
-					fmt.Println()
-				default:
-					break removeLoop
-				}
+			err = userinput.DeleteTask(tasks.Incomplete().Sort())
+			if err != nil {
+				log.Fatal(err)
 			}
 
 			fmt.Println()
 			fmt.Println()
 		case "-p":
-		pushLoop:
-			for {
-				err = userinput.PushTaskMenu(tasks.Incomplete())
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				fmt.Print("Anything else to push? (y/n)\t")
-				var more string
-				_, err = fmt.Scan(&more)
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				switch more {
-				case "y", "Y", "YES", "Yes", "yes":
-					fmt.Println()
-					fmt.Println()
-				default:
-					break pushLoop
-				}
+			err = userinput.PushTaskMenu(tasks.Incomplete().Sort())
+			if err != nil {
+				log.Fatal(err)
 			}
 
 			fmt.Println()
@@ -177,7 +139,6 @@ Usage:
   -a add a new task 
   -c complete a task 
   -d remove a task
-  -l list incomplete tasks
   -s search for tasks
 
 `)

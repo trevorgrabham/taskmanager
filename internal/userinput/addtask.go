@@ -36,7 +36,8 @@ func AddTaskMenu() (task.Task, error) {
 	dueDateString, err := reader.ReadString('\n')
 	dueDateString = strings.TrimSpace(dueDateString)
 	if dueDateString == "" || dueDateString == "now" || dueDateString == "NOW" || dueDateString == "Now" {
-		return task.Task{Title: title, Category: category, Description: description, DueDate: task.TaskDueDate(time.Now())}, nil
+		taskDueDate := task.TaskDueDate(time.Now())
+		return task.Task{Title: title, Category: category, Description: description, DueDate: &taskDueDate, Type: task.Due}, nil
 	}
 	if err != nil {
 		return task.Task{}, err
@@ -51,9 +52,10 @@ func AddTaskMenu() (task.Task, error) {
 	}
 
 	now := time.Now()
-	year := now.Year()
-	if dueDate.Month() < now.Month() || (dueDate.Month() == now.Month() && dueDate.Day() < now.Day()) {
-		year++
+	dueDate = time.Date(now.Year(), dueDate.Month(), dueDate.Day(), dueDate.Hour(), dueDate.Minute(), 0, 0, now.Location())
+	if dueDate.Before(now) {
+		dueDate = dueDate.AddDate(1,0,0)
 	}
-	return task.Task{Title: title, Category: category, Description: description, DueDate: task.TaskDueDate(time.Date(year, dueDate.Month(), dueDate.Day(), dueDate.Hour(), dueDate.Minute(), 0, 0, now.Location()))}, nil
+	taskDueDate := task.TaskDueDate(dueDate)
+	return task.Task{Title: title, Category: category, Description: description, DueDate: &taskDueDate, Type: task.Upcoming}, nil
 }

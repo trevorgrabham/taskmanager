@@ -3,9 +3,9 @@
     "title": "Clean bathroom",
     "category": "life",
     "description": "Clean toilet and shower",
-    "due-date": "Tue Jan 20 2026 12:00 AM",
-    "done": false,
-    "completion-date": ""
+    "due-date": "Mon Jan 26 2026 12:00 AM",
+    "done": true,
+    "completion-date": "Wed Jan 21 2026 5:55 PM"
   },
   {
     "title": "FHSA",
@@ -107,17 +107,17 @@
     "title": "Empty cans",
     "category": "life",
     "description": "Get them all together from the basement",
-    "due-date": "Wed Jan 21 2026 12:00 AM",
-    "done": false,
-    "completion-date": ""
+    "due-date": "Wed Feb 4 2026 12:00 AM",
+    "done": true,
+    "completion-date": "Wed Jan 21 2026 5:55 PM"
   },
   {
     "title": "Laundry",
     "category": "life",
     "description": "Work stuff",
     "due-date": "Wed Jan 21 2026 12:00 AM",
-    "done": false,
-    "completion-date": ""
+    "done": true,
+    "completion-date": "Wed Jan 21 2026 3:27 PM"
   },
   {
     "title": "Cancel novus",
@@ -148,15 +148,69 @@
     "category": "life",
     "description": "",
     "due-date": "Wed Jan 21 2026 12:53 PM",
-    "done": false,
-    "completion-date": ""
+    "done": true,
+    "completion-date": "Wed Jan 21 2026 3:27 PM"
   },
   {
     "title": "Groceries",
     "category": "life",
     "description": "Save-on with mom",
     "due-date": "Wed Jan 21 2026 12:55 PM",
+    "done": true,
+    "completion-date": "Wed Jan 21 2026 3:27 PM"
+  },
+  {
+    "title": "Air Fryer",
+    "category": "life",
+    "description": "Look up a good air fryer",
+    "due-date": "Wed Jan 21 2026 3:29 PM",
     "done": false,
     "completion-date": ""
+  },
+  {
+    "title": "Add priorities for categories",
+    "category": "taskmanager",
+    "description": "Add a way for users to give priorities for categories so that certain categories will appear higher up the task list",
+    "due-date": "Wed Jan 21 2026 3:30 PM",
+    "done": false,
+    "completion-date": ""
+  },
+  {
+    "title": "Allow for repeating actions",
+    "category": "taskmanager",
+    "description": "Prompt users if they would like to continue when adding, removing, pushing back, and completing tasks",
+    "due-date": "Wed Jan 21 2026 5:05 PM",
+    "done": false,
+    "completion-date": ""
+  },
+  {
+    "title": "Add recurring tasks",
+    "category": "taskmanager",
+    "description": "Allow for users to specify whether a task should be recurring. If it is the case, we need to get the interval in which is should repeat",
+    "due-date": "Mon Jan 26 2026 12:00 AM",
+    "done": false,
+    "completion-date": ""
+  },
+  {
+    "title": "Allow for due dates to be days of the week",
+    "category": "taskmanager",
+    "description": "Add support for things like \"Monday\" when adding due dates",
+    "due-date": "Mon Jan 26 2026 12:00 AM",
+    "done": false,
+    "completion-date": ""
+  },
+  {
+    "title": "Add meta data",
+    "category": "taskmanager",
+    "description": "Track data related to tasks. Such as how many times they have been completed, average length of time between when it was added and completed, etc.",
+    "due-date": "Mon Jan 26 2026 12:00 AM",
+    "done": false
+  },
+  {
+    "title": "Port over to a database",
+    "category": "taskmanager",
+    "description": "Move from using .json files to using a database so that we don't have to worry about keeping multiple .json files in tandom.",
+    "due-date": "Mon Jan 26 2026 12:00 AM",
+    "done": false
   }
 ]

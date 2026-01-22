@@ -22,44 +22,118 @@ func main() {
 			usage()
 			printedUsage = true
 		case "-a":
-			var newTask task.Task
-			newTask, err = userinput.AddTaskMenu()
-			if err != nil {
-				log.Fatal(err)
+		addLoop:
+			for {
+				var newTask task.Task
+				newTask, err = userinput.AddTaskMenu()
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				tasks = append(tasks, &newTask)
+
+				fmt.Print("Anything else to add? (y/n)\t")
+				var more string
+				_, err = fmt.Scan(&more)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				switch more {
+				case "y", "Y", "YES", "Yes", "yes":
+					fmt.Println()
+					fmt.Println()
+				default:
+					break addLoop
+				}
 			}
 
-			tasks = append(tasks, &newTask)
 			fmt.Println()
 			fmt.Println()
 		case "-c":
-			var selection *task.Task
-			selection, err = userinput.GetTaskSelection("Which task would you like to complete?", tasks.Incomplete())
-			if err != nil {
-				log.Fatal(err)
-			}
-			if selection == nil {
-				continue
-			}
+		completeLoop:
+			for {
+				var selection *task.Task
+				selection, err = userinput.GetTaskSelection("Which task would you like to complete?", tasks.Incomplete())
+				if err != nil {
+					log.Fatal(err)
+				}
+				if selection == nil {
+					break completeLoop
+				}
 
-			selection.Done = true
-			selection.CompletionDate = task.TaskDueDate(time.Now())
+				taskDueDate := task.TaskDueDate(time.Now())
+				selection.Done = true
+				selection.CompletionDate = &taskDueDate
+
+				fmt.Print("Anything else to complete? (y/n)\t")
+				var more string
+				_, err = fmt.Scan(&more)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				switch more {
+				case "y", "Y", "YES", "Yes", "yes":
+					fmt.Println()
+					fmt.Println()
+				default:
+					break completeLoop
+				}
+			}
 
 			fmt.Println()
 			fmt.Println()
 		case "-d":
-			err = userinput.DeleteTask(tasks)
-			if err != nil {
-				log.Fatal(err)
-			}
+		removeLoop:
+			for {
+				err = userinput.DeleteTask(tasks)
+				if err != nil {
+					log.Fatal(err)
+				}
 
-			tasks = tasks.FilterDeleted()
+				tasks = tasks.FilterDeleted()
+
+				fmt.Print("Anything else to remove? (y/n)\t")
+				var more string
+				_, err = fmt.Scan(&more)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				switch more {
+				case "y", "Y", "YES", "Yes", "yes":
+					fmt.Println()
+					fmt.Println()
+				default:
+					break removeLoop
+				}
+			}
 
 			fmt.Println()
 			fmt.Println()
 		case "-p":
-			err = userinput.PushTaskMenu(tasks.Incomplete())
-			if err != nil {
-				log.Fatal(err)
+		pushLoop:
+			for {
+				err = userinput.PushTaskMenu(tasks.Incomplete())
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				fmt.Print("Anything else to push? (y/n)\t")
+				var more string
+				_, err = fmt.Scan(&more)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				switch more {
+				case "y", "Y", "YES", "Yes", "yes":
+					fmt.Println()
+					fmt.Println()
+				default:
+					break pushLoop
+				}
 			}
 
 			fmt.Println()

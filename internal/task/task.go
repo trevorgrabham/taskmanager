@@ -19,13 +19,13 @@ const (
 )
 
 type Task struct {
-	Title          string      `json:"title"`
-	Category       string      `json:"category"`
-	Description    string      `json:"description"`
-	DueDate        TaskDueDate `json:"due-date"`
-	Done           bool        `json:"done"`
-	CompletionDate TaskDueDate `json:"completion-date,omitempty"`
-	Type           TaskType    `json:"-"`
+	Title          string       `json:"title"`
+	Category       string       `json:"category"`
+	Description    string       `json:"description"`
+	DueDate        *TaskDueDate `json:"due-date"`
+	Done           bool         `json:"done"`
+	CompletionDate *TaskDueDate `json:"completion-date,omitempty"`
+	Type           TaskType     `json:"-"`
 }
 
 func (t Task) String() string {
@@ -87,7 +87,7 @@ func UnmarshalTasks() (tasks TaskList, err error) {
 			tasks[i].Type = Done
 			continue
 		}
-		if time.Now().After(time.Time(tasks[i].DueDate)) {
+		if time.Now().After(time.Time(*tasks[i].DueDate)) {
 			tasks[i].Type = Due
 			continue
 		}

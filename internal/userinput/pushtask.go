@@ -36,6 +36,14 @@ func PushTaskMenu(tasks task.TaskList) error {
 		return errors.New("cannot push back by a negative number of days")
 	}
 
-	tasks[selection-1].DueDate = task.TaskDueDate(time.Time(tasks[selection-1].DueDate).Add(time.Duration(numDays) * time.Hour * 24))
+	taskDueDate := task.TaskDueDate(time.Time(*tasks[selection-1].DueDate).AddDate(0, 0, numDays))
+	tasks[selection-1].DueDate = &taskDueDate
+
+	if time.Time(taskDueDate).After(time.Now()) {
+		tasks[selection-1].Type = task.Upcoming
+	} else {
+		tasks[selection-1].Type = task.Due
+	}
+
 	return nil
 }

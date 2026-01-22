@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -18,6 +19,32 @@ const (
 	Done
 )
 
+func (t TaskType) ANSICode() string {
+	switch t {
+	case Due:
+		return "31m"
+	case Upcoming:
+		return "33m"
+	case Done:
+		return "32m"
+	default:
+		return ""
+	}
+}
+
+func (t TaskType) String() string {
+	switch t {
+	case Due:
+		return "Due"
+	case Upcoming:
+		return "Upcoming"
+	case Done:
+		return "Done"
+	default:
+		return ""
+	}
+}
+
 type Task struct {
 	Title          string       `json:"title"`
 	Category       string       `json:"category"`
@@ -29,20 +56,11 @@ type Task struct {
 }
 
 func (t Task) String() string {
-	var status string
-	switch t.Type {
-	case Due:
-		status = "Due"
-	case Upcoming:
-		status = "Upcoming"
-	case Done:
-		status = "Done"
-	}
 	var formattedString string
 	if t.Category == "" {
-		formattedString = fmt.Sprintf("%s - %s", t.Title, status)
+		formattedString = fmt.Sprintf("\033[30;46m%s\033[0m - \033[%s%s\033[0m", t.Title, t.Type.ANSICode(), t.Type.String())
 	} else {
-		formattedString = fmt.Sprintf("%s [%s] - %s", t.Title, t.Category, status)
+		formattedString = fmt.Sprintf("\033[30;46m%s\033[0m [\033[95m%s\033[0m] - \033[%s%s\033[0m", t.Title, t.Category, t.Type.ANSICode(), t.Type.String())
 	}
 	if t.Description != "" {
 		formattedString = fmt.Sprintf("%s\n%s", formattedString, t.Description)
@@ -50,6 +68,7 @@ func (t Task) String() string {
 	if t.Done {
 		formattedString = fmt.Sprintf("%s\nCompleted on %s", formattedString, t.CompletionDate.String())
 	}
+
 	return formattedString
 }
 
@@ -63,8 +82,59 @@ func MarshalTasks(out *os.File, tasks ...*Task) error {
 		return err
 	}
 
-	_, err = out.Write(data)
-	return err
+	dir := filepath.Dir(out.Name())
+
+	tmpFile, err := os.CreateTemp(dir, ".tmp-*")
+	if err != nil {
+		return err
+	}
+
+	tmpFileName := tmpFile.Name()
+	defer func() {
+		tmpFile.Close()
+		os.Remove(tmpFileName)
+	}()
+
+	_, err = tmpFile.Write(data)
+	if err != nil {
+		return err
+	}
+	err = tmpFile.Sync()
+	if err != nil {
+		return err
+	}
+
+	stat, err := tmpFile.Stat()
+	if err != nil {
+		return err
+	}
+	if stat.Size() != int64(len(data)) {
+		return fmt.Errorf("incomplete write: expected %d bytes, wrote %d", len(data), stat.Size())
+	}
+
+	err = tmpFile.Close()
+	if err != nil {
+		return err
+	}
+
+	err = os.Chmod(tmpFileName, 0644)
+	if err != nil {
+		return err
+	}
+
+	err = os.Rename(tmpFileName, out.Name())
+	if err != nil {
+		return err
+	}
+
+	dirFd, err := os.Open(dir)
+	if err != nil {
+		return err
+	}
+
+	defer dirFd.Close()
+
+	return dirFd.Sync()
 }
 
 func UnmarshalTasks() (tasks TaskList, err error) {

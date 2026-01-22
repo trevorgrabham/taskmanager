@@ -76,24 +76,22 @@
     "category": "taskmanager",
     "description": "Go through and add some comments. Should do this after I finish the restructuring",
     "due-date": "Tue Jan 20 2026 2:18 AM",
-    "done": false,
-    "completion-date": ""
+    "done": false
   },
   {
     "title": "Coloured output",
     "category": "taskmanager",
     "description": "Add colour coding so that the category stands out more. Also add colour coding depending on the completion/upcoming status of the task",
     "due-date": "Wed Jan 21 2026 12:00 AM",
-    "done": false,
-    "completion-date": ""
+    "done": true,
+    "completion-date": "Thu Jan 22 2026 2:36 PM"
   },
   {
     "title": "DueDate bug fix",
     "category": "taskmanager",
     "description": "'Coloured output' task is showing up as due at '20/01 4:00 PM' even though it should be due the day after. Also need to fix the increment for the year in the addtask.go file for when the day and month are the same, but the time is after",
     "due-date": "Tue Jan 20 2026 4:02 PM",
-    "done": false,
-    "completion-date": ""
+    "done": false
   },
   {
     "title": "Go to burb",
@@ -124,8 +122,7 @@
     "category": "life",
     "description": "Call in, see if they have a place where I can go in person to return the router and cancel my plan",
     "due-date": "Mon Jan 26 2026 12:00 AM",
-    "done": false,
-    "completion-date": ""
+    "done": false
   },
   {
     "title": "Update TaskList.Sort()",
@@ -140,8 +137,8 @@
     "category": "taskmanager",
     "description": "Change the flow of how we are writing to the save file. Screenshot saved with further instructions",
     "due-date": "Wed Jan 21 2026 1:14 AM",
-    "done": false,
-    "completion-date": ""
+    "done": true,
+    "completion-date": "Thu Jan 22 2026 2:06 PM"
   },
   {
     "title": "Haircut",
@@ -164,40 +161,35 @@
     "category": "life",
     "description": "Look up a good air fryer",
     "due-date": "Wed Jan 21 2026 3:29 PM",
-    "done": false,
-    "completion-date": ""
+    "done": false
   },
   {
     "title": "Add priorities for categories",
     "category": "taskmanager",
     "description": "Add a way for users to give priorities for categories so that certain categories will appear higher up the task list",
     "due-date": "Wed Jan 21 2026 3:30 PM",
-    "done": false,
-    "completion-date": ""
+    "done": false
   },
   {
     "title": "Allow for repeating actions",
     "category": "taskmanager",
     "description": "Prompt users if they would like to continue when adding, removing, pushing back, and completing tasks",
     "due-date": "Wed Jan 21 2026 5:05 PM",
-    "done": false,
-    "completion-date": ""
+    "done": false
   },
   {
     "title": "Add recurring tasks",
     "category": "taskmanager",
     "description": "Allow for users to specify whether a task should be recurring. If it is the case, we need to get the interval in which is should repeat",
     "due-date": "Mon Jan 26 2026 12:00 AM",
-    "done": false,
-    "completion-date": ""
+    "done": false
   },
   {
     "title": "Allow for due dates to be days of the week",
     "category": "taskmanager",
     "description": "Add support for things like \"Monday\" when adding due dates",
     "due-date": "Mon Jan 26 2026 12:00 AM",
-    "done": false,
-    "completion-date": ""
+    "done": false
   },
   {
     "title": "Add meta data",

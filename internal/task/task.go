@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-var SaveFileName = "tasks.json"
+var SaveFileName = "/home/trevorgrabham/.config/taskmanager/tasks.json"
 
 type TaskType int
 
@@ -72,6 +72,18 @@ func (t Task) String() string {
 	return formattedString
 }
 
+// configHome := os.Getenv("XDG_CONFIG_HOME")
+// if configHome == "" {
+// home, err := os.UserHomeDir()
+// if err != nil {
+// fmt.Println("Timer: unable to locate users home directory")
+// os.Exit(1)
+// }
+// configHome = filepath.Join(home, ".config")
+// }
+// dir := filepath.Join(configHome, "timer")
+// os.MkdirAll(dir, 0700)
+// jobFile := filepath.Join(dir, "job-num")
 func MarshalTasks(out *os.File, tasks ...*Task) error {
 	if out == nil {
 		return errors.New("cannot marshal to a nil out file")

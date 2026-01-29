@@ -20,5 +20,8 @@ func Connect() (*sql.DB, error) {
 		return nil, fmt.Errorf("pinging sqlite db: %s", err)
 	}
 
+	_, err = db.Exec(`PRAGMA foreign_keys = ON;`)
+	if err != nil { return nil, fmt.Errorf("setting up foreign keys: %s", err) }
+
 	return db, nil
 }

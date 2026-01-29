@@ -7,7 +7,7 @@ import (
 	"local/taskmanager2.0/internal/userinput"
 	"log"
 	"os"
-	"time"
+	"slices"
 )
 
 func main() {
@@ -16,12 +16,6 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
-
-	var tasks task.TaskList
-	tasks, err = sqlitedb.QueryAll(db)
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	var didSearch, printedUsage bool
 	for _, flag := range os.Args[1:] {
@@ -38,7 +32,6 @@ func main() {
 					log.Fatal(err)
 				}
 
-				tasks = append(tasks, &newTask)
 				err = sqlitedb.AddTask(db, newTask)
 				if err != nil {
 					log.Fatal(err)
@@ -63,20 +56,28 @@ func main() {
 			fmt.Println()
 			fmt.Println()
 		case "-c":
+			var tasks task.TaskList
+			tasks, err = sqlitedb.QueryIncompleteTasks(db)
+			if err != nil {
+				log.Fatal(err)
+			}
 		completeLoop:
 			for {
-				var selection *task.Task
-				selection, err = userinput.GetTaskSelection("Which task would you like to complete?", tasks.Incomplete())
+				var id int
+				id, err = userinput.GetTaskSelection("Which task would you like to complete?", tasks)
 				if err != nil {
 					log.Fatal(err)
 				}
-				if selection == nil {
+				if id == -1 {
 					break completeLoop
 				}
 
-				taskDueDate := task.TaskDueDate(time.Now())
-				selection.Done = true
-				selection.CompletionDate = &taskDueDate
+				err = sqlitedb.CompleteTask(db, id)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				tasks = slices.DeleteFunc(tasks, func(t *task.Task) bool { return t.ID == id })
 
 				fmt.Print("Anything else to complete? (y/n)\t")
 				var more string
@@ -96,29 +97,29 @@ func main() {
 
 			fmt.Println()
 			fmt.Println()
-		case "-d":
-			err = userinput.DeleteTask(tasks.Incomplete().Sort())
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			fmt.Println()
-			fmt.Println()
-		case "-p":
-			err = userinput.PushTaskMenu(tasks.Incomplete().Sort())
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			fmt.Println()
-			fmt.Println()
-		case "-s":
-			err = userinput.SearchTaskMenu(tasks)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			didSearch = true
+		// case "-d":
+		// err = userinput.DeleteTask(tasks.Incomplete().Sort())
+		// if err != nil {
+		// log.Fatal(err)
+		// }
+		//
+		// fmt.Println()
+		// fmt.Println()
+		// case "-p":
+		// err = userinput.PushTaskMenu(tasks.Incomplete().Sort())
+		// if err != nil {
+		// log.Fatal(err)
+		// }
+		//
+		// fmt.Println()
+		// fmt.Println()
+		// case "-s":
+		// err = userinput.SearchTaskMenu(tasks)
+		// if err != nil {
+		// log.Fatal(err)
+		// }
+		//
+		// didSearch = true
 		default:
 			fmt.Fprintf(os.Stderr, "unknown flag: %s\n\n", flag)
 			usage()
@@ -127,20 +128,13 @@ func main() {
 	}
 
 	if !didSearch && !printedUsage {
-		fmt.Println(tasks.Incomplete().Sort())
-	}
+		tasks, err := sqlitedb.QueryIncompleteTasks(db)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	outFile, err := os.OpenFile(task.SaveFileName, os.O_WRONLY|os.O_CREATE, 0644)
-	if err != nil {
-		log.Fatal(err)
+		fmt.Println(tasks)
 	}
-	defer outFile.Close()
-
-	err = task.MarshalTasks(outFile, tasks...)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 }
 
 func usage() {

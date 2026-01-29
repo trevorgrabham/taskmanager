@@ -58,9 +58,9 @@ type Task struct {
 func (t Task) String() string {
 	var formattedString string
 	if t.Category == "" {
-		formattedString = fmt.Sprintf("\033[30;46m%s\033[0m - \033[%s%s\033[0m", t.Title, t.Type.ANSICode(), t.Type.String())
+		formattedString = fmt.Sprintf("\033[30;46m%s\033[0m - \033[%s%s\033[0m", t.Title, t.Type.ANSICode(), t.DueDate.String())
 	} else {
-		formattedString = fmt.Sprintf("\033[30;46m%s\033[0m [\033[95m%s\033[0m] - \033[%s%s\033[0m", t.Title, t.Category, t.Type.ANSICode(), t.Type.String())
+		formattedString = fmt.Sprintf("\033[30;46m%s\033[0m [\033[95m%s\033[0m] - \033[%s%s\033[0m", t.Title, t.Category, t.Type.ANSICode(), t.DueDate.String())
 	}
 	if t.Description != "" {
 		formattedString = fmt.Sprintf("%s\n%s", formattedString, t.Description)
@@ -149,12 +149,12 @@ func MarshalTasks(out *os.File, tasks ...*Task) error {
 	return dirFd.Sync()
 }
 
-func UnmarshalTasks() (tasks TaskList, err error) {
-	if _, err = os.Stat(SaveFileName); err != nil {
+func UnmarshalTasks(saveFile string) (tasks TaskList, err error) {
+	if _, err = os.Stat(saveFile); err != nil {
 		return TaskList{}, nil
 	}
 	var data []byte
-	data, err = os.ReadFile(SaveFileName)
+	data, err = os.ReadFile(saveFile)
 	if err != nil {
 		return nil, err
 	}

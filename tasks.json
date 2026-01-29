@@ -204,5 +204,40 @@
     "description": "Move from using .json files to using a database so that we don't have to worry about keeping multiple .json files in tandom.",
     "due-date": "Mon Jan 26 2026 12:00 AM",
     "done": false
+  },
+  {
+    "title": "Change -a",
+    "category": "taskmanager",
+    "description": "Get it to add to the database instead of the TaskList",
+    "due-date": "Wed Jan 28 2026 5:09 PM",
+    "done": false
+  },
+  {
+    "title": "Change -c",
+    "category": "taskmanager",
+    "description": "Get it to alter the database instead of the TaskList",
+    "due-date": "Wed Jan 28 2026 5:09 PM",
+    "done": false
+  },
+  {
+    "title": "Change -d",
+    "category": "taskmanager",
+    "description": "Get it to drop from the database instead of the TaskList",
+    "due-date": "Wed Jan 28 2026 5:09 PM",
+    "done": false
+  },
+  {
+    "title": "Change -p",
+    "category": "taskmanager",
+    "description": "Get it to alter the database instead of the TaskList",
+    "due-date": "Wed Jan 28 2026 5:09 PM",
+    "done": false
+  },
+  {
+    "title": "Change -s",
+    "category": "taskmanager",
+    "description": "Get it to query the database instead of the TaskList",
+    "due-date": "Wed Jan 28 2026 5:09 PM",
+    "done": false
   }
 ]

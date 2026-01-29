@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	sqlitedb "local/taskmanager2.0/internal/db"
 	"local/taskmanager2.0/internal/task"
 	"local/taskmanager2.0/internal/userinput"
 	"log"
@@ -10,7 +11,14 @@ import (
 )
 
 func main() {
-	tasks, err := task.UnmarshalTasks()
+	db, err := sqlitedb.Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	var tasks task.TaskList
+	tasks, err = sqlitedb.QueryAll(db)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -31,6 +39,10 @@ func main() {
 				}
 
 				tasks = append(tasks, &newTask)
+				err = sqlitedb.AddTask(db, newTask)
+				if err != nil {
+					log.Fatal(err)
+				}
 
 				fmt.Print("Anything else to add? (y/n)\t")
 				var more string

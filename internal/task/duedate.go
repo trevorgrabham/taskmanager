@@ -2,6 +2,7 @@ package task
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -24,7 +25,7 @@ func (t *TaskDueDate) UnmarshalJSON(data []byte) error {
 	var dateString string
 	err := json.Unmarshal(data, &dateString)
 	if err != nil {
-		return err
+		return fmt.Errorf("unmarshaling date: %s", err)
 	}
 
 	if dateString == "" {
@@ -32,9 +33,14 @@ func (t *TaskDueDate) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
-	dueDate, err := time.Parse(DueDateFormatString, dateString)
+	timeZone, err := time.LoadLocation("Local")
 	if err != nil {
-		return err
+		return fmt.Errorf("loading timezone: %s", err)
+	}
+
+	dueDate, err := time.ParseInLocation(DueDateFormatString, dateString, timeZone)
+	if err != nil {
+		return fmt.Errorf("parsing DueDate: %s", err)
 	}
 
 	*t = TaskDueDate(dueDate)

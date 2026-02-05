@@ -25,7 +25,7 @@ func ImportFromJSON(db *sql.DB, fileName string) error {
 	}
 
 	var insertStatement *sql.Stmt
-	insertStatement, err = db.Prepare(`INSERT INTO tasks(title, category, description, due_date, completion_date, done) VALUES (?, ?, ?, ?, ?, ?)`)
+	insertStatement, err = db.Prepare(fmt.Sprintf(`INSERT INTO %s(title, category, description, due_date, completion_date, done) VALUES (?, ?, ?, ?, ?, ?)`, taskTableName))
 	if err != nil {
 		return fmt.Errorf("preparing insert stmnt: %s", err)
 	}

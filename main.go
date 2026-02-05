@@ -2,16 +2,15 @@ package main
 
 import (
 	"fmt"
-	sqlitedb "local/taskmanager2.0/internal/db"
+	sqlite "local/taskmanager2.0/internal/db"
 	"local/taskmanager2.0/internal/task"
 	"local/taskmanager2.0/internal/userinput"
 	"log"
 	"os"
-	"slices"
 )
 
 func main() {
-	db, err := sqlitedb.Connect()
+	db, err := sqlite.Connect()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -32,7 +31,7 @@ func main() {
 					log.Fatal(err)
 				}
 
-				err = sqlitedb.AddTask(db, newTask)
+				err = sqlite.AddTask(db, newTask)
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -56,69 +55,35 @@ func main() {
 			fmt.Println()
 			fmt.Println()
 		case "-c":
-			var tasks task.TaskList
-			tasks, err = sqlitedb.QueryIncompleteTasks(db)
+			err = userinput.CompleteTask(db)
 			if err != nil {
 				log.Fatal(err)
 			}
-		completeLoop:
-			for {
-				var id int
-				id, err = userinput.GetTaskSelection("Which task would you like to complete?", tasks)
-				if err != nil {
-					log.Fatal(err)
-				}
-				if id == -1 {
-					break completeLoop
-				}
 
-				err = sqlitedb.CompleteTask(db, id)
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				tasks = slices.DeleteFunc(tasks, func(t *task.Task) bool { return t.ID == id })
-
-				fmt.Print("Anything else to complete? (y/n)\t")
-				var more string
-				_, err = fmt.Scan(&more)
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				switch more {
-				case "y", "Y", "YES", "Yes", "yes":
-					fmt.Println()
-					fmt.Println()
-				default:
-					break completeLoop
-				}
+			fmt.Println()
+			fmt.Println()
+		case "-d":
+			err = userinput.DeleteTask(db)
+			if err != nil {
+				log.Fatal(err)
 			}
 
 			fmt.Println()
 			fmt.Println()
-		// case "-d":
-		// err = userinput.DeleteTask(tasks.Incomplete().Sort())
-		// if err != nil {
-		// log.Fatal(err)
-		// }
-		//
-		// fmt.Println()
-		// fmt.Println()
-		// case "-p":
-		// err = userinput.PushTaskMenu(tasks.Incomplete().Sort())
-		// if err != nil {
-		// log.Fatal(err)
-		// }
-		//
-		// fmt.Println()
-		// fmt.Println()
+		case "-p":
+			err = userinput.PushTask(db)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			fmt.Println()
+			fmt.Println()
 		// case "-s":
 		// err = userinput.SearchTaskMenu(tasks)
 		// if err != nil {
 		// log.Fatal(err)
 		// }
-		//
+
 		// didSearch = true
 		default:
 			fmt.Fprintf(os.Stderr, "unknown flag: %s\n\n", flag)
@@ -128,7 +93,7 @@ func main() {
 	}
 
 	if !didSearch && !printedUsage {
-		tasks, err := sqlitedb.QueryIncompleteTasks(db)
+		tasks, err := sqlite.QueryIncompleteTasks(db)
 		if err != nil {
 			log.Fatal(err)
 		}

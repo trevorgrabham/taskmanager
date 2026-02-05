@@ -3,33 +3,30 @@ package userinput
 import (
 	"fmt"
 	"local/taskmanager2.0/internal/task"
+	sqlite "local/taskmanager2.0/internal/db"
 	"log"
+	"database/sql"
+	"slices"
 )
 
-func DeleteTask(tasks task.TaskList) error {
+func DeleteTask(db *sql.DB) error {
+	if db == nil { return fmt.Errorf("deleting task: cannot delete from a nil database") }
+
+	tasks, err := sqlite.QueryIncompleteTasks(db)
+	if err != nil { return fmt.Errorf("deleting task: %s", err) }
+
 removeLoop:
 	for {
-		fmt.Println("Which task would you like to remove?")
-		for i := range tasks {
-			fmt.Printf("%-3s \033[%s%.80s\033[0m\n", fmt.Sprintf("%d.", (i+1)), tasks[i].Type.ANSICode(), tasks[i].Title)
-		}
-		fmt.Printf("\n0.  Cancel\n")
-		var selection int
-		_, err := fmt.Scan(&selection)
-		if err != nil {
-			return err
-		}
+		var id int
+		id, err = GetTaskSelection("Which task would you like to remove?", tasks)
+		if err != nil { return fmt.Errorf("deleting task: %s" , err) }
 
-		if selection > len(tasks) || selection < 0 {
-			return fmt.Errorf("%d is not a valid selection", selection)
-		}
-		if selection == 0 {
-			return nil
-		}
+		if id == -1 { break removeLoop }
 
-		*tasks[selection-1] = task.Task{}
+		err = sqlite.DeleteTask(db, id)
+		if err != nil { return fmt.Errorf("deleting task: %s" , err) }
 
-		tasks = tasks.FilterDeleted()
+		tasks = slices.DeleteFunc(tasks, func(t *task.Task) bool { return t.ID == id })
 
 		fmt.Print("Anything else to remove? (y/n)\t")
 		var more string

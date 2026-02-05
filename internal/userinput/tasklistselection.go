@@ -14,7 +14,7 @@ func GetTaskSelection(prompt string, tasks task.TaskList) (int, error) {
 	var selection int
 	_, err := fmt.Scan(&selection)
 	if err != nil {
-		return -1, err
+		return -1, fmt.Errorf("getting user task selection: %s", err)
 	}
 
 	if selection > len(tasks) || selection < 0 {

@@ -11,7 +11,7 @@ func TearDown(db *sql.DB) error {
 		return errors.New("tearing down: cannot tear down a nil db")
 	}
 
-	_, err := db.Exec(`DROP TABLE IF EXISTS tasks;`)
+	_, err := db.Exec(fmt.Sprintf(`DROP TABLE IF EXISTS %s;`, taskTableName))
 	if err != nil {
 		return fmt.Errorf("executing tear down: %s", err)
 	}

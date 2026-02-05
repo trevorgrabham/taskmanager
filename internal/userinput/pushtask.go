@@ -1,53 +1,53 @@
 package userinput
 
 import (
-	"errors"
 	"fmt"
 	"local/taskmanager2.0/internal/task"
-	"time"
+	sqlite "local/taskmanager2.0/internal/db"
+	"database/sql"
 	"log"
 )
 
-func PushTaskMenu(tasks task.TaskList) error {
+func PushTask(db *sql.DB) error {
+	if db == nil {
+		return fmt.Errorf("pushing task: cannot complete task for nil database")
+	}
+	tasks, err := sqlite.QueryIncompleteTasks(db)
+	if err != nil {
+		return fmt.Errorf("pushing task: %s", err)
+	}
+
 pushLoop:
 	for {
-		fmt.Println("Which task would you like to push?")
-		for i := range tasks {
-			fmt.Printf("%-3s \033[%s%.80s\033[0m\n", fmt.Sprintf("%d.", (i+1)), tasks[i].Type.ANSICode(), tasks[i].Title)
-		}
-		fmt.Printf("\n0.  Cancel\n")
-		var selection, numDays int
-		_, err := fmt.Scan(&selection)
-		if err != nil {
-			return err
-		}
-	
-		if selection > len(tasks) || selection < 0 {
-			return fmt.Errorf("%d is not a valid selection", selection)
-		}
-		if selection == 0 {
-			return nil
-		}
+		var id, numDays int
+		id, err = GetTaskSelection("Which task would you like to push?", tasks)
+		if err != nil { return err }
 	
 		fmt.Print("How many days should it be pushed back?\t")
 		_, err = fmt.Scan(&numDays)
 		if err != nil {
-			return err
+			return fmt.Errorf("pushing task: %s", err) 
 		}
 	
 		if numDays < 1 {
-			return errors.New("cannot push back by a negative number of days")
-		}
-	
-		taskDueDate := task.TaskDueDate(time.Time(*tasks[selection-1].DueDate).AddDate(0, 0, numDays))
-		tasks[selection-1].DueDate = &taskDueDate
-	
-		if time.Time(taskDueDate).After(time.Now()) {
-			tasks[selection-1].Type = task.Upcoming
-		} else {
-			tasks[selection-1].Type = task.Due
+			return fmt.Errorf("pushing task: cannot push back by a negative number of days")
 		}
 
+		err = sqlite.PushTask(db, id, numDays)
+		if err != nil { return fmt.Errorf("pushing task: %s", err) }
+
+		var updatedTask task.Task
+		updatedTask, err = sqlite.QueryTaskByID(db, id)
+		if err != nil { return fmt.Errorf("pushing task: %s", err) }
+
+		for i := range tasks {
+			if tasks[i].ID == id {
+				tasks[i].DueDate = updatedTask.DueDate
+				tasks[i].Type = updatedTask.Type
+				break
+			}
+		}
+	
 		fmt.Print("Anything else to push? (y/n)\t")
 		var more string
 		_, err = fmt.Scan(&more)

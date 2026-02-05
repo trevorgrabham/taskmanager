@@ -8,6 +8,7 @@ import (
 )
 
 var dbFileName = "/home/trevorgrabham/.config/taskmanager/tasks.db"
+var taskTableName = "tasks"
 
 func Connect() (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", dbFileName)
@@ -21,7 +22,9 @@ func Connect() (*sql.DB, error) {
 	}
 
 	_, err = db.Exec(`PRAGMA foreign_keys = ON;`)
-	if err != nil { return nil, fmt.Errorf("setting up foreign keys: %s", err) }
+	if err != nil {
+		return nil, fmt.Errorf("setting up foreign keys: %s", err)
+	}
 
 	return db, nil
 }

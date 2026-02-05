@@ -17,7 +17,7 @@ func AddTask(db *sql.DB, newTask task.Task) error {
 		return fmt.Errorf("adding task: cannot add empty task to sqlite database")
 	}
 
-	insertStatement, err := db.Prepare(`INSERT INTO tasks(title, category, description, due_date, completion_date, done) VALUES (?, ?, ?, ?, ?, ?)`)
+	insertStatement, err := db.Prepare(fmt.Sprintf(`INSERT INTO %s(title, category, description, due_date, completion_date, done) VALUES (?, ?, ?, ?, ?, ?)`, taskTableName))
 	if err != nil {
 		return fmt.Errorf("preparing insert stmnt: %s", err)
 	}

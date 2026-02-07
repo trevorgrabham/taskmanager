@@ -78,13 +78,13 @@ func main() {
 
 			fmt.Println()
 			fmt.Println()
-		// case "-s":
-		// err = userinput.SearchTaskMenu(tasks)
-		// if err != nil {
-		// log.Fatal(err)
-		// }
+		case "-s":
+			err = userinput.SearchTask(db)
+			if err != nil {
+				log.Fatal(err)
+			}
 
-		// didSearch = true
+			didSearch = true
 		default:
 			fmt.Fprintf(os.Stderr, "unknown flag: %s\n\n", flag)
 			usage()

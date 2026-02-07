@@ -3,12 +3,21 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
+	"local/taskmanager2.0/internal/task"
 )
 
 var dbFileName = "/home/trevorgrabham/.config/taskmanager/tasks.db"
 var taskTableName = "tasks"
+
+type QueryParams struct {
+	WhichTasks	task.WhichTasks
+	From 	time.Time
+	To 	time.Time
+	Category string 
+}
 
 func Connect() (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", dbFileName)

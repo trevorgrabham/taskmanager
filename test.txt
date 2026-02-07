@@ -1,0 +1,2 @@
+(i)NCOMPLETE, (c)OMPLETE, or (a)LL?	From? DD/MM[/YY] (default: beginning):	To? DD/MM[/YY] (default: end):	Category? (default: all):	
+

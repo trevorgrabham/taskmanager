@@ -11,15 +11,23 @@ import (
 
 var SaveFileName = "/home/trevorgrabham/.config/taskmanager/tasks.json"
 
-type TaskType int
+type WhichTasks int
 
 const (
-	Due TaskType = iota
+	All WhichTasks = iota
+	Inc
+	Comp
+)
+
+type TaskStatus int
+
+const (
+	Due TaskStatus = iota
 	Upcoming
 	Done
 )
 
-func (t TaskType) ANSICode() string {
+func (t TaskStatus) ANSICode() string {
 	switch t {
 	case Due:
 		return "31m"
@@ -32,7 +40,7 @@ func (t TaskType) ANSICode() string {
 	}
 }
 
-func (t TaskType) String() string {
+func (t TaskStatus) String() string {
 	switch t {
 	case Due:
 		return "Due"
@@ -53,7 +61,7 @@ type Task struct {
 	DueDate        *TaskDueDate `json:"due-date"`
 	Done           bool         `json:"done"`
 	CompletionDate *TaskDueDate `json:"completion-date,omitempty"`
-	Type           TaskType     `json:"-"`
+	Type           TaskStatus   `json:"-"`
 }
 
 func (t Task) String() string {

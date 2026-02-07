@@ -2,32 +2,37 @@ package userinput
 
 import (
 	"bufio"
+	"database/sql"
 	"fmt"
 	"local/taskmanager2.0/internal/task"
+	sqlite "local/taskmanager2.0/internal/db"
 	"os"
 	"strings"
 	"time"
 )
 
-func SearchTaskMenu(tasks task.TaskList) error {
+func SearchTask(db *sql.DB) error {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("incomplete or complete? (default: both):\t")
+	fmt.Print("(i)NCOMPLETE, (c)OMPLETE, or (a)LL?\t")
 	incOrComp, err := reader.ReadString('\n')
 	if err != nil {
-		return err
+		return fmt.Errorf("searching tasks: %s", err)
 	}
 
+	var taskType task.WhichTasks
 	switch strings.TrimSpace(incOrComp) {
-	case "INCOMPLETE", "INC", "Incomplete", "Inc", "incomplete", "inc":
-		tasks = tasks.Incomplete()
-	case "COMPLETE", "COMP", "COM", "Complete", "Comp", "Com", "complete", "comp", "com":
-		tasks = tasks.Complete()
+	case "i", "I", "INCOMPLETE", "INC", "Incomplete", "Inc", "incomplete", "inc":
+		taskType = task.Inc
+	case "c", "C", "COMPLETE", "COMP", "COM", "Complete", "Comp", "Com", "complete", "comp", "com":
+		taskType = task.Comp
+	default:
+		taskType = task.All
 	}
 
 	fmt.Print("From? DD/MM[/YY] (default: beginning):\t")
 	fromString, err := reader.ReadString('\n')
 	if err != nil {
-		return err
+		return fmt.Errorf("searching tasks: %s", err)
 	}
 
 	fromString = strings.TrimSpace(fromString)
@@ -37,7 +42,7 @@ func SearchTaskMenu(tasks task.TaskList) error {
 		if err != nil {
 			from, err = time.Parse("02/01/06", fromString)
 			if err != nil {
-				return err
+				return fmt.Errorf("searching tasks: %s", err)
 			}
 		}
 		var year int
@@ -47,13 +52,12 @@ func SearchTaskMenu(tasks task.TaskList) error {
 			year = from.Year()
 		}
 		from = time.Date(year, from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
-		tasks = tasks.From(from)
 	}
 
-	fmt.Print("To? DD/MM[/YY] (default: ending):\t")
+	fmt.Print("To? DD/MM[/YY] (default: end):\t")
 	toString, err := reader.ReadString('\n')
 	if err != nil {
-		return err
+		return fmt.Errorf("searching tasks: %s", err)
 	}
 
 	toString = strings.TrimSpace(toString)
@@ -63,7 +67,7 @@ func SearchTaskMenu(tasks task.TaskList) error {
 		if err != nil {
 			to, err = time.Parse("02/01/06", toString)
 			if err != nil {
-				return err
+				return fmt.Errorf("searching tasks: %s", err)
 			}
 		}
 		var year int
@@ -73,19 +77,18 @@ func SearchTaskMenu(tasks task.TaskList) error {
 			year = to.Year()
 		}
 		to = time.Date(year, to.Month(), to.Day(), 0, 0, 0, 0, to.Location())
-		tasks = tasks.To(to)
+	} else {
+		to = time.Date(9999, 1, 1, 0, 0, 0, 0, time.UTC)
 	}
 
 	fmt.Print("Category? (default: all):\t")
 	category, err := reader.ReadString('\n')
-	if err != nil {
-		return err
-	}
+	if err != nil { return fmt.Errorf("searching tasks: %s", err) }
 
 	category = strings.TrimSpace(category)
-	if category != "" {
-		tasks = tasks.ByCategory(category)
-	}
+	var tasks task.TaskList
+	tasks, err = sqlite.QueryTasks(db, sqlite.QueryParams{WhichTasks: taskType, Category: category, From: from, To: to})
+	if err != nil { return fmt.Errorf("searching tasks: %s", err) }
 
 	fmt.Println()
 	fmt.Println(tasks.Sort())

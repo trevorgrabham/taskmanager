@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"database/sql"
 	"fmt"
-	"local/taskmanager2.0/internal/task"
 	sqlite "local/taskmanager2.0/internal/db"
+	"local/taskmanager2.0/internal/task"
 	"os"
 	"strings"
 	"time"
@@ -83,14 +83,18 @@ func SearchTask(db *sql.DB) error {
 
 	fmt.Print("Category? (default: all):\t")
 	category, err := reader.ReadString('\n')
-	if err != nil { return fmt.Errorf("searching tasks: %s", err) }
+	if err != nil {
+		return fmt.Errorf("searching tasks: %s", err)
+	}
 
 	category = strings.TrimSpace(category)
 	var tasks task.TaskList
 	tasks, err = sqlite.QueryTasks(db, sqlite.QueryParams{WhichTasks: taskType, Category: category, From: from, To: to})
-	if err != nil { return fmt.Errorf("searching tasks: %s", err) }
+	if err != nil {
+		return fmt.Errorf("searching tasks: %s", err)
+	}
 
 	fmt.Println()
-	fmt.Println(tasks.Sort())
+	fmt.Println(tasks)
 	return nil
 }

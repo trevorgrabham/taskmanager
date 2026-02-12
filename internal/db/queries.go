@@ -27,7 +27,7 @@ func scanTaskRow(r dbScannable) (task.Task, error) {
 	t := task.Task{
 		ID:      int(id),
 		Title:   title,
-		DueDate: &dueDate,
+		DueDate: dueDate,
 	}
 
 	if category.Valid {
@@ -40,7 +40,7 @@ func scanTaskRow(r dbScannable) (task.Task, error) {
 
 	if completionDateUnix > -1 {
 		competionDate := task.TaskDueDate(time.Unix(completionDateUnix, 0))
-		t.CompletionDate = &competionDate
+		t.CompletionDate = competionDate
 	}
 
 	if time.Now().Before(time.Time(dueDate)) {

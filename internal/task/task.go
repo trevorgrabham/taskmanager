@@ -54,14 +54,14 @@ func (t TaskStatus) String() string {
 }
 
 type Task struct {
-	ID             int          `json:"id"`
-	Title          string       `json:"title"`
-	Category       string       `json:"category"`
-	Description    string       `json:"description"`
-	DueDate        *TaskDueDate `json:"due-date"`
-	Done           bool         `json:"done"`
-	CompletionDate *TaskDueDate `json:"completion-date,omitempty"`
-	Type           TaskStatus   `json:"-"`
+	ID             int         `json:"id"`
+	Title          string      `json:"title"`
+	Category       string      `json:"category"`
+	Description    string      `json:"description"`
+	DueDate        TaskDueDate `json:"due-date"`
+	Done           bool        `json:"done"`
+	CompletionDate TaskDueDate `json:"completion-date,omitempty"`
+	Type           TaskStatus  `json:"-"`
 }
 
 func (t Task) String() string {
@@ -178,7 +178,7 @@ func UnmarshalTasks(saveFile string) (tasks TaskList, err error) {
 			tasks[i].Type = Done
 			continue
 		}
-		if time.Now().After(time.Time(*tasks[i].DueDate)) {
+		if time.Now().After(time.Time(tasks[i].DueDate)) {
 			tasks[i].Type = Due
 			continue
 		}

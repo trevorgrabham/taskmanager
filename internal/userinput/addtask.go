@@ -70,7 +70,7 @@ func AddTaskMenu() (task.Task, error) {
 	dueDateString = strings.TrimSpace(dueDateString)
 	if dueDateString == "" || dueDateString == "now" || dueDateString == "NOW" || dueDateString == "Now" {
 		taskDueDate := task.TaskDueDate(time.Now())
-		return task.Task{Title: title, Category: category, Description: description, DueDate: &taskDueDate, Type: task.Due}, nil
+		return task.Task{Title: title, Category: category, Description: description, DueDate: taskDueDate, Type: task.Due}, nil
 	}
 	if err != nil {
 		return task.Task{}, err
@@ -93,5 +93,5 @@ func AddTaskMenu() (task.Task, error) {
 		dueDate = dueDate.AddDate(1, 0, 0)
 	}
 	taskDueDate := task.TaskDueDate(dueDate)
-	return task.Task{Title: title, Category: category, Description: description, DueDate: &taskDueDate, Type: task.Upcoming}, nil
+	return task.Task{Title: title, Category: category, Description: description, DueDate: taskDueDate, Type: task.Upcoming}, nil
 }

@@ -16,7 +16,7 @@ func (tl TaskList) Sort() TaskList {
 				if tl[i].DueDate == tl[j].DueDate {
 					return tl[i].Title < tl[j].Title
 				}
-				return time.Time(*tl[i].DueDate).Before(time.Time(*tl[j].DueDate))
+				return time.Time(tl[i].DueDate).Before(time.Time(tl[j].DueDate))
 			}
 			return tl[i].Category < tl[j].Category
 		}
@@ -28,7 +28,7 @@ func (tl TaskList) Sort() TaskList {
 func (tl TaskList) From(cutoff time.Time) TaskList {
 	filteredTasks := make(TaskList, 0, len(tl))
 	for i := range tl {
-		if cutoff.After(time.Time(*tl[i].DueDate)) {
+		if cutoff.After(time.Time(tl[i].DueDate)) {
 			continue
 		}
 
@@ -40,7 +40,7 @@ func (tl TaskList) From(cutoff time.Time) TaskList {
 func (tl TaskList) To(cutoff time.Time) TaskList {
 	filteredTasks := make(TaskList, 0, len(tl))
 	for i := range tl {
-		if cutoff.Before(time.Time(*tl[i].DueDate)) {
+		if cutoff.Before(time.Time(tl[i].DueDate)) {
 			continue
 		}
 

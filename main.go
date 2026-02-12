@@ -7,6 +7,8 @@ import (
 	"local/taskmanager2.0/internal/userinput"
 	"log"
 	"os"
+	"strings"
+	"time"
 )
 
 func main() {
@@ -16,6 +18,7 @@ func main() {
 	}
 	defer db.Close()
 
+	var category string
 	var didSearch, printedUsage bool
 	for _, flag := range os.Args[1:] {
 		switch flag {
@@ -86,16 +89,22 @@ func main() {
 
 			didSearch = true
 		default:
-			fmt.Fprintf(os.Stderr, "unknown flag: %s\n\n", flag)
-			usage()
-			printedUsage = true
+			category = strings.TrimSpace(flag)
 		}
 	}
 
 	if !didSearch && !printedUsage {
-		tasks, err := sqlite.QueryIncompleteTasks(db)
-		if err != nil {
-			log.Fatal(err)
+		var tasks task.TaskList
+		if category == "" {
+			tasks, err = sqlite.QueryIncompleteTasks(db)
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			tasks, err = sqlite.QueryTasks(db, sqlite.QueryParams{WhichTasks: task.Inc, Category: category, To: time.Date(3000, 1, 0, 0, 0, 0, 0, time.UTC)})
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 
 		fmt.Println(tasks)

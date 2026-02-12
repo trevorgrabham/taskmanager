@@ -89,7 +89,14 @@ func SearchTask(db *sql.DB) error {
 
 	category = strings.TrimSpace(category)
 	var tasks task.TaskList
-	tasks, err = sqlite.QueryTasks(db, sqlite.QueryParams{WhichTasks: taskType, Category: category, From: from, To: to})
+	switch taskType {
+	case task.All:
+		tasks, err = sqlite.QueryTasks(db, sqlite.TaskParams(sqlite.All(), sqlite.Category(category), sqlite.From(from), sqlite.To(to)))
+	case task.Inc:
+		tasks, err = sqlite.QueryTasks(db, sqlite.TaskParams(sqlite.Inc(), sqlite.Category(category), sqlite.From(from), sqlite.To(to)))
+	case task.Comp:
+		tasks, err = sqlite.QueryTasks(db, sqlite.TaskParams(sqlite.Comp(), sqlite.Category(category), sqlite.From(from), sqlite.To(to)))
+	}
 	if err != nil {
 		return fmt.Errorf("searching tasks: %s", err)
 	}

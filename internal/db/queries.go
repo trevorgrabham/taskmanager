@@ -57,7 +57,7 @@ func scanTaskRow(r dbScannable) (task.Task, error) {
 	return t, nil
 }
 
-func QueryTasks(db *sql.DB, params QueryParams) (task.TaskList, error) {
+func QueryTasks(db *sql.DB, params TaskQueryParams) (task.TaskList, error) {
 	if db == nil {
 		return nil, fmt.Errorf("querying tasks: cannot query a nil database")
 	}

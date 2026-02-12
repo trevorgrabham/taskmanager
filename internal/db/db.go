@@ -14,13 +14,6 @@ var dbFileName = "/home/trevorgrabham/.config/taskmanager/tasks.db"
 var taskTableName = "tasks"
 var taskListTableName = "tasks_list"
 
-type QueryParams struct {
-	WhichTasks task.WhichTasks
-	From       time.Time
-	To         time.Time
-	Category   string
-}
-
 func Setup(db *sql.DB) error {
 	if db == nil {
 		return fmt.Errorf("setting up: cannot setup a nil db")
@@ -88,4 +81,64 @@ func Connect() (*sql.DB, error) {
 	}
 
 	return db, nil
+}
+
+// ================================================== TaskQueryParams ==================================================
+
+func TaskParams(opts ...TaskQueryParamsFunc) TaskQueryParams {
+	t := TaskQueryParams{
+		WhichTasks: task.All,
+		From:       time.Time{},
+		To:         time.Date(3000, 1, 1, 0, 0, 0, 0, time.Now().Location()),
+		Category:   "",
+	}
+	for _, fn := range opts {
+		fn(&t)
+	}
+	return t
+}
+
+type TaskQueryParams struct {
+	WhichTasks task.WhichTasks
+	From       time.Time
+	To         time.Time
+	Category   string
+}
+
+type TaskQueryParamsFunc func(t *TaskQueryParams)
+
+func All() TaskQueryParamsFunc {
+	return func(t *TaskQueryParams) {
+		t.WhichTasks = task.All
+	}
+}
+
+func Inc() TaskQueryParamsFunc {
+	return func(t *TaskQueryParams) {
+		t.WhichTasks = task.Inc
+	}
+}
+
+func Comp() TaskQueryParamsFunc {
+	return func(t *TaskQueryParams) {
+		t.WhichTasks = task.Comp
+	}
+}
+
+func From(from time.Time) TaskQueryParamsFunc {
+	return func(t *TaskQueryParams) {
+		t.From = from
+	}
+}
+
+func To(to time.Time) TaskQueryParamsFunc {
+	return func(t *TaskQueryParams) {
+		t.From = to
+	}
+}
+
+func Category(category string) TaskQueryParamsFunc {
+	return func(t *TaskQueryParams) {
+		t.Category = category
+	}
 }

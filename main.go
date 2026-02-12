@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"strings"
-	"time"
 )
 
 func main() {
@@ -101,7 +100,7 @@ func main() {
 				log.Fatal(err)
 			}
 		} else {
-			tasks, err = sqlite.QueryTasks(db, sqlite.QueryParams{WhichTasks: task.Inc, Category: category, To: time.Date(3000, 1, 0, 0, 0, 0, 0, time.UTC)})
+			tasks, err = sqlite.QueryTasks(db, sqlite.TaskParams(sqlite.Category(category), sqlite.Inc()))
 			if err != nil {
 				log.Fatal(err)
 			}

@@ -65,22 +65,22 @@ func QueryTasks(db *sql.DB, params QueryParams) (task.TaskList, error) {
 	var rows *sql.Rows
 	var err error
 	if params.WhichTasks == task.All && params.Category == "" {
-		rows, err = db.Query(fmt.Sprintf(`SELECT id, title, category, description, due_date, completion_date, done FROM %s WHERE due_date > ? AND due_date < ? ORDER BY category, due_date ASC`, taskTableName), params.From.Unix(), params.To.Unix())
+		rows, err = db.Query(`SELECT tasks.id, title, category, description, due_date, completion_date, done FROM tasks JOIN tasks_list ON tasks_list.id = tasks.task_id WHERE due_date > ? AND due_date < ? ORDER BY category, due_date ASC`, params.From.Unix(), params.To.Unix())
 		if err != nil {
 			return nil, fmt.Errorf("querying tasks: %s", err)
 		}
 	} else if params.WhichTasks == task.All {
-		rows, err = db.Query(fmt.Sprintf(`SELECT id, title, category, description, due_date, completion_date, done FROM %s WHERE category = ? AND due_date > ? AND due_date < ? ORDER BY category, due_date ASC`, taskTableName), params.Category, params.From.Unix(), params.To.Unix())
+		rows, err = db.Query(`SELECT tasks.id, title, category, description, due_date, completion_date, done FROM tasks JOIN tasks_list ON tasks.task_id = tasks_list.id WHERE category = ? AND due_date > ? AND due_date < ? ORDER BY category, due_date ASC`, params.Category, params.From.Unix(), params.To.Unix())
 		if err != nil {
 			return nil, fmt.Errorf("querying tasks: %s", err)
 		}
 	} else if params.Category == "" {
-		rows, err = db.Query(fmt.Sprintf(`SELECT id, title, category, description, due_date, completion_date, done FROM %s WHERE done = ? AND due_date > ? AND due_date < ? ORDER BY category, due_date ASC`, taskTableName), params.WhichTasks-1, params.From.Unix(), params.To.Unix())
+		rows, err = db.Query(`SELECT tasks.id, title, category, description, due_date, completion_date, done FROM tasks JOIN tasks_list ON tasks.task_id = tasks_list.id WHERE done = ? AND due_date > ? AND due_date < ? ORDER BY category, due_date ASC`, params.WhichTasks-1, params.From.Unix(), params.To.Unix())
 		if err != nil {
 			return nil, fmt.Errorf("querying tasks: %s", err)
 		}
 	} else {
-		rows, err = db.Query(fmt.Sprintf(`SELECT id, title, category, description, due_date, completion_date, done FROM %s WHERE category = ? AND done = ? AND due_date > ? AND due_date < ? ORDER BY category, due_date ASC`, taskTableName), params.Category, params.WhichTasks-1, params.From.Unix(), params.To.Unix())
+		rows, err = db.Query(`SELECT tasks.id, title, category, description, due_date, completion_date, done FROM tasks JOIN tasks_list ON tasks.task_id = tasks_list.id WHERE category = ? AND done = ? AND due_date > ? AND due_date < ? ORDER BY category, due_date ASC`, params.Category, params.WhichTasks-1, params.From.Unix(), params.To.Unix())
 		if err != nil {
 			return nil, fmt.Errorf("querying tasks: %s", err)
 		}
@@ -109,7 +109,7 @@ func QueryAllTasks(db *sql.DB) (task.TaskList, error) {
 		return nil, fmt.Errorf("querying all tasks: cannot query a nil database")
 	}
 
-	rows, err := db.Query(fmt.Sprintf(`SELECT id, title, category, description, due_date, completion_date, done FROM %s ORDER BY done DESC, category, completion_date DESC, due_date ASC`, taskTableName))
+	rows, err := db.Query(`SELECT tasks.id, title, category, description, due_date, completion_date, done FROM tasks JOIN tasks_list ON tasks.task_id = tasks_list.id BY done DESC, category, completion_date DESC, due_date ASC`)
 	if err != nil {
 		return nil, fmt.Errorf("querying: %s", err)
 	}
@@ -137,7 +137,7 @@ func QueryIncompleteTasks(db *sql.DB) (task.TaskList, error) {
 		return nil, fmt.Errorf("querying incomplete tasks: cannot query a nil database")
 	}
 
-	rows, err := db.Query(fmt.Sprintf(`SELECT id, title, category, description, due_date, completion_date, done FROM %s WHERE done = 0 ORDER BY category, due_date ASC`, taskTableName))
+	rows, err := db.Query(`SELECT tasks.id, title, category, description, due_date, completion_date, done FROM tasks JOIN tasks_list ON tasks.task_id = tasks_list.id WHERE done = 0 ORDER BY category, due_date ASC`)
 	if err != nil {
 		return nil, fmt.Errorf("querying incomplete tasks: %s", err)
 	}
@@ -165,7 +165,7 @@ func QueryCompleteTasks(db *sql.DB) (task.TaskList, error) {
 		return nil, fmt.Errorf("querying complete tasks: cannot query a nil database")
 	}
 
-	rows, err := db.Query(fmt.Sprintf(`SELECT id, title, category, description, due_date, completion_date, done FROM %s WHERE done = 1 ORDER BY category, due_date ASC`, taskTableName))
+	rows, err := db.Query(`SELECT tasks.id, title, category, description, due_date, completion_date, done FROM tasks JOIN tasks_list ON tasks.task_id = tasks_list.id WHERE done = 1 ORDER BY category, due_date ASC`)
 	if err != nil {
 		return nil, fmt.Errorf("querying complete tasks: %s", err)
 	}
@@ -196,7 +196,7 @@ func QueryTaskByID(db *sql.DB, id int) (task.Task, error) {
 		return task.Task{}, fmt.Errorf("querying task by id: cannot query for id %d", id)
 	}
 
-	row := db.QueryRow(fmt.Sprintf(`SELECT id, title, category, description, due_date, completion_date, done FROM %s WHERE id = ?`, taskTableName), id)
+	row := db.QueryRow(`SELECT tasks.id, title, category, description, due_date, completion_date, done FROM tasks JOIN tasks_list ON tasks.task_id = tasks_list.id WHERE tasks.id = ?`, id)
 
 	t, err := scanTaskRow(row)
 	if err != nil {

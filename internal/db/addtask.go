@@ -40,24 +40,24 @@ func AddTask(db *sql.DB, newTask task.Task) error {
 
 	if newTask.Done {
 		if newTask.Description == "" {
-			_, err = db.Exec(fmt.Sprintf(`INSERT INTO %s(task_id, due_date, completion_date, done) VALUES (?, ?, ?, 1)`, taskListTableName), taskID, time.Time(newTask.DueDate).Unix(), time.Time(newTask.CompletionDate).Unix())
+			_, err = db.Exec(fmt.Sprintf(`INSERT INTO %s(task_id, due_date, completion_date, done) VALUES (?, ?, ?, 1)`, taskTableName), taskID, time.Time(newTask.DueDate).Unix(), time.Time(newTask.CompletionDate).Unix())
 			if err != nil {
 				return fmt.Errorf("adding task: %s", err)
 			}
 		} else {
-			_, err = db.Exec(fmt.Sprintf(`INSERT INTO %s(task_id, description, due_date, completion_date, done) VALUES (?, ?, ?, 1)`, taskListTableName), taskID, newTask.Description, time.Time(newTask.DueDate).Unix(), time.Time(newTask.CompletionDate).Unix())
+			_, err = db.Exec(fmt.Sprintf(`INSERT INTO %s(task_id, description, due_date, completion_date, done) VALUES (?, ?, ?, 1)`, taskTableName), taskID, newTask.Description, time.Time(newTask.DueDate).Unix(), time.Time(newTask.CompletionDate).Unix())
 			if err != nil {
 				return fmt.Errorf("adding task: %s", err)
 			}
 		}
 	} else {
 		if newTask.Description == "" {
-			_, err = db.Exec(fmt.Sprintf(`INSERT INTO %s(task_id, due_date) VALUES (?, ?)`, taskListTableName), taskID, time.Time(newTask.DueDate).Unix())
+			_, err = db.Exec(fmt.Sprintf(`INSERT INTO %s(task_id, due_date) VALUES (?, ?)`, taskTableName), taskID, time.Time(newTask.DueDate).Unix())
 			if err != nil {
 				return fmt.Errorf("adding task: %s", err)
 			}
 		} else {
-			_, err = db.Exec(fmt.Sprintf(`INSERT INTO %s(task_id, description, due_date) VALUES (?, ?, ?)`, taskListTableName), taskID, newTask.Description, time.Time(newTask.DueDate).Unix())
+			_, err = db.Exec(fmt.Sprintf(`INSERT INTO %s(task_id, description, due_date) VALUES (?, ?, ?)`, taskTableName), taskID, newTask.Description, time.Time(newTask.DueDate).Unix())
 			if err != nil {
 				return fmt.Errorf("adding task: %s", err)
 			}

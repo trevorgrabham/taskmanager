@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
 	"local/taskmanager2.0/internal/task"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var dbFileName = "/home/trevorgrabham/.config/taskmanager/tasks.db"
@@ -14,10 +15,10 @@ var taskTableName = "tasks"
 var taskListTableName = "tasks_list"
 
 type QueryParams struct {
-	WhichTasks	task.WhichTasks
-	From 	time.Time
-	To 	time.Time
-	Category string 
+	WhichTasks task.WhichTasks
+	From       time.Time
+	To         time.Time
+	Category   string
 }
 
 func Setup(db *sql.DB) error {

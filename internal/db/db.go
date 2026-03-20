@@ -3,44 +3,29 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"time"
-
-	"local/taskmanager2.0/internal/task"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 var dbFileName = "/home/trevorgrabham/.config/taskmanager/tasks.db"
-var taskTableName = "tasks"
-var taskListTableName = "tasks_list"
 
 func Setup(db *sql.DB) error {
 	if db == nil {
 		return fmt.Errorf("setting up: cannot setup a nil db")
 	}
-	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS tasks_list (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	title TEXT UNIQUE NOT NULL, 
-	category TEXT, 
-	times_completed INTEGER NOT NULL DEFAULT 0,
-	last_time_completed INTEGER NOT NULL DEFAULT -1
-);`)
-	if err != nil {
-		return fmt.Errorf("executing setup: %s", err)
-	}
 
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS tasks (
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS task (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	task_id INTEGER NOT NULL,
+	title TEXT NOT NULL,
+	category TEXT,
 	description TEXT,
-	due_date INTEGER NOT NULL,
-	completion_date INTEGER NOT NULL DEFAULT -1,
+	due_date INTEGER,
+	completion_date INTEGER,
 	done INTEGER NOT NULL DEFAULT 0
-		CHECK (done IN (0, 1)),
-	FOREIGN KEY (task_id) REFERENCES tasks_list(id)
+		CHECK (done IN (0, 1))
 );`)
 	if err != nil {
-		return fmt.Errorf("executing setup: %s", err)
+		return fmt.Errorf("setting up: %s", err)
 	}
 
 	return nil
@@ -51,14 +36,9 @@ func TearDown(db *sql.DB) error {
 		return fmt.Errorf("tearing down: cannot tear down a nil db")
 	}
 
-	_, err := db.Exec(fmt.Sprintf(`DROP TABLE IF EXISTS %s;`, taskTableName))
+	_, err := db.Exec(`DROP TABLE IF EXISTS task;`)
 	if err != nil {
-		return fmt.Errorf("executing tear down: %s", err)
-	}
-
-	_, err = db.Exec(fmt.Sprintf(`DROP TABLE IF EXISTS %s;`, taskListTableName))
-	if err != nil {
-		return fmt.Errorf("executing tear down: %s", err)
+		return fmt.Errorf("tearing down: %s", err)
 	}
 
 	return nil
@@ -67,78 +47,13 @@ func TearDown(db *sql.DB) error {
 func Connect() (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", dbFileName)
 	if err != nil {
-		return nil, fmt.Errorf("opening sqlite db: %s", err)
+		return nil, fmt.Errorf("connecting: %s", err)
 	}
 
 	err = db.Ping()
 	if err != nil {
-		return nil, fmt.Errorf("pinging sqlite db: %s", err)
-	}
-
-	_, err = db.Exec(`PRAGMA foreign_keys = ON;`)
-	if err != nil {
-		return nil, fmt.Errorf("setting up foreign keys: %s", err)
+		return nil, fmt.Errorf("connecting: %s", err)
 	}
 
 	return db, nil
-}
-
-// ================================================== TaskQueryParams ==================================================
-
-func TaskParams(opts ...TaskQueryParamsFunc) TaskQueryParams {
-	t := TaskQueryParams{
-		WhichTasks: task.All,
-		From:       time.Time{},
-		To:         time.Date(3000, 1, 1, 0, 0, 0, 0, time.Now().Location()),
-		Category:   "",
-	}
-	for _, fn := range opts {
-		fn(&t)
-	}
-	return t
-}
-
-type TaskQueryParams struct {
-	WhichTasks task.WhichTasks
-	From       time.Time
-	To         time.Time
-	Category   string
-}
-
-type TaskQueryParamsFunc func(t *TaskQueryParams)
-
-func All() TaskQueryParamsFunc {
-	return func(t *TaskQueryParams) {
-		t.WhichTasks = task.All
-	}
-}
-
-func Inc() TaskQueryParamsFunc {
-	return func(t *TaskQueryParams) {
-		t.WhichTasks = task.Inc
-	}
-}
-
-func Comp() TaskQueryParamsFunc {
-	return func(t *TaskQueryParams) {
-		t.WhichTasks = task.Comp
-	}
-}
-
-func From(from time.Time) TaskQueryParamsFunc {
-	return func(t *TaskQueryParams) {
-		t.From = from
-	}
-}
-
-func To(to time.Time) TaskQueryParamsFunc {
-	return func(t *TaskQueryParams) {
-		t.From = to
-	}
-}
-
-func Category(category string) TaskQueryParamsFunc {
-	return func(t *TaskQueryParams) {
-		t.Category = category
-	}
 }

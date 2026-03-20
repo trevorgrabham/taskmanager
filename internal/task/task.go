@@ -6,25 +6,41 @@ import (
 	"time"
 )
 
-var SaveFileName = "/home/trevorgrabham/.config/taskmanager/tasks.json"
-
 type Task struct {
-	ID             int         `json:"id"`
-	Title          string      `json:"title"`
-	Category       string      `json:"category"`
-	Description    string      `json:"description"`
-	DueDate        TaskDueDate `json:"due-date"`
-	Done           bool        `json:"done"`
-	CompletionDate TaskDueDate `json:"completion-date,omitempty"`
-	Type           TaskStatus  `json:"-"`
+	ID             int
+	Title          string
+	Category       string
+	Description    string
+	DueDate        TaskDueDate
+	CompletionDate TaskDueDate
+	Done           bool
+}
+
+func (t Task) ANSICode() string {
+	null := time.Time{}
+	// complete
+	if !time.Time(t.CompletionDate).Equal(null) {
+		return "32m"
+	}
+	// no due date
+	if time.Time(t.DueDate).Equal(null) {
+		return "0m"
+	}
+	// upcoming
+	if time.Time(t.DueDate).After(time.Now()) {
+		return "33m"
+	}
+	// due
+	return "31m"
 }
 
 func (t Task) String() string {
-	var formattedString string
-	if t.Category == "" {
-		formattedString = fmt.Sprintf("\033[30;46m%s\033[0m - \033[%s%s\033[0m", t.Title, t.Type.ANSICode(), t.DueDate.String())
-	} else {
-		formattedString = fmt.Sprintf("\033[30;46m%s\033[0m [\033[95m%s\033[0m] - \033[%s%s\033[0m", t.Title, t.Category, t.Type.ANSICode(), t.DueDate.String())
+	formattedString := fmt.Sprintf("\033[30;46m%s\033[0m", t.Title)
+	if t.Category != "" {
+		formattedString = fmt.Sprintf("%s [\033[95m%s\033[0m]", formattedString, t.Category)
+	}
+	if !t.DueDate.IsZero() {
+		formattedString = fmt.Sprintf("%s - \033[%s%s\033[0m", formattedString, t.ANSICode(), t.DueDate.String())
 	}
 	if t.Description != "" {
 		formattedString = fmt.Sprintf("%s\n%s", formattedString, t.Description)
@@ -36,55 +52,13 @@ func (t Task) String() string {
 	return formattedString
 }
 
-// ================================================== WhichTasks ==================================================
-
-type WhichTasks int
-
-const (
-	All WhichTasks = iota
-	Inc
-	Comp
-)
-
-// ================================================== TaskStatus ==================================================
-
-type TaskStatus int
-
-const (
-	Due TaskStatus = iota
-	Upcoming
-	Done
-)
-
-func (t TaskStatus) ANSICode() string {
-	switch t {
-	case Due:
-		return "31m"
-	case Upcoming:
-		return "33m"
-	case Done:
-		return "32m"
-	default:
-		return ""
-	}
-}
-
-func (t TaskStatus) String() string {
-	switch t {
-	case Due:
-		return "Due"
-	case Upcoming:
-		return "Upcoming"
-	case Done:
-		return "Done"
-	default:
-		return ""
-	}
+func (t Task) IsZero() bool {
+	return t.ID == 0 && t.Title == "" && t.Category == "" && t.Description == "" && t.DueDate.IsZero() && t.CompletionDate.IsZero() && !t.Done
 }
 
 // ================================================== TaskList ==================================================
 
-type TaskList []*Task
+type TaskList []Task
 
 func (tl TaskList) String() string {
 	taskStrings := make([]string, len(tl))
@@ -107,15 +81,10 @@ func (t TaskDueDate) String() string {
 	return time.Time(t).Format(DueDateFormatString)
 }
 
-// configHome := os.Getenv("XDG_CONFIG_HOME")
-// if configHome == "" {
-// home, err := os.UserHomeDir()
-// if err != nil {
-// fmt.Println("Timer: unable to locate users home directory")
-// os.Exit(1)
-// }
-// configHome = filepath.Join(home, ".config")
-// }
-// dir := filepath.Join(configHome, "timer")
-// os.MkdirAll(dir, 0700)
-// jobFile := filepath.Join(dir, "job-num")
+func (t TaskDueDate) IsZero() bool {
+	return time.Time(t).IsZero()
+}
+
+func (t TaskDueDate) Unix() int64 {
+	return time.Time(t).Unix()
+}

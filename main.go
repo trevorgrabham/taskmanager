@@ -1,12 +1,14 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	sqlite "local/taskmanager2.0/internal/db"
 	"local/taskmanager2.0/internal/task"
 	"local/taskmanager2.0/internal/userinput"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -17,108 +19,123 @@ func main() {
 	}
 	defer db.Close()
 
-	var category string
-	var didSearch, printedUsage bool
-	for _, flag := range os.Args[1:] {
-		switch flag {
-		case "-h":
-			usage()
-			printedUsage = true
-		case "-a":
-		addLoop:
-			for {
-				var newTask task.Task
-				newTask, err = userinput.AddTaskMenu()
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				err = sqlite.AddTask(db, newTask)
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				fmt.Print("Anything else to add? (y/n)\t")
-				var more string
-				_, err = fmt.Scan(&more)
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				switch more {
-				case "y", "Y", "YES", "Yes", "yes":
-					fmt.Println()
-					fmt.Println()
-				default:
-					break addLoop
-				}
-			}
-
-			fmt.Println()
-			fmt.Println()
-		case "-c":
-			err = userinput.CompleteTask(db)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			fmt.Println()
-			fmt.Println()
-		case "-d":
-			err = userinput.DeleteTask(db)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			fmt.Println()
-			fmt.Println()
-		case "-p":
-			err = userinput.PushTask(db)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			fmt.Println()
-			fmt.Println()
-		case "-s":
-			err = userinput.SearchTask(db)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			didSearch = true
-		default:
-			category = strings.TrimSpace(flag)
-		}
+	err = sqlite.Setup(db)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	if !didSearch && !printedUsage {
-		var tasks task.TaskList
-		if category == "" {
-			tasks, err = sqlite.QueryIncompleteTasks(db)
-			if err != nil {
-				log.Fatal(err)
-			}
-		} else {
-			tasks, err = sqlite.QueryTasks(db, sqlite.TaskParams(sqlite.Category(category), sqlite.Inc()))
-			if err != nil {
-				log.Fatal(err)
-			}
+	var helpFlag, addTaskFlag, completeTaskFlag, deleteTaskFlag, pushTaskFlag, filterTaskFlag, searchTaskFlag, searchTaskMetaDataFlag bool
+	flag.BoolVar(&helpFlag, "h", false, "prints usage")
+	flag.BoolVar(&addTaskFlag, "a", false, "add a task")
+	flag.BoolVar(&completeTaskFlag, "c", false, "complete a task")
+	flag.BoolVar(&deleteTaskFlag, "d", false, "delete a task")
+	flag.BoolVar(&pushTaskFlag, "p", false, "push a task")
+	flag.BoolVar(&filterTaskFlag, "f", false, "filter tasks")
+	flag.BoolVar(&searchTaskFlag, "s", false, "search for matching tasks")
+	flag.BoolVar(&searchTaskMetaDataFlag, "S", false, "search for matching task meta data")
+	flag.Parse()
+	args := flag.Args()
+
+	if len(args) > 1 {
+		log.Fatal("too many args")
+	}
+
+	var (
+		category    string
+		shouldPrint = true
+	)
+	if len(args) == 1 {
+		category = args[0]
+	} else {
+		var workingDir string
+		workingDir, err = os.Getwd()
+		if err != nil {
+			log.Fatal(err)
 		}
 
-		fmt.Println(tasks)
+		var data []byte
+		data, err = os.ReadFile(filepath.Join(workingDir, ".tmconfig"))
+		if err != nil && !os.IsNotExist(err) {
+			log.Fatal(err)
+		}
+		category = strings.TrimSpace(strings.ToLower(string(data)))
+	}
+	switch {
+	case helpFlag:
+		usage()
+		shouldPrint = false
+	case addTaskFlag:
+		err = userinput.AddTask(db, category)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println()
+		fmt.Println()
+	case completeTaskFlag:
+		err = userinput.CompleteTask(db, category)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println()
+		fmt.Println()
+	case deleteTaskFlag:
+		err = userinput.DeleteTask(db, category)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println()
+		fmt.Println()
+	case pushTaskFlag:
+		err = userinput.PushTask(db, category)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println()
+		fmt.Println()
+	case filterTaskFlag:
+		err = userinput.FilterTasks(db, category)
+		if err != nil {
+			log.Fatal(err)
+		}
+		shouldPrint = false
+	case searchTaskFlag:
+		err = userinput.SearchTask(db)
+		if err != nil {
+			log.Fatal(err)
+		}
+		shouldPrint = false
+	case searchTaskMetaDataFlag:
+		err = userinput.SearchTask(db)
+		if err != nil {
+			log.Fatal(err)
+		}
+		shouldPrint = false
+	default:
+	}
+	if shouldPrint {
+		var tasks task.TaskList
+		tasks, err = sqlite.QueryTasks(db, sqlite.TaskQueryParams{WhichTasks: sqlite.IncTasks, Category: category})
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Print(tasks)
+		fmt.Println()
 	}
 }
 
 func usage() {
 	fmt.Fprintf(os.Stderr, `taskmanager - manages upcoming tasks
 Usage:
-  taskmanager [-h] [-a] [-c] [-d] [-l] [-s]
+  taskmanager [-h] [-a] [-c] [-d] [-f] [-p] [-s] [-S]
   -h print help
   -a add a new task 
   -c complete a task 
   -d remove a task
+  -f filter tasks
+  -p push a task due date
   -s search for tasks
+  -S search for task meta data
 
 `)
 }

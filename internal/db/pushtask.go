@@ -3,19 +3,21 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"local/taskmanager2.0/internal/task"
 )
 
-func PushTask(db *sql.DB, id, numDays int) error {
+func PushTask(db *sql.DB, pushedTask task.Task) error {
 	if db == nil {
 		return fmt.Errorf("pushing task: cannot push task for nil database")
 	}
-	if id < 0 {
-		return fmt.Errorf("pushing task: cannot push a task with id %d", id)
+
+	if pushedTask.IsZero() {
+		return fmt.Errorf("pushing task: cannot push an empty task")
 	}
 
-	_, err := db.Exec(fmt.Sprintf(`UPDATE %s SET due_date = due_date + ? WHERE id = ?;`, taskTableName), numDays*24*60*60, id)
+	_, err := db.Exec(`UPDATE task SET due_date = ? WHERE id = ?;`, pushedTask.DueDate.Unix(), pushedTask.ID)
 	if err != nil {
-		return fmt.Errorf("updating task db: %s", err)
+		return fmt.Errorf("pushing task: %s", err)
 	}
 
 	return nil

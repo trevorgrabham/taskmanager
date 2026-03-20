@@ -3,22 +3,23 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"local/taskmanager2.0/internal/task"
 	"time"
 )
 
-func CompleteTask(db *sql.DB, id int) error {
+func CompleteTask(db *sql.DB, taskToComplete task.Task) error {
 	if db == nil {
 		return fmt.Errorf("completing task: cannot complete task for nil database")
 	}
-	if id < 0 {
-		return fmt.Errorf("completing task: cannot complete a task with id %d", id)
+	var defaultTask task.Task
+	if taskToComplete == defaultTask {
+		return fmt.Errorf("completing task: cannot complete an empty task")
 	}
 
-	_, err := db.Exec(fmt.Sprintf(`UPDATE %s SET done = 1, completion_date = ? WHERE id = ?;`, taskTableName), time.Now().Unix(), id)
-	if err != nil { return fmt.Errorf("updating task db: %s", err) }
-
-	err = UpdateTasksList(db)
-	if err != nil { return fmt.Errorf("updating task db: %s", err) }
+	_, err := db.Exec(`UPDATE task SET done = 1, completion_date = ? WHERE id = ?;`, time.Now().Unix(), taskToComplete.ID)
+	if err != nil {
+		return fmt.Errorf("completing task: %s", err)
+	}
 
 	return nil
 }

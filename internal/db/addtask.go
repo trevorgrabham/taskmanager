@@ -4,64 +4,43 @@ import (
 	"database/sql"
 	"fmt"
 	"local/taskmanager2.0/internal/task"
-	"time"
+	"strings"
 )
 
 func AddTask(db *sql.DB, newTask task.Task) error {
 	if db == nil {
 		return fmt.Errorf("adding task: cannot add task to nil sqlite database")
 	}
-	var emptyTask task.Task
-	if newTask == emptyTask {
+	if newTask.IsZero() {
 		return fmt.Errorf("adding task: cannot add empty task to sqlite database")
 	}
 
 	var err error
-	if newTask.Category == "" {
-		_, err = db.Exec(fmt.Sprintf(`INSERT INTO %s(title) VALUES (?) ON CONFLICT(title) DO NOTHING`, taskListTableName), newTask.Title)
-	} else {
-		_, err = db.Exec(fmt.Sprintf(`INSERT INTO %s(title, category) VALUES (?, ?) ON CONFLICT(title) DO NOTHING`, taskListTableName), newTask.Title, newTask.Category)
+	queryColumns := []string{"title"}
+	queryPlaceholders := []string{"?"}
+	queryArgs := []any{newTask.Title}
+
+	if newTask.Category != "" {
+		queryColumns = append(queryColumns, "category")
+		queryPlaceholders = append(queryPlaceholders, "?")
+		queryArgs = append(queryArgs, newTask.Category)
 	}
+
+	if newTask.Description != "" {
+		queryColumns = append(queryColumns, "description")
+		queryPlaceholders = append(queryPlaceholders, "?")
+		queryArgs = append(queryArgs, newTask.Description)
+	}
+
+	if !newTask.DueDate.IsZero() {
+		queryColumns = append(queryColumns, "due_date")
+		queryPlaceholders = append(queryPlaceholders, "?")
+		queryArgs = append(queryArgs, newTask.DueDate.Unix())
+	}
+
+	_, err = db.Exec(fmt.Sprintf(`INSERT INTO task(%s) VALUES (%s)`, strings.Join(queryColumns, ", "), strings.Join(queryPlaceholders, ", ")), queryArgs...)
 	if err != nil {
 		return fmt.Errorf("adding task: %s", err)
-	}
-
-	var taskID int
-	row := db.QueryRow(`SELECT id FROM tasks_list WHERE title = ?`, newTask.Title)
-	err = row.Scan(&taskID)
-	if err != nil {
-		return fmt.Errorf("adding task: %s", err)
-	}
-
-	// insertStatement, err := db.Prepare(fmt.Sprintf(`INSERT INTO %s(title, category, description, due_date, completion_date, done) VALUES (?, ?, ?, ?, ?, ?)`, taskTableName))
-	// if err != nil {
-	// return fmt.Errorf("preparing insert stmnt: %s", err)
-	// }
-
-	if newTask.Done {
-		if newTask.Description == "" {
-			_, err = db.Exec(fmt.Sprintf(`INSERT INTO %s(task_id, due_date, completion_date, done) VALUES (?, ?, ?, 1)`, taskTableName), taskID, time.Time(newTask.DueDate).Unix(), time.Time(newTask.CompletionDate).Unix())
-			if err != nil {
-				return fmt.Errorf("adding task: %s", err)
-			}
-		} else {
-			_, err = db.Exec(fmt.Sprintf(`INSERT INTO %s(task_id, description, due_date, completion_date, done) VALUES (?, ?, ?, 1)`, taskTableName), taskID, newTask.Description, time.Time(newTask.DueDate).Unix(), time.Time(newTask.CompletionDate).Unix())
-			if err != nil {
-				return fmt.Errorf("adding task: %s", err)
-			}
-		}
-	} else {
-		if newTask.Description == "" {
-			_, err = db.Exec(fmt.Sprintf(`INSERT INTO %s(task_id, due_date) VALUES (?, ?)`, taskTableName), taskID, time.Time(newTask.DueDate).Unix())
-			if err != nil {
-				return fmt.Errorf("adding task: %s", err)
-			}
-		} else {
-			_, err = db.Exec(fmt.Sprintf(`INSERT INTO %s(task_id, description, due_date) VALUES (?, ?, ?)`, taskTableName), taskID, newTask.Description, time.Time(newTask.DueDate).Unix())
-			if err != nil {
-				return fmt.Errorf("adding task: %s", err)
-			}
-		}
 	}
 
 	return nil

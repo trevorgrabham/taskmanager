@@ -1,4 +1,4 @@
-module local/taskmanager2.0
+module local/taskmanager
 
 go 1.24.6
 

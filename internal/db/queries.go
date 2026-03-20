@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"local/taskmanager2.0/internal/task"
+	"local/taskmanager/internal/task"
 )
 
 type dbScannable interface {

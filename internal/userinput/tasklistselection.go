@@ -2,7 +2,7 @@ package userinput
 
 import (
 	"fmt"
-	"local/taskmanager2.0/internal/task"
+	"local/taskmanager/internal/task"
 )
 
 func GetTaskSelection(prompt string, tasks task.TaskList) (task.Task, error) {

@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	sqlite "local/taskmanager2.0/internal/db"
-	"local/taskmanager2.0/internal/task"
-	"local/taskmanager2.0/internal/userinput"
+	sqlite "local/taskmanager/internal/db"
+	"local/taskmanager/internal/task"
+	"local/taskmanager/internal/userinput"
 	"log"
 	"os"
 	"path/filepath"

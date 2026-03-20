@@ -3,7 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"local/taskmanager2.0/internal/task"
+	"local/taskmanager/internal/task"
 	"time"
 )
 

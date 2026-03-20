@@ -3,7 +3,7 @@ package userinput
 import (
 	"bufio"
 	"fmt"
-	"local/taskmanager2.0/internal/task"
+	"local/taskmanager/internal/task"
 	"os"
 	"strings"
 	"time"

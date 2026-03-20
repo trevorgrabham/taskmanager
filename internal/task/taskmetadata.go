@@ -6,8 +6,8 @@ import (
 )
 
 type TaskMetaData struct {
-	TaskName  string
-	Count     int
+	TaskName      string
+	Count         int
 	LastCompleted TaskDueDate
 }
 

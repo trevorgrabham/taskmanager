@@ -46,7 +46,7 @@ func (t Task) String() string {
 		formattedString = fmt.Sprintf("%s\n%s", formattedString, t.Description)
 	}
 	if t.Done {
-		formattedString = fmt.Sprintf("%s\nCompleted on %s", formattedString, t.CompletionDate.String())
+		formattedString = fmt.Sprintf("%s\n\033[32mCompleted on %s\033[0m", formattedString, t.CompletionDate.String())
 	}
 
 	return formattedString

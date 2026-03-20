@@ -61,23 +61,23 @@ func QueryTasks(db *sql.DB, params TaskQueryParams) (task.TaskList, error) {
 	var (
 		queryFilters []string
 		queryArgs    []any
-		defaultTime  time.Time
 	)
 
-	if params.WhichTasks == IncTasks {
+	switch params.WhichTasks {
+	case IncTasks:
 		queryFilters = append(queryFilters, "done = ?")
 		queryArgs = append(queryArgs, 0)
-	} else if params.WhichTasks == CompTasks {
+	case CompTasks:
 		queryFilters = append(queryFilters, "done = ?")
 		queryArgs = append(queryArgs, 1)
 	}
 
-	if params.From != defaultTime {
+	if !params.From.IsZero() {
 		queryFilters = append(queryFilters, "due_date >= ?")
 		queryArgs = append(queryArgs, params.From.Unix())
 	}
 
-	if params.To != defaultTime {
+	if !params.To.IsZero() {
 		queryFilters = append(queryFilters, "due_date <= ?")
 		queryArgs = append(queryArgs, params.To.Unix())
 	}
@@ -92,7 +92,7 @@ func QueryTasks(db *sql.DB, params TaskQueryParams) (task.TaskList, error) {
 		err  error
 	)
 	if len(queryFilters) > 0 {
-		rows, err = db.Query(fmt.Sprintf(`SELECT id, title, category, description, due_date, completion_date, done FROM task WHERE %s ORDER BY category, due_date ASC`, strings.Join(queryFilters, " AND ")), queryArgs...)
+		rows, err = db.Query(fmt.Sprintf(`SELECT id, title, category, description, due_date, completion_date, done FROM task WHERE %s ORDER BY category, done DESC, completion_date, due_date `, strings.Join(queryFilters, " AND ")), queryArgs...)
 	} else {
 		rows, err = db.Query(`SELECT id, title, category, description, due_date, completion_date, done FROM task`)
 	}

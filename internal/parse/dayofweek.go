@@ -36,5 +36,5 @@ func ParseDayOfWeek(s string) (time.Time, error) {
 		dayDiff = 7
 	}
 
-	return time.Date(now.Year(), now.Month(), now.Day()+dayDiff, 0, 0, 0, 0, now.Location()), nil
+	return time.Date(now.Year(), now.Month(), now.Day()+dayDiff, 23, 59, 0, 0, now.Location()), nil
 }

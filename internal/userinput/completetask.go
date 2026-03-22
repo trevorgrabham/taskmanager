@@ -52,11 +52,11 @@ completeLoop:
 
 		more = strings.TrimSpace(strings.ToLower(more))
 		switch more {
-		case "n", "no":
-			break completeLoop
+		case "y", "yes":
+			fmt.Println()
+			fmt.Println()
 		default:
-			fmt.Println()
-			fmt.Println()
+			break completeLoop
 		}
 	}
 	return nil

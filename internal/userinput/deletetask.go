@@ -56,11 +56,11 @@ removeLoop:
 
 		more = strings.TrimSpace(strings.ToLower(more))
 		switch more {
-		case "n", "no":
-			break removeLoop
+		case "y", "yes":
+			fmt.Println()
+			fmt.Println()
 		default:
-			fmt.Println()
-			fmt.Println()
+			break removeLoop
 		}
 	}
 	return nil

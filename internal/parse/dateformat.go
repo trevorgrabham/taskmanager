@@ -6,8 +6,9 @@ import (
 )
 
 func ParseDate(s string) (time.Time, error) {
-	if s == "" { return time.Time{}, fmt.Errorf("parsing date: cannot parse an empty string") }
-
+	if s == "" {
+		return time.Time{}, fmt.Errorf("parsing date: cannot parse an empty string")
+	}
 
 	date, err := time.Parse("02/01", s)
 	if err != nil {
@@ -23,5 +24,5 @@ func ParseDate(s string) (time.Time, error) {
 	} else {
 		year = date.Year()
 	}
-	return time.Date(year, date.Month(), date.Day(), 0, 0, 0, 0, date.Location()), nil
+	return time.Date(year, date.Month(), date.Day(), 23, 59, 0, 0, time.Local), nil
 }

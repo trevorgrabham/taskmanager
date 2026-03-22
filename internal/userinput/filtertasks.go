@@ -44,7 +44,8 @@ func FilterTasks(db *sql.DB, category string) error {
 			return fmt.Errorf("filtering tasks: %s", err)
 		}
 
-		queryParams.From = from
+		queryParams.From = time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
+		fmt.Println(queryParams.From)
 	}
 
 	fmt.Print("To? DD/MM[/YY] (default: end):\t")

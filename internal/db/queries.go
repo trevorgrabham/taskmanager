@@ -67,19 +67,36 @@ func QueryTasks(db *sql.DB, params TaskQueryParams) (task.TaskList, error) {
 	case IncTasks:
 		queryFilters = append(queryFilters, "done = ?")
 		queryArgs = append(queryArgs, 0)
+		if !params.From.IsZero() {
+			queryFilters = append(queryFilters, "due_date >= ?")
+			queryArgs = append(queryArgs, params.From.Unix())
+		}
+		if !params.To.IsZero() {
+			queryFilters = append(queryFilters, "due_date <= ?")
+			queryArgs = append(queryArgs, params.To.Unix())
+		}
 	case CompTasks:
 		queryFilters = append(queryFilters, "done = ?")
 		queryArgs = append(queryArgs, 1)
-	}
-
-	if !params.From.IsZero() {
-		queryFilters = append(queryFilters, "due_date >= ?")
-		queryArgs = append(queryArgs, params.From.Unix())
-	}
-
-	if !params.To.IsZero() {
-		queryFilters = append(queryFilters, "due_date <= ?")
-		queryArgs = append(queryArgs, params.To.Unix())
+		if !params.From.IsZero() {
+			queryFilters = append(queryFilters, "completion_date >= ?")
+			queryArgs = append(queryArgs, params.From.Unix())
+		}
+		if !params.To.IsZero() {
+			queryFilters = append(queryFilters, "completion_date <= ?")
+			queryArgs = append(queryArgs, params.To.Unix())
+		}
+	case AllTasks:
+		if !params.From.IsZero() {
+			queryFilters = append(queryFilters, "(completion_date >= ? OR due_date >= ?)")
+			queryArgs = append(queryArgs, params.From.Unix())
+			queryArgs = append(queryArgs, params.From.Unix())
+		}
+		if !params.To.IsZero() {
+			queryFilters = append(queryFilters, "(completion_date <= ? OR due_date <= ?)")
+			queryArgs = append(queryArgs, params.To.Unix())
+			queryArgs = append(queryArgs, params.To.Unix())
+		}
 	}
 
 	if params.Category != "" {

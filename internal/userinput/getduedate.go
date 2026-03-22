@@ -23,10 +23,12 @@ func promptDueDate(prompt string) (task.TaskDueDate, error) {
 	if dueDateString == "" || dueDateString == "n" || dueDateString == "no" || dueDateString == "none" {
 		return task.TaskDueDate{}, nil
 	}
-	
+
 	var dueDate task.TaskDueDate
 	dueDate, err = parse.ParseDateAndTime(dueDateString)
-	if err != nil { return task.TaskDueDate{}, err }
+	if err != nil {
+		return task.TaskDueDate{}, err
+	}
 
 	return dueDate, nil
 }

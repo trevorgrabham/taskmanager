@@ -24,8 +24,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var helpFlag, addTaskFlag, completeTaskFlag, deleteTaskFlag, pushTaskFlag, filterTaskFlag, searchTaskFlag, searchTaskMetaDataFlag bool
-	flag.BoolVar(&helpFlag, "h", false, "prints usage")
+	var addTaskFlag, completeTaskFlag, deleteTaskFlag, pushTaskFlag, filterTaskFlag, searchTaskFlag, searchTaskMetaDataFlag bool
 	flag.BoolVar(&addTaskFlag, "a", false, "add a task")
 	flag.BoolVar(&completeTaskFlag, "c", false, "complete a task")
 	flag.BoolVar(&deleteTaskFlag, "d", false, "delete a task")
@@ -61,9 +60,6 @@ func main() {
 		category = strings.TrimSpace(strings.ToLower(string(data)))
 	}
 	switch {
-	case helpFlag:
-		usage()
-		shouldPrint = false
 	case addTaskFlag:
 		err = userinput.AddTask(db, category)
 		if err != nil {
@@ -105,7 +101,7 @@ func main() {
 		}
 		shouldPrint = false
 	case searchTaskMetaDataFlag:
-		err = userinput.SearchTask(db)
+		err = userinput.SearchTaskMetaData(db)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -136,18 +132,18 @@ func main() {
 	}
 }
 
-func usage() {
-	fmt.Fprintf(os.Stderr, `taskmanager - manages upcoming tasks
-Usage:
-  taskmanager [-h] [-a] [-c] [-d] [-f] [-p] [-s] [-S]
-  -h print help
-  -a add a new task 
-  -c complete a task 
-  -d remove a task
-  -f filter tasks
-  -p push a task due date
-  -s search for tasks
-  -S search for task meta data
-
-`)
-}
+// func usage() {
+// fmt.Fprintf(os.Stderr, `taskmanager - manages upcoming tasks
+// Usage:
+// taskmanager [-h] [-a] [-c] [-d] [-f] [-p] [-s] [-S]
+// -h print help
+// -a add a new task
+// -c complete a task
+// -d remove a task
+// -f filter tasks
+// -p push a task due date
+// -s search for tasks
+// -S search for task meta data
+//
+// `)
+// }

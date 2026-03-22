@@ -55,6 +55,8 @@ func SearchTaskMetaData(db *sql.DB) error {
 	}
 
 	fmt.Println()
-	fmt.Println(matches)
+	for _, match := range matches {
+		fmt.Println(match)
+	}
 	return nil
 }

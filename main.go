@@ -111,6 +111,18 @@ func main() {
 		}
 		shouldPrint = false
 	default:
+		// if no flags and no args, then just print todays tasks
+		if len(args) < 1 {
+			var tasks task.TaskList
+			tasks, err = sqlite.ListDailyTasks(db)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			fmt.Print(tasks)
+			fmt.Println()
+			shouldPrint = false
+		}
 	}
 	if shouldPrint {
 		var tasks task.TaskList

@@ -23,9 +23,7 @@ func CompleteTask(db *sql.DB, taskToComplete task.Task) error {
 		return fmt.Errorf("completing task: %s", err)
 	}
 	defer func() {
-		if err != nil {
-			_ = tx.Rollback()
-		}
+		_ = tx.Rollback()
 	}()
 
 	_, err = tx.Exec(`UPDATE task SET done = 1, completion_date = ? WHERE id = ?;`, time.Now().Unix(), taskToComplete.ID)

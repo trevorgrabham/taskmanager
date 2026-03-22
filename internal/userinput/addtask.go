@@ -5,47 +5,11 @@ import (
 	"database/sql"
 	"fmt"
 	sqlite "local/taskmanager/internal/db"
+	"local/taskmanager/internal/parse"
 	"local/taskmanager/internal/task"
 	"os"
-	"regexp"
-	"strconv"
 	"strings"
 )
-
-func parsePeriod(userInput string) (string, error) {
-	if userInput == "" {
-		return "", fmt.Errorf("cannot parse an empty period")
-	}
-
-	userInput = strings.TrimSpace(strings.ToLower(userInput))
-
-	re := regexp.MustCompile(`^(\d+)\s*([A-Za-z]+)$`)
-	matches := re.FindStringSubmatch(userInput)
-
-	if matches == nil {
-		return "", fmt.Errorf("bad period format")
-	}
-
-	unit := matches[2]
-	value, err := strconv.Atoi(matches[1])
-	if err != nil {
-		return "", err
-	}
-
-	var period string
-	switch unit {
-	case "d", "day", "days":
-		period = fmt.Sprintf("%d days", value)
-	case "w", "week", "weeks":
-		period = fmt.Sprintf("%d weeks", value)
-	case "m", "month", "months":
-		period = fmt.Sprintf("%d months", value)
-	default:
-		return "", fmt.Errorf("unrecognized format")
-	}
-
-	return period, nil
-}
 
 func AddTask(db *sql.DB, category string) error {
 	if db == nil {
@@ -109,7 +73,7 @@ addLoop:
 				return fmt.Errorf("adding task: %s", err)
 			}
 
-			period, err = parsePeriod(recurring)
+			period, err = parse.ParsePeriod(recurring)
 			if err != nil {
 				return fmt.Errorf("adding task: %s", err)
 			}

@@ -5,42 +5,12 @@ import (
 	"database/sql"
 	"fmt"
 	sqlite "local/taskmanager/internal/db"
+	"local/taskmanager/internal/parse"
 	"local/taskmanager/internal/task"
 	"os"
 	"strings"
 	"time"
 )
-
-func parseDate(prompt string) (time.Time, error) {
-	fmt.Print(prompt)
-	reader := bufio.NewReader(os.Stdin)
-	dateString, err := reader.ReadString('\n')
-	if err != nil {
-		return time.Time{}, err
-	}
-
-	dateString = strings.TrimSpace(dateString)
-	if dateString == "" {
-		return time.Time{}, nil
-	}
-
-	var date time.Time
-	date, err = time.Parse("02/01", dateString)
-	if err != nil {
-		date, err = time.Parse("02/01/06", dateString)
-		if err != nil {
-			return time.Time{}, err
-		}
-	}
-	var year int
-	if date.Year() == 0 {
-		year = time.Now().Year()
-	} else {
-		year = date.Year()
-	}
-	date = time.Date(year, date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
-	return date, nil
-}
 
 func FilterTasks(db *sql.DB, category string) error {
 	queryParams := sqlite.TaskQueryParams{Category: category}
@@ -60,17 +30,40 @@ func FilterTasks(db *sql.DB, category string) error {
 		queryParams.WhichTasks = sqlite.AllTasks
 	}
 
-	from, err := parseDate("From? DD/MM[/YY] (default: beginning):\t")
+	fmt.Print("From? DD/MM[/YY] (default: beginning):\t")
+	dateString, err := reader.ReadString('\n')
 	if err != nil {
 		return fmt.Errorf("filtering tasks: %s", err)
 	}
-	queryParams.From = from
 
-	to, err := parseDate("To? DD/MM[/YY] (default: end):\t")
+	dateString = strings.TrimSpace(dateString)
+	if dateString != "" {
+		var from time.Time
+		from, err = parse.ParseDate(dateString)
+		if err != nil {
+			return fmt.Errorf("filtering tasks: %s", err)
+		}
+
+		queryParams.From = from
+	}
+
+	fmt.Print("To? DD/MM[/YY] (default: end):\t")
+	dateString, err = reader.ReadString('\n')
 	if err != nil {
 		return fmt.Errorf("filtering tasks: %s", err)
 	}
-	queryParams.To = to
+
+	dateString = strings.TrimSpace(dateString)
+
+	if dateString != "" {
+		var to time.Time
+		to, err = parse.ParseDate(dateString)
+		if err != nil {
+			return fmt.Errorf("filtering tasks: %s", err)
+		}
+
+		queryParams.To = to
+	}
 
 	var tasks task.TaskList
 	tasks, err = sqlite.QueryTasks(db, queryParams)

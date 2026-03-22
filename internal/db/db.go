@@ -7,7 +7,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var dbFileName = "tasks.db"
+var dbFileName = "/home/trevorgrabham/.config/taskmanager/tasks.db"
 
 func Setup(db *sql.DB) error {
 	if db == nil {

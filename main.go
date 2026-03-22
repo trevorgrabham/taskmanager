@@ -24,7 +24,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var addTaskFlag, completeTaskFlag, deleteTaskFlag, pushTaskFlag, filterTaskFlag, searchTaskFlag, searchTaskMetaDataFlag bool
+	var addTaskFlag, completeTaskFlag, deleteTaskFlag, pushTaskFlag, filterTaskFlag, searchTaskFlag, searchTaskMetaDataFlag, listTasksFlag, listAllTasksFlag bool
 	flag.BoolVar(&addTaskFlag, "a", false, "add a task")
 	flag.BoolVar(&completeTaskFlag, "c", false, "complete a task")
 	flag.BoolVar(&deleteTaskFlag, "d", false, "delete a task")
@@ -32,6 +32,8 @@ func main() {
 	flag.BoolVar(&filterTaskFlag, "f", false, "filter tasks")
 	flag.BoolVar(&searchTaskFlag, "s", false, "search for matching tasks")
 	flag.BoolVar(&searchTaskMetaDataFlag, "S", false, "search for matching task meta data")
+	flag.BoolVar(&listTasksFlag, "l", false, "list tasks for a category")
+	flag.BoolVar(&listAllTasksFlag, "L", false, "list all tasks")
 	flag.Parse()
 	args := flag.Args()
 
@@ -105,6 +107,26 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		shouldPrint = false
+	case listTasksFlag:
+		var tasks task.TaskList
+		tasks, err = sqlite.QueryTasks(db, sqlite.TaskQueryParams{WhichTasks: sqlite.IncTasks, Category: category})
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Print(tasks)
+		fmt.Println()
+		shouldPrint = false
+	case listAllTasksFlag:
+		var tasks task.TaskList
+		tasks, err = sqlite.QueryTasks(db, sqlite.TaskQueryParams{WhichTasks: sqlite.IncTasks})
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Print(tasks)
+		fmt.Println()
 		shouldPrint = false
 	default:
 		// if no flags and no args, then just print todays tasks

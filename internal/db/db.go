@@ -7,7 +7,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var dbFileName = "/home/trevorgrabham/.config/taskmanager/tasks.db"
+var dbFileName = "tasks.db"
 
 func Setup(db *sql.DB) error {
 	if db == nil {
@@ -24,6 +24,16 @@ func Setup(db *sql.DB) error {
 	done INTEGER NOT NULL DEFAULT 0
 		CHECK (done IN (0, 1))
 );`)
+	if err != nil {
+		return fmt.Errorf("setting up: %s", err)
+	}
+
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS recurring (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	task_id INTEGER NOT NULL,
+	period TEXT NOT NULL,
+	FOREIGN KEY (task_id) REFERENCES task(id)
+	);`)
 	if err != nil {
 		return fmt.Errorf("setting up: %s", err)
 	}
@@ -53,6 +63,11 @@ func Connect() (*sql.DB, error) {
 	err = db.Ping()
 	if err != nil {
 		return nil, fmt.Errorf("connecting: %s", err)
+	}
+
+	_, err = db.Exec(`PRAGMA foreign_keys = ON`)
+	if err != nil {
+		return nil, fmt.Errorf("connecting: %s")
 	}
 
 	return db, nil

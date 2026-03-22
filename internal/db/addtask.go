@@ -7,15 +7,14 @@ import (
 	"strings"
 )
 
-func AddTask(db *sql.DB, newTask task.Task) error {
+func AddTask(db *sql.DB, newTask task.Task) (id int, err error) {
 	if db == nil {
-		return fmt.Errorf("adding task: cannot add task to nil sqlite database")
+		return -1, fmt.Errorf("adding task: cannot add task to nil sqlite database")
 	}
 	if newTask.IsZero() {
-		return fmt.Errorf("adding task: cannot add empty task to sqlite database")
+		return -1, fmt.Errorf("adding task: cannot add empty task to sqlite database")
 	}
 
-	var err error
 	queryColumns := []string{"title"}
 	queryPlaceholders := []string{"?"}
 	queryArgs := []any{newTask.Title}
@@ -38,10 +37,16 @@ func AddTask(db *sql.DB, newTask task.Task) error {
 		queryArgs = append(queryArgs, newTask.DueDate.Unix())
 	}
 
-	_, err = db.Exec(fmt.Sprintf(`INSERT INTO task(%s) VALUES (%s)`, strings.Join(queryColumns, ", "), strings.Join(queryPlaceholders, ", ")), queryArgs...)
+	var res sql.Result
+	res, err = db.Exec(fmt.Sprintf(`INSERT INTO task(%s) VALUES (%s)`, strings.Join(queryColumns, ", "), strings.Join(queryPlaceholders, ", ")), queryArgs...)
 	if err != nil {
-		return fmt.Errorf("adding task: %s", err)
+		return -1, fmt.Errorf("adding task: %s", err)
 	}
 
-	return nil
+	var lastID int64
+	lastID, err = res.LastInsertId()
+	if err != nil { return -1, fmt.Errorf("adding task: %s", err) }
+
+	id = int(lastID)
+	return id, nil
 }

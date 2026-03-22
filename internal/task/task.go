@@ -88,3 +88,14 @@ func (t TaskDueDate) IsZero() bool {
 func (t TaskDueDate) Unix() int64 {
 	return time.Time(t).Unix()
 }
+
+// ================================================== RecurringTask ==================================================
+
+type RecurringTask struct {
+	TaskID int
+	Period string
+}
+
+func (r RecurringTask) IsZero() bool {
+	return r.TaskID == 0 && r.Period == ""
+}

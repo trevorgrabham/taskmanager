@@ -24,12 +24,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var addTaskFlag, completeTaskFlag, deleteTaskFlag, pushTaskFlag, filterTaskFlag, searchTaskFlag, searchTaskMetaDataFlag, listTasksFlag, listAllTasksFlag bool
+	var addTaskFlag, completeTaskFlag, deleteTaskFlag, pushTaskFlag, filterTaskFlag, filterAllTaskFlag, searchTaskFlag, searchTaskMetaDataFlag, listTasksFlag, listAllTasksFlag bool
 	flag.BoolVar(&addTaskFlag, "a", false, "add a task")
 	flag.BoolVar(&completeTaskFlag, "c", false, "complete a task")
 	flag.BoolVar(&deleteTaskFlag, "d", false, "delete a task")
 	flag.BoolVar(&pushTaskFlag, "p", false, "push a task")
 	flag.BoolVar(&filterTaskFlag, "f", false, "filter tasks")
+	flag.BoolVar(&filterAllTaskFlag, "F", false, "filter all tasks")
 	flag.BoolVar(&searchTaskFlag, "s", false, "search for matching tasks")
 	flag.BoolVar(&searchTaskMetaDataFlag, "S", false, "search for matching task meta data")
 	flag.BoolVar(&listTasksFlag, "l", false, "list tasks for a category")
@@ -92,6 +93,12 @@ func main() {
 		fmt.Println()
 	case filterTaskFlag:
 		err = userinput.FilterTasks(db, category)
+		if err != nil {
+			log.Fatal(err)
+		}
+		shouldPrint = false
+	case filterAllTaskFlag:
+		err = userinput.FilterTasks(db, "")
 		if err != nil {
 			log.Fatal(err)
 		}

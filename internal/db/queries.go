@@ -109,9 +109,9 @@ func QueryTasks(db *sql.DB, params TaskQueryParams) (task.TaskList, error) {
 		err  error
 	)
 	if len(queryFilters) > 0 {
-		rows, err = db.Query(fmt.Sprintf(`SELECT id, title, category, description, due_date, completion_date, done FROM task WHERE %s ORDER BY category, done DESC, completion_date, due_date `, strings.Join(queryFilters, " AND ")), queryArgs...)
+		rows, err = db.Query(fmt.Sprintf(`SELECT id, title, category, description, due_date, completion_date, done FROM task WHERE %s ORDER BY category, done DESC, completion_date, due_date`, strings.Join(queryFilters, " AND ")), queryArgs...)
 	} else {
-		rows, err = db.Query(`SELECT id, title, category, description, due_date, completion_date, done FROM task`)
+		rows, err = db.Query(`SELECT id, title, category, description, due_date, completion_date, done FROM task ORDER BY category, done DESC, completion_date, due_date`)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("querying tasks: %s", err)

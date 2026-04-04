@@ -5,7 +5,7 @@ import (
 	"fmt"
 	sqlite "local/taskmanager/internal/db"
 	"local/taskmanager/internal/task"
-	"local/taskmanager/internal/userinput"
+	"local/taskmanager/internal/tui"
 	"log"
 	"os"
 	"path/filepath"
@@ -64,53 +64,53 @@ func main() {
 	}
 	switch {
 	case addTaskFlag:
-		err = userinput.AddTask(db, category)
+		err = tui.AddTask(db, category)
 		if err != nil {
 			log.Fatal(err)
 		}
 		fmt.Println()
 		fmt.Println()
 	case completeTaskFlag:
-		err = userinput.CompleteTask(db, category)
+		err = tui.CompleteTask(db, category)
 		if err != nil {
 			log.Fatal(err)
 		}
 		fmt.Println()
 		fmt.Println()
 	case deleteTaskFlag:
-		err = userinput.DeleteTask(db, category)
+		err = tui.DeleteTask(db, category)
 		if err != nil {
 			log.Fatal(err)
 		}
 		fmt.Println()
 		fmt.Println()
 	case pushTaskFlag:
-		err = userinput.PushTask(db, category)
+		err = tui.PushTask(db, category)
 		if err != nil {
 			log.Fatal(err)
 		}
 		fmt.Println()
 		fmt.Println()
 	case filterTaskFlag:
-		err = userinput.FilterTasks(db, category)
+		err = tui.FilterTasks(db, category)
 		if err != nil {
 			log.Fatal(err)
 		}
 		shouldPrint = false
 	case filterAllTaskFlag:
-		err = userinput.FilterTasks(db, "")
+		err = tui.FilterTasks(db, "")
 		if err != nil {
 			log.Fatal(err)
 		}
 		shouldPrint = false
 	case searchTaskFlag:
-		err = userinput.SearchTask(db)
+		err = tui.SearchTask(db)
 		if err != nil {
 			log.Fatal(err)
 		}
 		shouldPrint = false
 	case searchTaskMetaDataFlag:
-		err = userinput.SearchTaskMetaData(db)
+		err = tui.SearchTaskMetaData(db)
 		if err != nil {
 			log.Fatal(err)
 		}

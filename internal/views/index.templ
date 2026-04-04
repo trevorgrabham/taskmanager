@@ -1,0 +1,12 @@
+package views 
+
+templ Index() {
+  <p id="task-list"></p>
+
+  <button
+    hx-get="/todays-tasks"
+    hx-target="#task-list"
+    hx-swap="innerHTML" >
+    Get today's tasks 
+  </button>
+}

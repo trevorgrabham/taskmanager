@@ -1,4 +1,4 @@
-package userinput
+package tui
 
 import (
 	"bufio"

@@ -1,0 +1,11 @@
+package views 
+
+import "local/taskmanager/internal/task"
+
+templ List(tasks task.TaskList) {
+  <ul>
+    for _, task := range tasks {
+      <li>@ListItem(task)</li>
+    }
+  </ul>
+}

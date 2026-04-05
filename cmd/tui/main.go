@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -139,7 +140,7 @@ func main() {
 		// if no flags and no args, then just print todays tasks
 		if len(args) < 1 {
 			var tasks task.TaskList
-			tasks, err = sqlite.ListDailyTasks(db)
+			tasks, err = sqlite.ListDailyTasks(db, time.Now())
 			if err != nil {
 				log.Fatal(err)
 			}

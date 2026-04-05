@@ -1,0 +1,19 @@
+package views 
+
+import (
+  "local/taskmanager/internal/task"
+  "time"
+)
+
+templ DayTaskList(unixDate int64, tasks task.TaskList) {
+  <div class="day-of-tasks">
+  <div class="tasks-date-header">{time.Unix(unixDate, 0).Format("Mon Jan 2")}</div>
+  if len(tasks) > 0 {
+    <ul>
+      for _, task := range tasks {
+        @ListItem(task)
+      }
+    </ul>
+  }
+  </div>
+}

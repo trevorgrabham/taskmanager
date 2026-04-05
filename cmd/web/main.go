@@ -6,27 +6,36 @@ import (
 	"local/taskmanager/internal/views"
 	"log"
 	"net/http"
+	"slices"
+	"time"
 )
 
 func main() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		err := views.Layout(views.Index()).Render(r.Context(), w)
-		if err != nil {
-			log.Fatal(err)
-		}
-	})
+	fs := http.FileServer(http.Dir("./static"))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
-	http.HandleFunc("/todays-tasks", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
 		db, err := sqlite.Connect()
 		if err != nil {
 			log.Fatal(err)
 		}
-		var tasks task.TaskList
-		tasks, err = sqlite.ListDailyTasks(db)
+		var tasks map[int64]task.TaskList
+		tasks, err = sqlite.ListWeeklyTasks(db, time.Now())
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = views.List(tasks).Render(r.Context(), w)
+
+		keys := make([]int64, 0, 7)
+		for k := range tasks {
+			keys = append(keys, k)
+		}
+		slices.Sort(keys)
+
+		err = views.Layout(views.Index(tasks, keys)).Render(r.Context(), w)
 		if err != nil {
 			log.Fatal(err)
 		}

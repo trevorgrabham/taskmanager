@@ -1,12 +1,9 @@
 package views 
 
-templ Index() {
-  <p id="task-list"></p>
+import "local/taskmanager/internal/task"
 
-  <button
-    hx-get="/todays-tasks"
-    hx-target="#task-list"
-    hx-swap="innerHTML" >
-    Get today's tasks 
-  </button>
+templ Index(tasksByDay map[int64]task.TaskList, sortedKeys []int64) {
+  <div class="task-content">
+    @WeekTaskList(tasksByDay, sortedKeys)
+  </div>
 }

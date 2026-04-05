@@ -10,7 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "local/taskmanager/internal/task"
 
-func Index(tasksByDay map[int64]task.TaskList, sortedKeys []int64) templ.Component {
+func WeekTaskList(tasks map[int64]task.TaskList, sortedKeys []int64) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -31,13 +31,15 @@ func Index(tasksByDay map[int64]task.TaskList, sortedKeys []int64) templ.Compone
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"task-content\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"week-of-tasks\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = WeekTaskList(tasksByDay, sortedKeys).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+		for _, key := range sortedKeys {
+			templ_7745c5c3_Err = DayTaskList(key, tasks[key]).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</div>")
 		if templ_7745c5c3_Err != nil {

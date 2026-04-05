@@ -3,5 +3,10 @@ package views
 import "local/taskmanager/internal/task"
 
 templ ListItem(task task.Task) {
-  <ul>{task.Title}</ul>
+  {{var currentCategory string}}
+  if currentCategory != task.Category {
+    {{currentCategory = task.Category}}
+    <li><div class="task-category-header">{task.Category}</div></li>
+  }
+  <li><div class="task-list-item">{task.Title}</div></li>
 }

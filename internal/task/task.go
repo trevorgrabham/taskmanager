@@ -89,6 +89,10 @@ func (t TaskDueDate) Unix() int64 {
 	return time.Time(t).Unix()
 }
 
+func (t TaskDueDate) IsDue() bool {
+	return !time.Now().After(time.Time(t))
+}
+
 // ================================================== RecurringTask ==================================================
 
 type RecurringTask struct {

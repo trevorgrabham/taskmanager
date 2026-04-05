@@ -1,0 +1,45 @@
+body {
+    margin: 0 10%;
+}
+
+.week-of-tasks {
+    display: flex;
+    border: 1px solid white;
+    border-radius: 15px;
+}
+
+.day-of-tasks {
+    flex: 1;
+    padding: 1em;
+}
+
+.day-of-tasks:not(:first-child) {
+    border-left: 1px solid white;
+}
+
+.day-of-tasks > ul {
+    padding-inline: 0;
+}
+
+.tasks-date-header {
+    font-size: 1.5em;
+}
+
+li:has(.task-category-header) {
+    list-style-type: none;
+    margin-left: 0;
+    text-decoration-line: underline;
+    font-weight: bold;
+}
+
+li:has(.task-list-item) {
+    margin-inline: 1em;
+}
+
+.task-category-header {
+    font-size: 1.2em;
+}
+
+.task-category-header {
+    margin-top: 0.5em;
+}

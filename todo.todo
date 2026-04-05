@@ -1,4 +1,0 @@
-- add empty lists for each day from start to end
-- for each task, convert its due date to a date without a time. then convert that to unix and use it as the key value
-- go through the list of keys and sort them
-- pass it all to WeekTaskList() and render

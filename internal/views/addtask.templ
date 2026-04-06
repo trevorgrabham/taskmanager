@@ -1,0 +1,20 @@
+package views
+
+import "local/taskmanager/internal/task"
+import "time"
+
+templ AddTaskForm(partial task.Task) {
+  <form hx-post="/add-task" hx-target="#content" id="add-task-form">
+    <input type="text" name="title" placeholder="Title..." required>
+    <input class="optional-input" type="text" name="description" placeholder="Description...">
+    <input class="optional-input" type="text" name="category" placeholder="Category...">
+    if partial.DueDate.IsZero() {
+      <input class="optional-input" type="date" name="due-date">
+    } else {
+      <input class="optional-input" type="date" name="due-date" value={time.Time(partial.DueDate).Format("2006-01-02")}>
+    }
+    <input class="optional-input" type="checkbox" name="recurring" hx-get="/recurring-toggle" hx-trigger="change" hx-target="#recurring-period-input" hx-swap="innerHTML">
+    <div id="recurring-period-input"></div>
+    <button type="submit">Submit</button>
+  </form>
+}

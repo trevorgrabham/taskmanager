@@ -8,9 +8,7 @@ package views
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "local/taskmanager/internal/task"
-
-func WeekTaskList(tasks map[int64]task.TaskList, sortedKeys []int64) templ.Component {
+func WeekTaskList(pi PageInfo) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -35,8 +33,8 @@ func WeekTaskList(tasks map[int64]task.TaskList, sortedKeys []int64) templ.Compo
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		for _, key := range sortedKeys {
-			templ_7745c5c3_Err = DayTaskList(key, tasks[key]).Render(ctx, templ_7745c5c3_Buffer)
+		for _, key := range pi.WeekOrderedKeys {
+			templ_7745c5c3_Err = DayTaskList(key, pi.WeekOfTasks[key]).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

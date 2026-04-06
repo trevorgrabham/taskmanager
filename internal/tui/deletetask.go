@@ -22,7 +22,6 @@ func DeleteTask(db *sql.DB, category string) error {
 		return fmt.Errorf("deleting task: %s", err)
 	}
 
-removeLoop:
 	for {
 		var taskToRemove task.Task
 		taskToRemove, err = GetTaskSelection("Which task would you like to remove?", tasks)
@@ -31,7 +30,7 @@ removeLoop:
 		}
 
 		if taskToRemove.IsZero() {
-			break removeLoop
+			return nil
 		}
 
 		err = sqlite.DeleteTask(db, taskToRemove)
@@ -41,7 +40,7 @@ removeLoop:
 
 		tasks = slices.DeleteFunc(tasks, func(t task.Task) bool { return t.ID == taskToRemove.ID })
 		if len(tasks) < 1 {
-			break removeLoop
+			return nil
 		}
 
 		fmt.Print("Anything else to remove? (y/n)\t")
@@ -60,8 +59,7 @@ removeLoop:
 			fmt.Println()
 			fmt.Println()
 		default:
-			break removeLoop
+			return nil
 		}
 	}
-	return nil
 }

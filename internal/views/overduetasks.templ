@@ -1,0 +1,17 @@
+package views
+
+import "local/taskmanager/internal/task"
+
+templ OverdueTasks(tasks task.TaskList) {
+  {{var currentCategory string}}
+  <div class="overdue-tasks">
+    <div class="overdue-tasks-header">Overdue</div>
+    for _, task := range tasks {
+      if currentCategory != task.Category {
+        {{currentCategory = task.Category}}
+        <div class="task-category-header">{task.Category}</div>
+      }
+      <div class="task-list-item">{task.Title}</div>
+    }
+  </div>
+}

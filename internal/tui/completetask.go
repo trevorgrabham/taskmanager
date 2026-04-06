@@ -21,7 +21,6 @@ func CompleteTask(db *sql.DB, category string) error {
 		return fmt.Errorf("completing task: %s", err)
 	}
 
-completeLoop:
 	for {
 		var taskToComplete task.Task
 		taskToComplete, err = GetTaskSelection("Which task would you like to complete?", tasks)
@@ -30,12 +29,16 @@ completeLoop:
 		}
 
 		if taskToComplete.IsZero() {
-			break completeLoop
+			return nil
 		}
 
 		err = sqlite.CompleteTask(db, taskToComplete)
 		if err != nil {
 			return fmt.Errorf("completing task: %s", err)
+		}
+
+		if len(tasks) < 2 {
+			return nil
 		}
 
 		tasks = slices.DeleteFunc(tasks, func(t task.Task) bool { return t.ID == taskToComplete.ID })
@@ -56,8 +59,7 @@ completeLoop:
 			fmt.Println()
 			fmt.Println()
 		default:
-			break completeLoop
+			return nil
 		}
 	}
-	return nil
 }

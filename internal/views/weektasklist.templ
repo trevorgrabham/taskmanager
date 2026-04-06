@@ -1,11 +1,9 @@
 package views
 
-import "local/taskmanager/internal/task"
-
-templ WeekTaskList(tasks map[int64]task.TaskList, sortedKeys []int64) { 
+templ WeekTaskList(pi PageInfo) { 
   <div class="week-of-tasks">
-    for _, key := range sortedKeys {
-      @DayTaskList(key, tasks[key])
+    for _, key := range pi.WeekOrderedKeys {
+      @DayTaskList(key, pi.WeekOfTasks[key])
     }
   </div>
 }

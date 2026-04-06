@@ -21,7 +21,6 @@ func PushTask(db *sql.DB, category string) error {
 		return fmt.Errorf("pushing task: %s", err)
 	}
 
-pushLoop:
 	for {
 		var taskToPush task.Task
 		taskToPush, err = GetTaskSelection("Which task would you like to push?", tasks)
@@ -60,8 +59,7 @@ pushLoop:
 			fmt.Println()
 			fmt.Println()
 		default:
-			break pushLoop
+			return nil
 		}
 	}
-	return nil
 }

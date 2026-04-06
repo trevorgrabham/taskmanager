@@ -1,9 +1,9 @@
 package views 
 
-import "local/taskmanager/internal/task"
-
-templ Index(tasksByDay map[int64]task.TaskList, sortedKeys []int64) {
-  <div class="task-content">
-    @WeekTaskList(tasksByDay, sortedKeys)
+templ Index(pi PageInfo) {
+  @WeekTaskList(pi)
+  <div class="bottom-console">
+    @OverdueTasks(pi.OverdueTasks)
+    @CategoryTasks(pi.FavCategoryTasks)
   </div>
 }

@@ -17,7 +17,6 @@ func AddTask(db *sql.DB, category string) error {
 	}
 
 	reader := bufio.NewReader(os.Stdin)
-addLoop:
 	for {
 		fmt.Printf("title:\t")
 		title, err := reader.ReadString('\n')
@@ -97,8 +96,7 @@ addLoop:
 			fmt.Println()
 			fmt.Println()
 		default:
-			break addLoop
+			return nil
 		}
 	}
-	return nil
 }

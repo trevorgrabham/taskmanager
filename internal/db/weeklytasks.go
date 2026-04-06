@@ -7,16 +7,16 @@ import (
 	"time"
 )
 
-func ListWeeklyTasks(db *sql.DB, day time.Time) (map[int64]task.TaskList, error) {
+func ListWeekOfTasks(db *sql.DB, start time.Time) (map[int64]task.TaskList, error) {
 	if db == nil {
 		return nil, fmt.Errorf("listing weekly: cannot get tasks for a nil database")
 	}
-	if day.IsZero() {
+	if start.IsZero() {
 		return nil, fmt.Errorf("listing weekly: cannot list tasks without a day")
 	}
 
-	start := time.Date(day.Year(), day.Month(), day.Day()-int(day.Weekday()), 0, 0, 0, 0, day.Location())
-	end := time.Date(day.Year(), day.Month(), day.Day()+(6-int(day.Weekday())), 23, 59, 0, 0, day.Location())
+	start = time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, start.Location())
+	end := time.Date(start.Year(), start.Month(), start.Day()+6, 23, 59, 0, 0, start.Location())
 	rows, err := db.Query(`
 		SELECT id, title, category, description, due_date, completion_date, done 
 		FROM task 

@@ -1,13 +1,14 @@
 package routes
 
 import (
-	"time"
+	sqlite "local/taskmanager/internal/db"
+	"local/taskmanager/internal/task"
+	"local/taskmanager/internal/views"
+	"local/taskmanager/internal/views/dashboard"
 	"log"
 	"net/http"
 	"slices"
-	"local/taskmanager/internal/views"
-	"local/taskmanager/internal/task"
-	sqlite "local/taskmanager/internal/db"
+	"time"
 )
 
 func (h Handlers) IndexHandler(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +69,7 @@ func (h Handlers) IndexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/html")
-	err = views.Layout(views.Index(info)).Render(r.Context(), w)
+	err = views.Layout(dashboard.Index(info)).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, "Error rendering page", http.StatusInternalServerError)
 		log.Printf("index: %s\n", err)

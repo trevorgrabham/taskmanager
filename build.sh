@@ -16,6 +16,9 @@ if ps --pid "$(cat /tmp/taskmanager-webserver.pid 2>/dev/null)" > /dev/null 2>&1
   echo "Generating Templates..."
   templ generate
   echo "Templates Generated"
+  echo "Compiling CSS..."
+  cat ./static/*/index.css | csso > ./static/index.min.css
+  echo "CSS Compiled"
   echo "Restarting Server..."
   go run ./cmd/web & 
   echo "$!" > "$PID_NAME"
@@ -24,6 +27,9 @@ else
   echo "Generating Templates..."
   templ generate
   echo "Templates Generated"
+  echo "Compiling CSS..."
+  cat ./static/*/index.css | csso > ./static/index.min.css
+  echo "CSS Compiled"
   echo "Starting Server..."
   go run ./cmd/web & 
   echo "$!" > "$PID_NAME"

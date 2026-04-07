@@ -29,7 +29,7 @@ func Layout(content templ.Component) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Task Manager</title><!-- HTMX CDN --><script src=\"https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js\"></script><!-- main stylesheet --><link rel=\"stylesheet\" href=\"/static/index.css\"></head><body><h1 id=\"main-title\">Task Manager</h1><div id=\"content\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Task Manager</title><!-- HTMX CDN --><script src=\"https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js\"></script><!-- main stylesheet --><link rel=\"stylesheet\" href=\"/static/index.min.css\"></head><body id=\"app\"><h1 id=\"main-title\" class=\"div-button\" hx-get=\"/\" hx-trigger=\"click\" hx-target=\"#app\">Task Manager</h1><div id=\"content\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

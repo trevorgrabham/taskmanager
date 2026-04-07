@@ -22,6 +22,7 @@ func main() {
 	http.HandleFunc("/add-task-form", handlers.AddTaskHandler)
 	http.HandleFunc("/add-task", handlers.ParseAddTaskHandler)
 	http.HandleFunc("/recurring-toggle", handlers.ToggleRecurringTaskHandler)
+	http.HandleFunc("/toggle-complete", handlers.ToggleCompleteHandler)
 
 	_ = http.ListenAndServe("127.0.0.1:8080", nil)
 }

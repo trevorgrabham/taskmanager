@@ -1,0 +1,11 @@
+package dashboard
+
+templ AddTaskButton(path string) {
+  <div 
+    class="div-button fill-parent"
+    tabindex="0" 
+    role="button"
+    hx-get={path} 
+    hx-target="#content" 
+  >+</div>
+}

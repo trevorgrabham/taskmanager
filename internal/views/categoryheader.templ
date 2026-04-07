@@ -1,7 +1,0 @@
-package views
-
-import "unicode"
-
-templ CategoryHeader(category []rune) {
-  <li><div class="category-header">{string(unicode.ToUpper(category[0])) + string(category[1:])}</div></li>
-}

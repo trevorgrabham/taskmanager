@@ -12,10 +12,16 @@ templ Layout(content templ.Component) {
     <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js"></script>
 
     <!-- main stylesheet -->
-    <link rel="stylesheet" href="/static/index.css">
+    <link rel="stylesheet" href="/static/index.min.css">
   </head>
-  <body>
-    <h1 id="main-title">Task Manager</h1>
+  <body id="app">
+    <h1 
+      id="main-title" 
+      class="div-button"
+      hx-get="/" 
+      hx-trigger="click"
+      hx-target="#app"
+    >Task Manager</h1>
 
     <div id="content">
       @content

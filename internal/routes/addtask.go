@@ -2,7 +2,7 @@ package routes
 
 import (
 	"local/taskmanager/internal/task"
-	"local/taskmanager/internal/views"
+	"local/taskmanager/internal/views/addtaskform"
 	"log"
 	"net/http"
 	"time"
@@ -20,8 +20,13 @@ func (h Handlers) AddTaskHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		t.DueDate = task.TaskDueDate(dueDate)
 	}
+	category := r.URL.Query().Get("category")
+	if category != "" {
+		t.Category = category
+	}
+
 	w.Header().Set("Content-Type", "text/html")
-	err := views.AddTaskForm(t).Render(r.Context(), w)
+	err := addtaskform.AddTaskForm(t).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, "Error rendering page", http.StatusInternalServerError)
 		log.Printf("index: %s\n", err)

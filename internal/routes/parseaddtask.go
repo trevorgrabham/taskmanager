@@ -11,11 +11,11 @@ import (
 )
 
 func (h Handlers) ParseAddTaskHandler(w http.ResponseWriter, r *http.Request) {
-	// if r.Header.Get("HX-Request") != "true" {
-	// http.Error(w, "Endpoint expected an HTMX request", http.StatusBadRequest)
-	// log.Println("ParseAddTaskHandler(): endpoint hit without HTMX")
-	// return
-	// }
+	if r.Header.Get("HX-Request") != "true" {
+		http.Error(w, "Endpoint expected an HTMX request", http.StatusBadRequest)
+		log.Println("ParseAddTaskHandler(): endpoint hit without HTMX")
+		return
+	}
 	if h.DB == nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		log.Println("ParseAddTaskHandler(): no database provided to handler")

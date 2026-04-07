@@ -1,9 +1,0 @@
-package views
-
-templ WeekTaskList(pi PageInfo) { 
-  <div class="week-of-tasks">
-    for _, key := range pi.WeekOrderedKeys {
-      @DayTaskList(key, pi.WeekOfTasks[key])
-    }
-  </div>
-}

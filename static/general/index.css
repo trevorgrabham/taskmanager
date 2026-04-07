@@ -1,0 +1,13 @@
+body {
+  margin: 0 10%;
+}
+
+.fill-parent {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.div-button {
+  cursor: pointer;
+}

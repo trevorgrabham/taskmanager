@@ -1,0 +1,15 @@
+package dashboard 
+
+import "local/taskmanager/internal/views"
+
+templ Index(pi views.PageInfo) {
+  <div id="dashboard" class="fill-parent">
+    <div id="dashboard-side-panel">
+      <div>@OverdueTasks(pi.OverdueTasks)</div>
+      <div>@CategoryTasks(pi.FavCategoryTasks)</div>
+    </div>
+    <div id="dashboard-main-panel">
+      @WeekTaskList(pi)
+    </div>
+  </div>
+}

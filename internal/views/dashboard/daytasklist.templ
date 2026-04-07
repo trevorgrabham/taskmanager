@@ -1,0 +1,30 @@
+package dashboard 
+
+import (
+  "local/taskmanager/internal/task" 
+  "time" 
+	"fmt"
+)
+
+templ DayTaskList(tasks task.TaskList, unixDate int64) {
+  {{var currentCategory string}}
+
+  <div class="dashboard-day-of-tasks fill-parent">
+    <div class="dashboard-daily-header">
+      <div class="dashboard-tasks-title-header">
+        {time.Unix(unixDate, 0).Format("Mon Jan 2")}
+      </div>
+      <div class="dashboard-date-add-button">@AddTaskButton(fmt.Sprintf("/add-task-form?due-date=%s", time.Unix(unixDate, 0).Format("2006-01-02")))</div>
+    </div>
+    if len(tasks) > 0 { 
+      for _, task := range tasks { 
+        if currentCategory != task.Category {
+          {{currentCategory = task.Category}}
+          <div>@CategoryHeader(task.Category, unixDate)</div>
+        }
+
+        <div>@ListItem(task)</div>
+      } 
+    }
+  </div>
+}

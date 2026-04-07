@@ -1,0 +1,22 @@
+package dashboard
+
+import (
+  "local/taskmanager/internal/task"
+  "fmt"
+)
+
+templ ListItem(t task.Task) {
+  {{var completedClass string}}
+  if t.Done {
+    {{completedClass = " completed-task"}}
+  }
+
+  <div 
+    class={fmt.Sprintf("dashboard-list-item fill-parent div-button%s", completedClass)}
+    tabindex="0"
+    role="button"
+    hx-get={fmt.Sprintf("/toggle-complete?task-id=%d", t.ID)}
+    hx-trigger="click"
+    hx-swap="outerHTML"
+  >{t.Title}</div>
+}

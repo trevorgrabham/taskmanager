@@ -2,7 +2,7 @@ package routes
 
 import (
 	"fmt"
-	"local/taskmanager/internal/views"
+	"local/taskmanager/internal/views/addtaskform"
 	"log"
 	"net/http"
 )
@@ -27,7 +27,7 @@ func (h Handlers) ToggleRecurringTaskHandler(w http.ResponseWriter, r *http.Requ
 
 	w.Header().Set("Content-Type", "text/html")
 	if r.FormValue("recurring") == "on" {
-		fmt.Fprint(w, views.RecurringPeriodInput().Render(r.Context(), w))
+		fmt.Fprint(w, addtaskform.RecurringPeriodInput().Render(r.Context(), w))
 	} else {
 		fmt.Fprint(w, "")
 	}

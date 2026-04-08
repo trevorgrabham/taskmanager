@@ -1,0 +1,38 @@
+package taskinfo
+
+import (
+	"local/taskmanager/internal/task"
+)
+
+templ RecurringPeriodInput(t task.Task) {
+  {{ periodValue, _ := t.PeriodValue() }}
+  <div id="task-info-recurring-period-input">
+    <input 
+      type="text"
+      name="period-value"
+      if t.RecurringPeriod != "" {
+        value={periodValue}
+      }
+      required>
+    <select 
+      name="period-unit"
+      required>
+      <option 
+        value="days"
+        if t.RecurringPeriod != "" && t.RecurringPeriod[len(t.RecurringPeriod)-2:] == "ys" {
+          selected
+        }
+      >Days</option>
+      <option value="weeks"
+        if t.RecurringPeriod != "" && t.RecurringPeriod[len(t.RecurringPeriod)-2:] == "ks" {
+          selected
+        }
+      >Weeks</option>
+      <option value="months"
+        if t.RecurringPeriod != "" && t.RecurringPeriod[len(t.RecurringPeriod)-2:] == "hs" {
+          selected
+        }
+      >Days</option>
+    </select>
+  </div>
+}

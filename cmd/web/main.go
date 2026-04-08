@@ -12,6 +12,7 @@ func main() {
 	if err != nil {
 		log.Fatal("connecting to database: ", err)
 	}
+	defer db.Close()
 
 	handlers := routes.Handlers{DB: db}
 
@@ -21,8 +22,11 @@ func main() {
 	http.HandleFunc("/", handlers.IndexHandler)
 	http.HandleFunc("/add-task-form", handlers.AddTaskHandler)
 	http.HandleFunc("/add-task", handlers.ParseAddTaskHandler)
-	http.HandleFunc("/recurring-toggle", handlers.ToggleRecurringTaskHandler)
+	http.HandleFunc("/toggle-recurring/", handlers.ToggleRecurringTaskHandler)
 	http.HandleFunc("/toggle-complete", handlers.ToggleCompleteHandler)
+	http.HandleFunc("/task", handlers.TaskInfoHandler)
+	http.HandleFunc("/edit-task", handlers.EditTaskHandler)
+	http.HandleFunc("/delete-task/", handlers.DeleteTaskHandler)
 
 	_ = http.ListenAndServe("127.0.0.1:8080", nil)
 }

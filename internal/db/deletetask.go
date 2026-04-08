@@ -10,8 +10,7 @@ func DeleteTask(db *sql.DB, taskToDelete task.Task) error {
 	if db == nil {
 		return fmt.Errorf("deleting task: cannot complete task for nil database")
 	}
-	var defaultTask task.Task
-	if taskToDelete == defaultTask {
+	if taskToDelete.IsZero() {
 		return fmt.Errorf("deleting task: cannot delete an emtpy task")
 	}
 

@@ -18,8 +18,9 @@ func ListWeekOfTasks(db *sql.DB, start time.Time) (map[int64]task.TaskList, erro
 	start = time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, start.Location())
 	end := time.Date(start.Year(), start.Month(), start.Day()+6, 23, 59, 0, 0, start.Location())
 	rows, err := db.Query(`
-		SELECT id, title, category, description, due_date, completion_date, done 
+		SELECT task.id, title, category, description, due_date, completion_date, done, period
 		FROM task 
+		LEFT JOIN recurring ON task.id = recurring.task_id
 		WHERE done = 0 AND due_date >= ? AND due_date <= ?
 		ORDER BY due_date ASC, category`,
 		start.Unix(),

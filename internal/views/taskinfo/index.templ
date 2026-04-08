@@ -1,0 +1,37 @@
+package taskinfo
+
+import (
+  "local/taskmanager/internal/task"
+  "fmt"
+)
+
+templ TaskInfo(t task.Task) {
+  <div class="task-info-content fill-parent">
+    <div class="task-info-header">
+      <div class="task-info-title">{t.Title}</div>
+      <div class="task-info-action-buttons">
+        <div 
+          class="task-info-edit-button div-button"
+          hx-get={fmt.Sprintf("/edit-task?id=%d", t.ID)}
+          hx-target=".task-info-content"
+        >Edit</div>
+        <div 
+          class="task-info-delete-button div-button"
+          hx-get={fmt.Sprintf("/delete-task/%d", t.ID)}
+          hx-target=".task-info-content"
+          hx-swap="outerHTML"
+        >Delete</div>
+      </div>
+    </div>
+    <div class="task-info-sub-header">
+      <div class="task-info-category">{t.Category}</div>
+      if !t.DueDate.IsZero() {
+        <div class="task-info-due-date">{t.DueDate.String()}</div>
+      }
+    </div>
+    <div class="task-info-description">{t.Description}</div>
+    if t.RecurringPeriod != "" {
+      <div class="task-info-recurring">Every {t.RecurringPeriod}</div>
+    }
+  </div>
+}

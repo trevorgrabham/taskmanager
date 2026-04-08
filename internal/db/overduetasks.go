@@ -15,9 +15,10 @@ func OverdueTasks(db *sql.DB) (task.TaskList, error) {
 	now := time.Now()
 	yesterdayAtMidnight := time.Date(now.Year(), now.Month(), now.Day()-1, 23, 59, 0, 0, time.Local)
 	rows, err := db.Query(`
-		SELECT id, title, category, description, due_date, completion_date, done
+		SELECT task.id, title, category, description, due_date, completion_date, done, period
 		FROM task 
-		WHERE done = 0 AND due_date < ? AND due_date IS NOT NULL
+		LEFT JOIN recurring ON task.id = recurring.task_id
+		WHERE done = 0 AND due_date <= ? AND due_date IS NOT NULL
 		ORDER BY category, due_date ASC`,
 		yesterdayAtMidnight.Unix())
 	if err != nil {

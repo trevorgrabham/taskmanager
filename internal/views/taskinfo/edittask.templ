@@ -1,0 +1,56 @@
+package taskinfo
+
+import (
+  "local/taskmanager/internal/task"
+  "fmt"
+  "time"
+)
+
+templ EditTaskInfo(t task.Task) {
+  <form hx-post="/edit-task" hx-target=".task-info-content" class="task-info-content fill-parent">
+    <div class="task-info-header">
+      <input type="hidden" name="id" value={t.ID}>
+      <input 
+        type="text" 
+        name="title" 
+        value={t.Title} 
+        class="task-info-title">
+    </div>
+    <div class="task-info-sub-header">
+      <input 
+        type="text" 
+        name="category" 
+        value={t.Category} 
+        class="task-info-category">
+      <input 
+        type="date" 
+        name="due-date" 
+        if !t.DueDate.IsZero() {
+          value={time.Time(t.DueDate).Format("2006-01-02")} 
+        } 
+        class="task-info-due-date">
+      <input 
+        type="checkbox" 
+        name="recurring" 
+        if t.RecurringPeriod != "" {
+          value="on"
+          checked
+        }
+        hx-get={fmt.Sprintf("/toggle-recurring/edit-task?id=%d", t.ID)}
+        hx-trigger="change" 
+        hx-target="#task-info-recurring-period-input" 
+        hx-swap="innerHTML">
+        if t.RecurringPeriod != "" {
+          @RecurringPeriodInput(t)
+        } else {
+          <div id="task-info-recurring-period-input"></div>
+        }
+    </div>
+    <input 
+      type="text"
+      name="description"
+      value={t.Description}
+      class="task-info-description">
+    <button type="submit">Done</button>
+  </form>
+}

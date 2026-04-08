@@ -2,18 +2,20 @@ package task
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 )
 
 type Task struct {
-	ID             int
-	Title          string
-	Category       string
-	Description    string
-	DueDate        TaskDueDate
-	CompletionDate TaskDueDate
-	Done           bool
+	ID              int
+	Title           string
+	Category        string
+	Description     string
+	DueDate         TaskDueDate
+	CompletionDate  TaskDueDate
+	Done            bool
+	RecurringPeriod string // n days || n weeks || n months
 }
 
 func (t Task) ANSICode() string {
@@ -56,6 +58,20 @@ func (t Task) IsZero() bool {
 	return t.ID == 0 && t.Title == "" && t.Category == "" && t.Description == "" && t.DueDate.IsZero() && t.CompletionDate.IsZero() && !t.Done
 }
 
+func (t Task) PeriodValue() (int, error) {
+	valueString := strings.Split(t.RecurringPeriod, " ")[0]
+	value, err := strconv.Atoi(valueString)
+	if err != nil {
+		return -1, fmt.Errorf("task.PeriodValue(): %s", err)
+	}
+
+	return value, nil
+}
+
+func (t Task) PeriodUnit() string {
+	return strings.Split(t.RecurringPeriod, " ")[1]
+}
+
 // ================================================== TaskList ==================================================
 
 type TaskList []Task
@@ -91,15 +107,4 @@ func (t TaskDueDate) Unix() int64 {
 
 func (t TaskDueDate) IsDue() bool {
 	return !time.Now().After(time.Time(t))
-}
-
-// ================================================== RecurringTask ==================================================
-
-type RecurringTask struct {
-	TaskID int
-	Period string
-}
-
-func (r RecurringTask) IsZero() bool {
-	return r.TaskID == 0 && r.Period == ""
 }

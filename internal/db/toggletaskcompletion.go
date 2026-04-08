@@ -23,7 +23,7 @@ func ToggleTaskComplete(db *sql.DB, taskToToggle task.Task) (t task.Task, err er
 				ELSE NULL
 			END
 		WHERE id = ?
-		RETURNING id, title, category, description, due_date, completion_date, done
+		RETURNING id, title, category, description, due_date, completion_date, done, NULL
 	`, time.Now().Unix(), taskToToggle.ID)
 	t, err = scanTaskRow(row)
 	if err != nil {

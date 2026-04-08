@@ -18,10 +18,10 @@ func scanTaskRow(r dbScannable) (task.Task, error) {
 		id, done                        int64
 		dueDateUnix, completionDateUnix sql.NullInt64
 		title                           string
-		category, description           sql.NullString
+		category, description, period   sql.NullString
 	)
 
-	if err := r.Scan(&id, &title, &category, &description, &dueDateUnix, &completionDateUnix, &done); err != nil {
+	if err := r.Scan(&id, &title, &category, &description, &dueDateUnix, &completionDateUnix, &done, &period); err != nil {
 		return task.Task{}, fmt.Errorf("scanning row: %s", err)
 	}
 
@@ -36,6 +36,10 @@ func scanTaskRow(r dbScannable) (task.Task, error) {
 
 	if description.Valid {
 		t.Description = description.String
+	}
+
+	if period.Valid {
+		t.RecurringPeriod = period.String
 	}
 
 	if dueDateUnix.Valid {

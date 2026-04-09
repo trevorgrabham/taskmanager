@@ -7,4 +7,5 @@ type PageInfo struct {
 	WeekOrderedKeys  []int64
 	OverdueTasks     task.TaskList
 	FavCategoryTasks task.TaskList
+	UnscheduledTasks task.TaskList
 }

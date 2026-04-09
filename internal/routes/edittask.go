@@ -9,6 +9,8 @@ import (
 	"strconv"
 )
 
+// POST request: Parses form data and calls routes/ParseEditTaskHandler() to update the backend
+// GET request: Renders task-info page in view mode
 func (h Handlers) EditTaskHandler(w http.ResponseWriter, r *http.Request) {
 	if h.DB == nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
@@ -17,26 +19,29 @@ func (h Handlers) EditTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodPost {
-		h.ParseEditTaskHandler(w, r)
+		h.ParseEditTask(w, r)
 		return
 	}
 
 	idString := r.URL.Query().Get("id")
 	if idString == "" {
-		http.Error(w, "Bad route", http.StatusBadRequest)
-		log.Printf("task info: bad path %s\n", r.URL.RawPath)
+		http.Error(w, "Error no id", http.StatusBadRequest)
+		log.Println("task info: no id")
 		return
 	}
 
-	id, err := strconv.Atoi(idString)
+	var (
+		t   task.Task
+		err error
+	)
+	t.ID, err = strconv.Atoi(idString)
 	if err != nil {
 		http.Error(w, "Bad route", http.StatusBadRequest)
 		log.Printf("task info: bad id %s\n", idString)
 		return
 	}
 
-	var t task.Task
-	t, err = sqlite.TaskByID(h.DB, id)
+	t, err = sqlite.TaskByID(h.DB, t.ID)
 	if err != nil {
 		http.Error(w, "Error getting task info", http.StatusInternalServerError)
 		log.Printf("task info: %s", err)

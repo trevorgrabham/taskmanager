@@ -11,22 +11,22 @@ import (
 	"time"
 )
 
-func (h Handlers) ParseEditTaskHandler(w http.ResponseWriter, r *http.Request) {
+func (h Handlers) ParseEditTask(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("HX-Request") != "true" {
 		http.Error(w, "Endpoint expected an HTMX request", http.StatusBadRequest)
-		log.Println("ParseEditTaskHandler(): endpoint hit without HTMX")
+		log.Println("parsing edit task: endpoint hit without HTMX")
 		return
 	}
 	if h.DB == nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
-		log.Println("ParseEditTaskHandler(): no database provided to handler")
+		log.Println("parsing edit task: no database provided to handler")
 		return
 	}
 
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, "Unable to parse New Task Form", http.StatusBadRequest)
-		log.Println("ParseEditTaskHandler(): error parsing form")
+		log.Println("parsing edit task: error parsing form")
 		return
 	}
 
@@ -36,8 +36,8 @@ func (h Handlers) ParseEditTaskHandler(w http.ResponseWriter, r *http.Request) {
 	)
 	t.Title = r.FormValue("title")
 	if t.Title == "" {
-		http.Error(w, "No 'title' provided", http.StatusBadRequest)
-		log.Println("ParseEditTaskHandler(): no title provided")
+		http.Error(w, "Error no title", http.StatusBadRequest)
+		log.Println("parsing edit task: no title provided")
 		return
 	}
 
@@ -47,8 +47,8 @@ func (h Handlers) ParseEditTaskHandler(w http.ResponseWriter, r *http.Request) {
 	if dueDateString != "" {
 		dueDate, err = time.ParseInLocation("2006-01-02 3:04PM", dueDateString+" 11:59PM", time.Local)
 		if err != nil {
-			http.Error(w, "Error parsing due date", http.StatusBadRequest)
-			log.Printf("ParseEditTaskHandler(): error parsing due date")
+			http.Error(w, "Error bad due date", http.StatusBadRequest)
+			log.Printf("parsing edit task: %s\n", err)
 			return
 		}
 
@@ -57,26 +57,24 @@ func (h Handlers) ParseEditTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	idString := r.FormValue("id")
 	if idString == "" {
-		http.Error(w, "Error parsing id", http.StatusBadRequest)
-		log.Printf("ParseEditTaskHandler(): error parsing id")
+		http.Error(w, "Error bad id", http.StatusBadRequest)
+		log.Println("parsing edit task: no id")
 		return
 	}
 
-	var id int
-	id, err = strconv.Atoi(idString)
+	t.ID, err = strconv.Atoi(idString)
 	if err != nil {
-		http.Error(w, "Error parsing id", http.StatusBadRequest)
-		log.Printf("ParseEditTaskHandler(): error parsing id")
+		http.Error(w, "Error bad id", http.StatusBadRequest)
+		log.Printf("parsing edit task: %s\n", err)
 		return
 	}
 
-	t.ID = id
 	recurringPeriodValue := r.FormValue("period-value")
 	recurringPeriodUnit := r.FormValue("period-unit")
 	if recurringPeriodValue != "" && recurringPeriodUnit != "" {
 		if recurringPeriodUnit != "days" && recurringPeriodUnit != "weeks" && recurringPeriodUnit != "months" {
 			http.Error(w, "Bad value for recurring unit", http.StatusBadRequest)
-			log.Printf("ParseEditTaskHandler(): bad value for recurring period unit %s", recurringPeriodUnit)
+			log.Printf("parsing edit task: bad value for recurring period unit %s\n", recurringPeriodUnit)
 			return
 		}
 
@@ -84,21 +82,25 @@ func (h Handlers) ParseEditTaskHandler(w http.ResponseWriter, r *http.Request) {
 		value, err = strconv.Atoi(recurringPeriodValue)
 		if err != nil {
 			http.Error(w, "Bad value for recurring value", http.StatusBadRequest)
-			log.Printf("ParseEditTaskHandler(): bad value for recurring period value %s", recurringPeriodValue)
+			log.Printf("parsing edit task: bad value for recurring period value %s\n", recurringPeriodValue)
 			return
 		}
 
 		t.RecurringPeriod = fmt.Sprintf("%d %s", value, recurringPeriodUnit)
 	}
 
-	fmt.Println(t.Title, t.Category, t.Description, t.DueDate, t.RecurringPeriod)
 	err = sqlite.UpdateTask(h.DB, t)
 	if err != nil {
-		http.Error(w, "Error adding task", http.StatusBadRequest)
-		log.Printf("ParseEditTaskHandler(): error adding task to DB")
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		log.Printf("parsing edit task: %s\n", err)
 		return
 	}
 
 	w.Header().Set("Content-Type", "text/html")
-	taskinfo.TaskInfo(t).Render(r.Context(), w)
+	err = taskinfo.TaskInfo(t).Render(r.Context(), w)
+	if err != nil {
+		http.Error(w, "Error rendering page", http.StatusInternalServerError)
+		log.Printf("parsing edit task: %s\n", err)
+		return
+	}
 }

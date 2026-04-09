@@ -20,13 +20,12 @@ func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	http.HandleFunc("/", handlers.IndexHandler)
-	http.HandleFunc("/add-task-form", handlers.AddTaskHandler)
-	http.HandleFunc("/add-task", handlers.ParseAddTaskHandler)
+	http.HandleFunc("/add-task", handlers.AddTaskHandler)
 	http.HandleFunc("/toggle-recurring/", handlers.ToggleRecurringTaskHandler)
 	http.HandleFunc("/toggle-complete", handlers.ToggleCompleteHandler)
 	http.HandleFunc("/task", handlers.TaskInfoHandler)
 	http.HandleFunc("/edit-task", handlers.EditTaskHandler)
-	http.HandleFunc("/delete-task/", handlers.DeleteTaskHandler)
+	http.HandleFunc("/delete-task", handlers.DeleteTaskHandler)
 
 	_ = http.ListenAndServe("127.0.0.1:8080", nil)
 }

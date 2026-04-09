@@ -6,9 +6,9 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
+// Hits the backend db.DeleteTask() and redirects to "/"
 func (h Handlers) DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 	if h.DB == nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
@@ -16,21 +16,25 @@ func (h Handlers) DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	splitPath := strings.Split(r.URL.Path, "/")
-	if len(splitPath) != 3 {
-		http.Error(w, "Bad path", http.StatusBadRequest)
-		log.Printf("delete task: bad path %s\n", r.URL.Path)
+	idString := r.URL.Query().Get("id")
+	if idString == "" {
+		http.Error(w, "Error no id", http.StatusBadRequest)
+		log.Println("delete task: no id")
 		return
 	}
 
-	id, err := strconv.Atoi(splitPath[2])
-	if err != nil {
-		http.Error(w, "Bad id", http.StatusBadRequest)
-		log.Printf("delete task: bad id %s\n", err)
+	var (
+		t   task.Task
+		err error
+	)
+	t.ID, err = strconv.Atoi(idString)
+	if idString == "" {
+		http.Error(w, "Error bad id", http.StatusBadRequest)
+		log.Printf("delete task: %s\n", err)
 		return
 	}
 
-	err = sqlite.DeleteTask(h.DB, task.Task{ID: id})
+	err = sqlite.DeleteTask(h.DB, t)
 	if err != nil {
 		http.Error(w, "Database error", http.StatusBadRequest)
 		log.Printf("delete task: %s\n", err)

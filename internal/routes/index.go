@@ -5,16 +5,18 @@ import (
 	"local/taskmanager/internal/task"
 	"local/taskmanager/internal/views"
 	"local/taskmanager/internal/views/dashboard"
+	"local/taskmanager/internal/views/shared"
 	"log"
 	"net/http"
 	"slices"
 	"time"
 )
 
+// Renders the index.html page
 func (h Handlers) IndexHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
-		log.Printf("index: unknown path %s", r.URL.Path)
+		log.Printf("index: unknown path %s\n", r.URL.Path)
 		return
 	}
 	if h.DB == nil {
@@ -23,11 +25,11 @@ func (h Handlers) IndexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Tasks for the upcoming week
 	var (
 		info views.PageInfo
 		err  error
 	)
+	// Tasks for the upcoming week
 	info.WeekOfTasks, err = sqlite.ListWeekOfTasks(h.DB, time.Now())
 	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
@@ -68,8 +70,15 @@ func (h Handlers) IndexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	info.UnscheduledTasks, err = sqlite.UnscheduledTasks(h.DB)
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		log.Printf("index: %s", err)
+		return
+	}
+
 	w.Header().Set("Content-Type", "text/html")
-	err = views.Layout(dashboard.Index(info)).Render(r.Context(), w)
+	err = shared.Layout(dashboard.Index(info)).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, "Error rendering page", http.StatusInternalServerError)
 		log.Printf("index: %s\n", err)

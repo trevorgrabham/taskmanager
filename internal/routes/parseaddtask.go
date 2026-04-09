@@ -10,22 +10,18 @@ import (
 	"time"
 )
 
-func (h Handlers) ParseAddTaskHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("HX-Request") != "true" {
-		http.Error(w, "Endpoint expected an HTMX request", http.StatusBadRequest)
-		log.Println("ParseAddTaskHandler(): endpoint hit without HTMX")
-		return
-	}
+// Parses the add-task POST request and adds it to our backend. Redirects to "/"
+func (h Handlers) ParseAddTask(w http.ResponseWriter, r *http.Request) {
 	if h.DB == nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
-		log.Println("ParseAddTaskHandler(): no database provided to handler")
+		log.Println("parsing add task: no database provided to handler")
 		return
 	}
 
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, "Unable to parse New Task Form", http.StatusBadRequest)
-		log.Println("ParseAddTaskHandler(): error parsing form")
+		log.Printf("parsing add task: %s\n", err)
 		return
 	}
 
@@ -35,8 +31,8 @@ func (h Handlers) ParseAddTaskHandler(w http.ResponseWriter, r *http.Request) {
 	)
 	t.Title = r.FormValue("title")
 	if t.Title == "" {
-		http.Error(w, "No 'title' provided", http.StatusBadRequest)
-		log.Println("ParseAddTaskHandler(): no title provided")
+		http.Error(w, "Error no title", http.StatusBadRequest)
+		log.Println("parsing add task: no title provided")
 		return
 	}
 
@@ -47,7 +43,7 @@ func (h Handlers) ParseAddTaskHandler(w http.ResponseWriter, r *http.Request) {
 		dueDate, err = time.ParseInLocation("2006-01-02 3:04PM", dueDateString+" 11:59PM", time.Local)
 		if err != nil {
 			http.Error(w, "Error parsing due date", http.StatusBadRequest)
-			log.Printf("ParseAddTaskHandler(): error parsing due date")
+			log.Printf("parsing add task: %s\n", err)
 			return
 		}
 
@@ -59,7 +55,7 @@ func (h Handlers) ParseAddTaskHandler(w http.ResponseWriter, r *http.Request) {
 	if recurringPeriodValue != "" && recurringPeriodUnit != "" {
 		if recurringPeriodUnit != "days" && recurringPeriodUnit != "weeks" && recurringPeriodUnit != "months" {
 			http.Error(w, "Bad value for recurring unit", http.StatusBadRequest)
-			log.Printf("ParseAddTaskHandler(): bad value for recurring period unit %s", recurringPeriodUnit)
+			log.Printf("parsing add task: bad value for recurring period unit %s\n", recurringPeriodUnit)
 			return
 		}
 
@@ -67,7 +63,7 @@ func (h Handlers) ParseAddTaskHandler(w http.ResponseWriter, r *http.Request) {
 		value, err = strconv.Atoi(recurringPeriodValue)
 		if err != nil {
 			http.Error(w, "Bad value for recurring value", http.StatusBadRequest)
-			log.Printf("ParseAddTaskHandler(): bad value for recurring period value %s", recurringPeriodValue)
+			log.Printf("parsing add task: bad value for recurring period value %s\n", recurringPeriodValue)
 			return
 		}
 
@@ -76,8 +72,8 @@ func (h Handlers) ParseAddTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	_, err = sqlite.AddTask(h.DB, t)
 	if err != nil {
-		http.Error(w, "Error adding task", http.StatusBadRequest)
-		log.Printf("ParseAddTaskHandler(): error adding task to DB")
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		log.Printf("parsing add task: %s\n", err)
 		return
 	}
 

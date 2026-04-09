@@ -6,12 +6,12 @@ import (
 )
 
   // {{onRightClick := templ.ComponentScript{CallInline: fmt.Sprintf(`event.preventDefault(); htmx.ajax('GET', '/toggle-complete?task-id=%d', {target: this});`, t.ID)}}}
-templ ListItem(t task.Task) {
+templ ListItem(t, newTask task.Task) {
   {{var completedClass string}}
   if t.Done {
     {{completedClass = " completed-task"}}
   }
-  {{onRightClick := templ.JSUnsafeFuncCall(fmt.Sprintf("event.preventDefault(); htmx.ajax('GET', '/toggle-complete?task-id=%d', { target: this, swap: 'outerHTML' })", t.ID))}}
+  {{onRightClick := templ.JSUnsafeFuncCall(fmt.Sprintf("event.preventDefault(); htmx.ajax('GET', '/toggle-complete?id=%d', { target: this, swap: 'outerHTML' })", t.ID))}}
 
 
   <div 
@@ -23,4 +23,10 @@ templ ListItem(t task.Task) {
     hx-target="#content"
     hx-on:contextmenu={onRightClick}
   >{t.Title}</div>
+
+  if !newTask.IsZero() {
+    // query the database to get the daily tasks for newTask.DueDate
+    // update DayTaskList to accept a (swap bool) arg.
+    // swap it using hx-swap-oob="outerHTML"
+  }
 }

@@ -7,7 +7,12 @@ import (
 )
 
 templ DayTaskList(tasks task.TaskList, unixDate int64) {
-  {{var currentCategory string}}
+  {{
+    tasksByCategory := make(map[string]task.TaskList)
+    for i := range tasks {
+      tasksByCategory[tasks[i].Category] = append(tasksByCategory[tasks[i].Category], tasks[i])
+    }
+  }}
 
   <div class="dashboard-day-of-tasks fill-parent">
     <div class="dashboard-daily-header">
@@ -16,15 +21,8 @@ templ DayTaskList(tasks task.TaskList, unixDate int64) {
       </div>
       <div class="dashboard-date-add-button">@AddTaskButton(fmt.Sprintf("/add-task-form?due-date=%s", time.Unix(unixDate, 0).Format("2006-01-02")))</div>
     </div>
-    if len(tasks) > 0 { 
-      for _, task := range tasks { 
-        if currentCategory != task.Category {
-          {{currentCategory = task.Category}}
-          <div>@CategoryHeader(task.Category, unixDate)</div>
-        }
-
-        <div>@ListItem(task)</div>
-      } 
+    for k := range tasksByCategory {
+      <div>@CategoryTasks(tasksByCategory[k], unixDate, "dashboard-category-container")</div>
     }
   </div>
 }

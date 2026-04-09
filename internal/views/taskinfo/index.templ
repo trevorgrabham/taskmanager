@@ -17,7 +17,7 @@ templ TaskInfo(t task.Task) {
         >Edit</div>
         <div 
           class="task-info-delete-button div-button"
-          hx-get={fmt.Sprintf("/delete-task/%d", t.ID)}
+          hx-get={fmt.Sprintf("/delete-task?id=%d", t.ID)}
           hx-target=".task-info-content"
           hx-swap="outerHTML"
         >Delete</div>

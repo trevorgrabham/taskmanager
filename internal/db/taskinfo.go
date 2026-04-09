@@ -17,8 +17,13 @@ func TaskByID(db *sql.DB, id int) (task.Task, error) {
 	row := db.QueryRow(`
 		SELECT task.id, title, category, description, due_date, completion_date, done, period
 		FROM task 
-		LEFT JOIN recurring ON task.id = recurring.task_id
+		LEFT JOIN recurring ON task.recurring_id = recurring.id
 		WHERE task.id = ?`, id)
 
-	return scanTaskRow(row)
+	t, err := scanTaskRow(row)
+	if err != nil {
+		return task.Task{}, fmt.Errorf("task by id: %s", err)
+	}
+
+	return t, nil
 }

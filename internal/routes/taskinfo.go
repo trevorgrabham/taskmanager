@@ -9,35 +9,44 @@ import (
 	"strconv"
 )
 
+// Renders task-info page
 func (h Handlers) TaskInfoHandler(w http.ResponseWriter, r *http.Request) {
 	if h.DB == nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
-		log.Println("delete task: nil database")
+		log.Println("task info: nil database")
 		return
 	}
 
 	idString := r.URL.Query().Get("id")
 	if idString == "" {
-		http.Error(w, "Bad route", http.StatusBadRequest)
-		log.Printf("task info: bad path %s\n", r.URL.RawPath)
+		http.Error(w, "Error bad id", http.StatusBadRequest)
+		log.Println("task info: no id")
 		return
 	}
 
-	id, err := strconv.Atoi(idString)
+	var (
+		t   task.Task
+		err error
+	)
+	t.ID, err = strconv.Atoi(idString)
 	if err != nil {
-		http.Error(w, "Bad route", http.StatusBadRequest)
-		log.Printf("task info: bad id %s\n", idString)
+		http.Error(w, "Error bad id", http.StatusBadRequest)
+		log.Printf("task info: %s\n", err)
 		return
 	}
 
-	var t task.Task
-	t, err = sqlite.TaskByID(h.DB, id)
+	t, err = sqlite.TaskByID(h.DB, t.ID)
 	if err != nil {
-		http.Error(w, "Error getting task info", http.StatusInternalServerError)
+		http.Error(w, "Database error", http.StatusInternalServerError)
 		log.Printf("task info: %s", err)
 		return
 	}
 
 	w.Header().Set("Content-Type", "text/html")
-	taskinfo.TaskInfo(t).Render(r.Context(), w)
+	err = taskinfo.TaskInfo(t).Render(r.Context(), w)
+	if err != nil {
+		http.Error(w, "Error rendering page", http.StatusInternalServerError)
+		log.Printf("task info: %s", err)
+		return
+	}
 }

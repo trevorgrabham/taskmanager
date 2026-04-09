@@ -15,7 +15,7 @@ func SearchTasks(db *sql.DB, searchKey string) (task.TaskList, error) {
 		return nil, fmt.Errorf("searching tasks: cannot search without a search term")
 	}
 
-	rows, err := db.Query(`SELECT id, title, category, description, due_date, completion_date, done FROM task WHERE title LIKE ?`, "%"+searchKey+"%")
+	rows, err := db.Query(`SELECT id, title, category, description, due_date, completion_date, done, period FROM task LEFT JOIN recurring ON recurring.id = task.recurring_id WHERE title LIKE ?`, "%"+searchKey+"%")
 	if err != nil {
 		return nil, fmt.Errorf("searching tasks: %s", err)
 	}
@@ -51,6 +51,7 @@ func SearchTasksMetaData(db *sql.DB, searchKey string) (task.TaskMetaDataList, e
 	if err != nil {
 		return nil, fmt.Errorf("searching task meta data: %s", err)
 	}
+	defer rows.Close()
 
 	var (
 		matches           task.TaskMetaDataList

@@ -44,7 +44,21 @@ func AddTask(db *sql.DB, newTask task.Task) (id int, err error) {
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	var res sql.Result
+	var (
+		res         sql.Result
+		recurringID int
+	)
+	if newTask.RecurringPeriod != "" {
+		err = tx.QueryRow(`INSERT INTO recurring(period) VALUES (?) ON CONFLICT(period) DO UPDATE SET period=excluded.period RETURNING id`, newTask.RecurringPeriod).Scan(&recurringID)
+		if err != nil {
+			return -1, fmt.Errorf("adding task: %s", err)
+		}
+
+		queryColumns = append(queryColumns, "recurring_id")
+		queryPlaceholders = append(queryPlaceholders, "?")
+		queryArgs = append(queryArgs, recurringID)
+	}
+
 	res, err = tx.Exec(fmt.Sprintf(`INSERT INTO task(%s) VALUES (%s)`, strings.Join(queryColumns, ", "), strings.Join(queryPlaceholders, ", ")), queryArgs...)
 	if err != nil {
 		return -1, fmt.Errorf("adding task: %s", err)
@@ -56,19 +70,6 @@ func AddTask(db *sql.DB, newTask task.Task) (id int, err error) {
 		return -1, fmt.Errorf("adding task: %s", err)
 	}
 
-	id = int(lastID)
-
-	var existed sql.NullBool
-	if newTask.RecurringPeriod != "" {
-		err = tx.QueryRow(`UPDATE recurring SET period = ? WHERE task_id = ? RETURNING 1`, newTask.RecurringPeriod, id).Scan(&existed)
-		if !existed.Valid {
-			_, err = tx.Exec(`INSERT INTO recurring(task_id, period) SELECT ?, ?`, id, newTask.RecurringPeriod)
-		}
-		if err != nil {
-			return -1, fmt.Errorf("adding recurring task: %s", err)
-		}
-	}
-
 	_ = tx.Commit()
-	return id, nil
+	return int(lastID), nil
 }

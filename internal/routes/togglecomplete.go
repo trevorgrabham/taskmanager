@@ -12,7 +12,7 @@ import (
 func (h Handlers) ToggleCompleteHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("HX-Request") != "true" {
 		http.Error(w, "Endpoint expected an HTMX request", http.StatusBadRequest)
-		log.Println("ParseAddTaskHandler(): endpoint hit without HTMX")
+		log.Println("toggle complete: endpoint hit without HTMX")
 		return
 	}
 	if h.DB == nil {
@@ -21,25 +21,25 @@ func (h Handlers) ToggleCompleteHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	taskIDString := r.URL.Query().Get("task-id")
-	if taskIDString == "" {
-		http.Error(w, "Bad task id", http.StatusBadRequest)
-		log.Println("toggle complete: no task id provided")
+	idString := r.URL.Query().Get("id")
+	if idString == "" {
+		http.Error(w, "Error bad id", http.StatusBadRequest)
+		log.Println("toggle complete: no id")
 		return
 	}
 
 	var (
-		t   task.Task
+		t, newTask   task.Task
 		err error
 	)
-	t.ID, err = strconv.Atoi(taskIDString)
+	t.ID, err = strconv.Atoi(idString)
 	if err != nil {
-		http.Error(w, "Bad task id", http.StatusBadRequest)
-		log.Println("toggle complete: unable to parse task id")
+		http.Error(w, "Bad id", http.StatusBadRequest)
+		log.Printf("toggle complete: %s\n", err)
 		return
 	}
 
-	t, err = sqlite.ToggleTaskComplete(h.DB, t)
+	t, newTask, err = sqlite.ToggleTaskComplete(h.DB, t)
 	if err != nil {
 		http.Error(w, "Database error", http.StatusBadRequest)
 		log.Printf("toggle complete: %s\n", err)
@@ -47,7 +47,7 @@ func (h Handlers) ToggleCompleteHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.Header().Set("Content-Type", "text/html")
-	err = dashboard.ListItem(t).Render(r.Context(), w)
+	err = dashboard.ListItem(t, newTask).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, "Error rendering page", http.StatusInternalServerError)
 		log.Printf("toggle complete: %s\n", err)

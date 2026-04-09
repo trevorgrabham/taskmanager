@@ -2,10 +2,10 @@ package dashboard
 
 import "local/taskmanager/internal/task"
 
-templ OverdueTasks(tasks task.TaskList) {
+templ UnscheduledTasks(tasks task.TaskList) {
   {{var currentCategory string}}
-  <div class="dashboard-overdue-tasks fill-parent">
-    <div class="dashboard-tasks-title-header">Overdue</div>
+  <div class="dashboard-unscheduled-tasks fill-parent">
+    <div class="dashboard-tasks-title-header">Unscheduled</div>
     for _, task := range tasks {
       if currentCategory != task.Category {
         {{currentCategory = task.Category}}

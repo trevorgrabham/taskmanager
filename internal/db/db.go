@@ -14,7 +14,15 @@ func Setup(db *sql.DB) error {
 		return fmt.Errorf("setting up: cannot setup a nil db")
 	}
 
-	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS task (
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS recurring (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	period TEXT UNIQUE NOT NULL
+	);`)
+	if err != nil {
+		return fmt.Errorf("setting up: %s", err)
+	}
+
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS task (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	title TEXT NOT NULL,
 	category TEXT,
@@ -22,18 +30,10 @@ func Setup(db *sql.DB) error {
 	due_date INTEGER,
 	completion_date INTEGER,
 	done INTEGER NOT NULL DEFAULT 0
-		CHECK (done IN (0, 1))
+		CHECK (done IN (0, 1)),
+	recurring_id INTEGER,
+	FOREIGN KEY (recurring_id) REFERENCES recurring(id)
 );`)
-	if err != nil {
-		return fmt.Errorf("setting up: %s", err)
-	}
-
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS recurring (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	task_id INTEGER NOT NULL,
-	period TEXT NOT NULL,
-	FOREIGN KEY (task_id) REFERENCES task(id)
-	);`)
 	if err != nil {
 		return fmt.Errorf("setting up: %s", err)
 	}
@@ -47,6 +47,11 @@ func TearDown(db *sql.DB) error {
 	}
 
 	_, err := db.Exec(`DROP TABLE IF EXISTS task;`)
+	if err != nil {
+		return fmt.Errorf("tearing down: %s", err)
+	}
+
+	_, err = db.Exec(`DROP TABLE IF EXISTS recurring;`)
 	if err != nil {
 		return fmt.Errorf("tearing down: %s", err)
 	}
@@ -67,7 +72,7 @@ func Connect() (*sql.DB, error) {
 
 	_, err = db.Exec(`PRAGMA foreign_keys = ON`)
 	if err != nil {
-		return nil, fmt.Errorf("connecting: %s")
+		return nil, fmt.Errorf("connecting: %s", err)
 	}
 
 	return db, nil

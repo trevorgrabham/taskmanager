@@ -17,7 +17,9 @@ templ AddTaskForm(partial task.Task) {
     } else {
       <input class="optional-input" type="date" name="due-date" value={time.Time(partial.DueDate).Format("2006-01-02")}>
     }
-    <input class="optional-input" type="checkbox" name="recurring" hx-get="/recurring-toggle" hx-trigger="change" hx-target="#recurring-period-input" hx-swap="innerHTML">
+    <input class="optional-input" type="checkbox" name="all-day" hx-get="/toggle-time/add-task" hx-trigger="change" hx-target="#time-input" hx-swap="innerHTML" checked>Any time
+    <div id="time-input"></div>
+    <input class="optional-input" type="checkbox" name="recurring" hx-get="/toggle-recurring/add-task" hx-trigger="change" hx-target="#recurring-period-input" hx-swap="innerHTML">
     <div id="recurring-period-input"></div>
     <button type="submit">Submit</button>
   </form>

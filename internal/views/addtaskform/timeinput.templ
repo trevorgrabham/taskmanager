@@ -1,0 +1,18 @@
+package addtaskform
+
+import (
+  "local/taskmanager/internal/task"
+  "time"
+)
+
+templ TimeInput(t task.Task) {
+  <div id="time-input">
+    <input 
+      type="time" 
+      name="time"
+      if !t.IsZero() {
+        value={time.Time(t.DueDate).Format("15:04")}
+      }
+      required>
+  </div>
+}

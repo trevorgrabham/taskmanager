@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func ListWeekOfTasks(db *sql.DB, start time.Time) (map[int64]task.TaskList, error) {
+func ListWeekOfTasks(db *sql.DB, start time.Time) (map[int64]map[string]task.TaskList, error) {
 	if db == nil {
 		return nil, fmt.Errorf("listing weekly: cannot get tasks for a nil database")
 	}
@@ -22,7 +22,7 @@ func ListWeekOfTasks(db *sql.DB, start time.Time) (map[int64]task.TaskList, erro
 		FROM task 
 		LEFT JOIN recurring ON task.recurring_id = recurring.id
 		WHERE done = 0 AND due_date >= ? AND due_date <= ?
-		ORDER BY due_date ASC, category`,
+		ORDER BY due_date ASC, category, title`,
 		start.Unix(),
 		end.Unix())
 	if err != nil {
@@ -32,7 +32,7 @@ func ListWeekOfTasks(db *sql.DB, start time.Time) (map[int64]task.TaskList, erro
 
 	var (
 		tasks      task.TaskList
-		tasksByDay = make(map[int64]task.TaskList)
+		tasksByDay = make(map[int64]map[string]task.TaskList)
 	)
 	for rows.Next() {
 		var t task.Task
@@ -49,14 +49,14 @@ func ListWeekOfTasks(db *sql.DB, start time.Time) (map[int64]task.TaskList, erro
 
 	for i := range 7 {
 		if i == 0 {
-			tasksByDay[start.Unix()] = task.TaskList{}
+			tasksByDay[start.Unix()] = make(map[string]task.TaskList)
 		}
-		tasksByDay[start.AddDate(0, 0, i).Unix()] = task.TaskList{}
+		tasksByDay[start.AddDate(0, 0, i).Unix()] = make(map[string]task.TaskList)
 	}
 	for _, t := range tasks {
 		dueDate := time.Time(t.DueDate)
 		date := time.Date(dueDate.Year(), dueDate.Month(), dueDate.Day(), 0, 0, 0, 0, time.Local)
-		tasksByDay[date.Unix()] = append(tasksByDay[date.Unix()], t)
+		tasksByDay[date.Unix()][t.Category] = append(tasksByDay[date.Unix()][t.Category], t)
 	}
 
 	return tasksByDay, nil

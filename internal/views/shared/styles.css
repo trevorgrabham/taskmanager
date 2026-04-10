@@ -11,3 +11,7 @@ body {
 .div-button {
   cursor: pointer;
 }
+
+#main-title {
+  display: inline-block;
+}

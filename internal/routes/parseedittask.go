@@ -43,9 +43,14 @@ func (h Handlers) ParseEditTask(w http.ResponseWriter, r *http.Request) {
 
 	t.Category = r.FormValue("category")
 	t.Description = r.FormValue("description")
+	timeString := r.FormValue("time")
 	dueDateString := r.FormValue("due-date")
 	if dueDateString != "" {
-		dueDate, err = time.ParseInLocation("2006-01-02 3:04PM", dueDateString+" 11:59PM", time.Local)
+		if timeString == "" {
+			dueDate, err = time.ParseInLocation("2006-01-02 3:04PM", dueDateString+" 11:59PM", time.Local)
+		} else {
+			dueDate, err = time.ParseInLocation("2006-01-02 15:04", dueDateString+" "+timeString, time.Local)
+		}
 		if err != nil {
 			http.Error(w, "Error bad due date", http.StatusBadRequest)
 			log.Printf("parsing edit task: %s\n", err)

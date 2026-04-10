@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"slices"
+	"strings"
 	"time"
 )
 
@@ -39,14 +40,20 @@ func (h Handlers) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get the week of tasks in order
 	tasksPerCategory := make(map[string]task.TaskList)
-	info.WeekOrderedKeys = make([]int64, 0, 7)
-	for k := range info.WeekOfTasks {
-		info.WeekOrderedKeys = append(info.WeekOrderedKeys, k)
-		for _, t := range info.WeekOfTasks[k] {
-			tasksPerCategory[t.Category] = append(tasksPerCategory[t.Category], t)
+	info.WeekDateOrderedKeys = make([]int64, 0, 7)
+	info.WeekCategoryOrderedKeys = make(map[int64][]string)
+	for dateKey := range info.WeekOfTasks {
+		info.WeekCategoryOrderedKeys[dateKey] = make([]string, 0)
+		info.WeekDateOrderedKeys = append(info.WeekDateOrderedKeys, dateKey)
+		for catKey := range info.WeekOfTasks[dateKey] {
+			info.WeekCategoryOrderedKeys[dateKey] = append(info.WeekCategoryOrderedKeys[dateKey], catKey)
+			for _, t := range info.WeekOfTasks[dateKey][catKey] {
+				tasksPerCategory[t.Category] = append(tasksPerCategory[t.Category], t)
+			}
 		}
+		slices.Sort(info.WeekCategoryOrderedKeys[dateKey])
 	}
-	slices.Sort(info.WeekOrderedKeys)
+	slices.Sort(info.WeekDateOrderedKeys)
 
 	// Get the FavCategory (most tasks upcoming)
 	var favCategory string
@@ -61,6 +68,9 @@ func (h Handlers) IndexHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	info.FavCategoryTasks = tasksPerCategory[favCategory]
+	slices.SortFunc(info.FavCategoryTasks, func(a, b task.Task) int {
+		return strings.Compare(a.Title, b.Title)
+	})
 
 	// Get overdue tasks
 	info.OverdueTasks, err = sqlite.OverdueTasks(h.DB)

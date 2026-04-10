@@ -5,7 +5,10 @@ import "local/taskmanager/internal/task"
 templ UnscheduledTasks(tasks task.TaskList) {
   {{var currentCategory string}}
   <div class="dashboard-unscheduled-tasks fill-parent">
-    <div class="dashboard-tasks-title-header">Unscheduled</div>
+    <div class="dashboard-unscheduled-header">
+      <div class="dashboard-unscheduled-title-header">Unscheduled</div>
+      <div class="dashboard-unscheduled-add-button">@AddTaskButton("/add-task")</div>
+    </div>
     for _, task := range tasks {
       if currentCategory != task.Category {
         {{currentCategory = task.Category}}

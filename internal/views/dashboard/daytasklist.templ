@@ -6,22 +6,15 @@ import (
 	"fmt"
 )
 
-templ DayTaskList(tasks task.TaskList, unixDate int64) {
-  {{
-    tasksByCategory := make(map[string]task.TaskList)
-    for i := range tasks {
-      tasksByCategory[tasks[i].Category] = append(tasksByCategory[tasks[i].Category], tasks[i])
-    }
-  }}
-
+templ DayTaskList(tasksByCategory map[string]task.TaskList, sortedKeys []string, unixDate int64) {
   <div class="dashboard-day-of-tasks fill-parent">
     <div class="dashboard-daily-header">
       <div class="dashboard-tasks-title-header">
         {time.Unix(unixDate, 0).Format("Mon Jan 2")}
       </div>
-      <div class="dashboard-date-add-button">@AddTaskButton(fmt.Sprintf("/add-task-form?due-date=%s", time.Unix(unixDate, 0).Format("2006-01-02")))</div>
+      <div class="dashboard-date-add-button">@AddTaskButton(fmt.Sprintf("/add-task?due-date=%s", time.Unix(unixDate, 0).Format("2006-01-02")))</div>
     </div>
-    for k := range tasksByCategory {
+    for _, k := range sortedKeys {
       <div>@CategoryTasks(tasksByCategory[k], unixDate, "dashboard-category-container")</div>
     }
   </div>

@@ -17,7 +17,7 @@ if ps --pid "$(cat /tmp/taskmanager-webserver.pid 2>/dev/null)" > /dev/null 2>&1
   templ generate
   echo "Templates Generated"
   echo "Compiling CSS..."
-  cat ./static/*/index.css | csso > ./static/index.min.css
+  find ./internal -type f -name "*.css" -print0 | xargs -0 cat | csso > ./static/index.min.css
   echo "CSS Compiled"
   echo "Restarting Server..."
   go run ./cmd/web & 
@@ -28,7 +28,7 @@ else
   templ generate
   echo "Templates Generated"
   echo "Compiling CSS..."
-  cat ./static/*/index.css | csso > ./static/index.min.css
+  find ./internal -type f -name "*.css" -print0 | xargs -0 cat | csso > ./static/index.min.css
   echo "CSS Compiled"
   echo "Starting Server..."
   go run ./cmd/web & 

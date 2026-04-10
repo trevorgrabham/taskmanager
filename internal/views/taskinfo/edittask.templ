@@ -2,11 +2,13 @@ package taskinfo
 
 import (
   "local/taskmanager/internal/task"
+  "local/taskmanager/internal/views/addtaskform"
   "fmt"
   "time"
 )
 
 templ EditTaskInfo(t task.Task) {
+  {{dueDate := time.Time(t.DueDate)}}
   <form hx-post="/edit-task" hx-target=".task-info-content" class="task-info-content fill-parent">
     <div class="task-info-header">
       <input type="hidden" name="id" value={t.ID}>
@@ -30,6 +32,22 @@ templ EditTaskInfo(t task.Task) {
           value={time.Time(t.DueDate).Format("2006-01-02")} 
         } 
         class="task-info-due-date">
+      <input 
+        class="optional-input" 
+        type="checkbox" 
+        name="all-day" 
+        hx-get={fmt.Sprintf("/toggle-time/edit-task?id=%d", t.ID)}
+        hx-trigger="change" 
+        hx-target="#time-input" 
+        hx-swap="innerHTML" 
+        if dueDate.Hour() == 23 && dueDate.Minute() == 59 {
+          checked
+        }>Any time
+      if dueDate.Hour() == 23 && dueDate.Minute() == 59 {
+        <div id="time-input"></div>
+      } else { 
+        @addtaskform.TimeInput(t)
+      }
       <input 
         type="checkbox" 
         name="recurring" 

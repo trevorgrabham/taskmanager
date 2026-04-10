@@ -23,6 +23,7 @@ func main() {
 	http.HandleFunc("/add-task", handlers.AddTaskHandler)
 	http.HandleFunc("/toggle-recurring/", handlers.ToggleRecurringTaskHandler)
 	http.HandleFunc("/toggle-complete", handlers.ToggleCompleteHandler)
+	http.HandleFunc("/toggle-time/", handlers.ToggleTimeHandler)
 	http.HandleFunc("/task", handlers.TaskInfoHandler)
 	http.HandleFunc("/edit-task", handlers.EditTaskHandler)
 	http.HandleFunc("/delete-task", handlers.DeleteTaskHandler)

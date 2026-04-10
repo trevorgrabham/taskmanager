@@ -40,10 +40,10 @@ templ EditTaskInfo(t task.Task) {
         hx-trigger="change" 
         hx-target="#time-input" 
         hx-swap="innerHTML" 
-        if dueDate.Hour() == 23 && dueDate.Minute() == 59 {
+        if t.DueDate.IsZero() || (dueDate.Hour() == 23 && dueDate.Minute() == 59) {
           checked
         }>Any time
-      if dueDate.Hour() == 23 && dueDate.Minute() == 59 {
+      if t.DueDate.IsZero() || (dueDate.Hour() == 23 && dueDate.Minute() == 59) {
         <div id="time-input"></div>
       } else { 
         @addtaskform.TimeInput(t)

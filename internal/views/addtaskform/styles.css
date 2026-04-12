@@ -1,0 +1,12 @@
+.add-form-category-suggestion {
+  display: none;
+}
+
+.add-form-category-matched {
+  display: block;
+  color: #00f;
+}
+
+.add-form-category-matched.active {
+  color: #0f0;
+}

@@ -6,7 +6,7 @@ import (
 )
 
 templ AddTaskForm(partial task.Task, categories []string) {
-  <form hx-post="/add-task" hx-target="#content" id="add-form">
+  <form hx-post="/add-task" hx-target="#content" hx-on::load="registerCategorySuggestions()" id="add-form">
     <input 
       id="add-form-title" 
       type="text" 
@@ -36,6 +36,12 @@ templ AddTaskForm(partial task.Task, categories []string) {
         name="category" 
         value={partial.Category}>
     }
+
+    <div id="add-form-category-suggestions">
+      for _, category := range categories {
+        <div class="add-form-category-suggestion">{category}</div>
+      }
+    </div>
 
     if partial.DueDate.IsZero() {
       <input 
@@ -79,6 +85,6 @@ templ AddTaskForm(partial task.Task, categories []string) {
 
     <button id="add-form-submit-button" type="submit">Submit</button>
 
-    @templ.JSONScript("add-form-category-autocomplete-data", categories)
+    // @templ.JSONScript("add-form-category-autocomplete-data", categories)
   </form>
 }

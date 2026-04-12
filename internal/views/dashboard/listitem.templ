@@ -5,7 +5,6 @@ import (
   "fmt"
 )
 
-  // {{onRightClick := templ.ComponentScript{CallInline: fmt.Sprintf(`event.preventDefault(); htmx.ajax('GET', '/toggle-complete?task-id=%d', {target: this});`, t.ID)}}}
 templ ListItem(t, newTask task.Task) {
   {{var completedClass string}}
   if t.Done {
@@ -20,7 +19,7 @@ templ ListItem(t, newTask task.Task) {
     hx-trigger="click"
     hx-target="#content"
     hx-on:contextmenu={templ.JSUnsafeFuncCall(fmt.Sprintf("event.preventDefault(); htmx.ajax('GET', '/toggle-complete?id=%d', { target: this, swap: 'outerHTML' })", t.ID))}
-    hx-on::load={templ.JSUnsafeFuncCall("setTimeout(() => { if (this.classList.contains('completed-task')) { parent = this.parentNode.parentNode; this.parentNode.remove(); setTimeout(() => { if (parent.children.length == 1) { parent.remove() }}, 0)}} , 5000)")}
+    hx-on::load="removeCompletedTask(this)"
   >{t.Title}</div>
 
   if !newTask.IsZero() {

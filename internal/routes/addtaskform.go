@@ -3,6 +3,7 @@ package routes
 import (
 	"local/taskmanager/internal/task"
 	"local/taskmanager/internal/views/addtaskform"
+	sqlite "local/taskmanager/internal/db"
 	"log"
 	"net/http"
 	"time"
@@ -29,8 +30,15 @@ func (h Handlers) AddTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	t.Category = r.URL.Query().Get("category")
 
+	userCategories, err := sqlite.Categories(h.DB)
+	if err != nil { 
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		log.Printf("add task form: %s\n", err)
+		return
+	}
+
 	w.Header().Set("Content-Type", "text/html")
-	err := addtaskform.AddTaskForm(t).Render(r.Context(), w)
+	err = addtaskform.AddTaskForm(t, userCategories).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, "Error rendering page", http.StatusInternalServerError)
 		log.Printf("add task form: %s\n", err)

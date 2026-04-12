@@ -1,26 +1,84 @@
 package addtaskform
 
-import "local/taskmanager/internal/task"
-import "time"
+import (
+  "local/taskmanager/internal/task"
+  "time" 
+)
 
-templ AddTaskForm(partial task.Task) {
-  <form hx-post="/add-task" hx-target="#content" id="add-task-form">
-    <input type="text" name="title" placeholder="Title..." required>
-    <input class="optional-input" type="text" name="description" placeholder="Description...">
+templ AddTaskForm(partial task.Task, categories []string) {
+  <form hx-post="/add-task" hx-target="#content" id="add-form">
+    <input 
+      id="add-form-title" 
+      type="text" 
+      name="title" 
+      placeholder="Title..." 
+      required>
+
+    <input 
+      id="add-form-description" 
+      class="add-form-optional-input" 
+      type="text" 
+      name="description" 
+      placeholder="Description...">
+
     if partial.Category == "" {
-      <input class="optional-input" type="text" name="category" placeholder="Category...">
+      <input 
+        id="add-form-category" 
+        class="add-form-optional-input" 
+        type="text" 
+        name="category" 
+        placeholder="Category...">
     } else {
-      <input class="optional-input" type="text" name="category" value={partial.Category}>
+      <input 
+        id="add-form-category" 
+        class="add-form-optional-input" 
+        type="text" 
+        name="category" 
+        value={partial.Category}>
     }
+
     if partial.DueDate.IsZero() {
-      <input class="optional-input" type="date" name="due-date">
+      <input 
+        id="add-form-due-date" 
+        class="add-form-optional-input" 
+        type="date" 
+        name="due-date">
     } else {
-      <input class="optional-input" type="date" name="due-date" value={time.Time(partial.DueDate).Format("2006-01-02")}>
+      <input 
+        id="add-form-due-date" 
+        class="add-form-optional-input" 
+        type="date" 
+        name="due-date" 
+        value={time.Time(partial.DueDate).Format("2006-01-02")}>
     }
-    <input class="optional-input" type="checkbox" name="all-day" hx-get="/toggle-time/add-task" hx-trigger="change" hx-target="#time-input" hx-swap="innerHTML" checked>Any time
-    <div id="time-input"></div>
-    <input class="optional-input" type="checkbox" name="recurring" hx-get="/toggle-recurring/add-task" hx-trigger="change" hx-target="#recurring-period-input" hx-swap="innerHTML">
-    <div id="recurring-period-input"></div>
-    <button type="submit">Submit</button>
+
+    <input 
+      id="add-form-all-day-toggle" 
+      class="add-form-optional-input" 
+      type="checkbox" 
+      name="all-day" 
+      hx-get="/toggle-time/add-task" 
+      hx-trigger="change" 
+      hx-target="#add-form-time-input" 
+      hx-swap="innerHTML" 
+      checked>Any time
+
+    <div id="add-form-time-input"></div>
+
+    <input 
+      id="add-form-recurring-toggle"
+      class="add-form-optional-input" 
+      type="checkbox" 
+      name="recurring" 
+      hx-get="/toggle-recurring/add-task" 
+      hx-trigger="change" 
+      hx-target="#add-form-recurring-period-input" 
+      hx-swap="innerHTML">
+
+    <div id="add-form-recurring-period-input"></div>
+
+    <button id="add-form-submit-button" type="submit">Submit</button>
+
+    @templ.JSONScript("add-form-category-autocomplete-data", categories)
   </form>
 }

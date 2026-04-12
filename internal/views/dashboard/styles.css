@@ -48,16 +48,16 @@
   display: flex;
   justify-content: space-between;
   font-size: 1.5em;
+  margin-block-start: 0.5em;
 }
 
 .dashboard-category-banner {
   display: flex;
-  row-gap: 5em;
+  column-gap: 0.5em;
 }
 
 .dashboard-category-header {
   font-size: 1.2em;
-  margin-block-start: 0.5em;
 }
 
 .dashboard-list-item:not(:last-child) {

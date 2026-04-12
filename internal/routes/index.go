@@ -27,11 +27,11 @@ func (h Handlers) IndexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var (
-		info views.PageInfo
+		info = views.PageInfo{StartDay: time.Now()}
 		err  error
 	)
 	// Tasks for the upcoming week
-	info.WeekOfTasks, err = sqlite.ListWeekOfTasks(h.DB, time.Now())
+	info.WeekOfTasks, err = sqlite.ListWeekOfTasks(h.DB, info.StartDay)
 	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		log.Printf("index: %s", err)
@@ -40,11 +40,9 @@ func (h Handlers) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get the week of tasks in order
 	tasksPerCategory := make(map[string]task.TaskList)
-	info.WeekDateOrderedKeys = make([]int64, 0, 7)
-	info.WeekCategoryOrderedKeys = make(map[int64][]string)
+	info.WeekCategoryOrderedKeys = make(map[int][]string)
 	for dateKey := range info.WeekOfTasks {
 		info.WeekCategoryOrderedKeys[dateKey] = make([]string, 0)
-		info.WeekDateOrderedKeys = append(info.WeekDateOrderedKeys, dateKey)
 		for catKey := range info.WeekOfTasks[dateKey] {
 			info.WeekCategoryOrderedKeys[dateKey] = append(info.WeekCategoryOrderedKeys[dateKey], catKey)
 			for _, t := range info.WeekOfTasks[dateKey][catKey] {
@@ -53,7 +51,6 @@ func (h Handlers) IndexHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		slices.Sort(info.WeekCategoryOrderedKeys[dateKey])
 	}
-	slices.Sort(info.WeekDateOrderedKeys)
 
 	// Get the FavCategory (most tasks upcoming)
 	var favCategory string

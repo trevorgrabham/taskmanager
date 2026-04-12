@@ -1,11 +1,14 @@
 package views
 
-import "local/taskmanager/internal/task"
+import (
+	"local/taskmanager/internal/task"
+	"time"
+)
 
 type PageInfo struct {
-	WeekOfTasks             map[int64]map[string]task.TaskList
-	WeekDateOrderedKeys     []int64
-	WeekCategoryOrderedKeys map[int64][]string
+	StartDay                time.Time
+	WeekOfTasks             map[int]map[string]task.TaskList
+	WeekCategoryOrderedKeys map[int][]string
 	OverdueTasks            task.TaskList
 	FavCategoryTasks        task.TaskList
 	UnscheduledTasks        task.TaskList

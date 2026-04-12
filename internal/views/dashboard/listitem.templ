@@ -20,7 +20,7 @@ templ ListItem(t, newTask task.Task) {
     hx-trigger="click"
     hx-target="#content"
     hx-on:contextmenu={templ.JSUnsafeFuncCall(fmt.Sprintf("event.preventDefault(); htmx.ajax('GET', '/toggle-complete?id=%d', { target: this, swap: 'outerHTML' })", t.ID))}
-    hx-on::load={templ.JSUnsafeFuncCall("setTimeout(() => { if (this.classList.contains('completed-task')) { parent = this.parentNode.parentNode; this.parentNode.remove(); setTimeout(() => { if (parent.children.length == 1) { parent.remove() }}, 0)}} , 10000)")}
+    hx-on::load={templ.JSUnsafeFuncCall("setTimeout(() => { if (this.classList.contains('completed-task')) { parent = this.parentNode.parentNode; this.parentNode.remove(); setTimeout(() => { if (parent.children.length == 1) { parent.remove() }}, 0)}} , 5000)")}
   >{t.Title}</div>
 
   if !newTask.IsZero() {

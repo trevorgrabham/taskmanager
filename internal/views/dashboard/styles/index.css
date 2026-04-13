@@ -1,0 +1,21 @@
+#dashboard {
+  display: flex;
+  column-gap: var(--default-dashboard-gap);
+}
+
+#dashboard-main-panel {
+  flex: 3;
+}
+
+#dashboard-side-panel {
+  display: flex;
+  flex-direction: column;
+  row-gap: var(--default-dashboard-gap);
+
+  flex: 1;
+}
+
+#dashboard-side-panel > div {
+  flex: 1;
+  flex-grow: 0;
+}

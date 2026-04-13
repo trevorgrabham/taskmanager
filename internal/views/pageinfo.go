@@ -9,7 +9,7 @@ type PageInfo struct {
 	StartDay                time.Time
 	WeekOfTasks             map[int]map[string]task.TaskList
 	WeekCategoryOrderedKeys map[int][]string
-	OverdueTasks            task.TaskList
+	OverdueTasks            map[string]task.TaskList
 	FavCategoryTasks        task.TaskList
-	UnscheduledTasks        task.TaskList
+	UnscheduledTasks        map[string]task.TaskList
 }

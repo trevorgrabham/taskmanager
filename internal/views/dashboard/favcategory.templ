@@ -1,0 +1,21 @@
+package dashboard
+
+import (
+  "local/taskmanager/internal/task"
+  "fmt"
+)
+
+templ FavCategoryTasks(tasks task.TaskList) {
+  <div class="dashboard-fav-category-tasks dashboard-tasks-container fill-parent">
+    <div class="dashboard-tasks-title-header-container">
+      <div class="dashboard-tasks-title-header dashboard-fav-category-title-header">{tasks[0].Category}</div>
+      <div class="dashboard-unscheduled-add-button">@AddTaskButton(fmt.Sprintf("/add-task?category=%s", tasks[0].Category))</div>
+    </div>
+    <div class="dashboard-list-items-container">
+    for _, task := range tasks {
+      <div class="dashboard-list-item-container">@ListItem(task, defaultTask)</div>
+    }
+    </div>
+  </div>
+}
+

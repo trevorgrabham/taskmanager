@@ -1,0 +1,12 @@
+.dashboard-week-of-tasks {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-day-of-tasks-container {
+  flex: 1;
+}
+
+.dashboard-day-of-tasks-container:not(:first-child) {
+  border-block-start: var(--default-border);
+}

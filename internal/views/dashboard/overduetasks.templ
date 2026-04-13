@@ -1,18 +1,26 @@
 package dashboard
 
-import "local/taskmanager/internal/task"
+import (
+  "local/taskmanager/internal/task"
+  "slices"
+)
 
-templ OverdueTasks(tasks task.TaskList) {
-  {{var currentCategory string}}
-  <div class="dashboard-overdue-tasks fill-parent">
-    <div class="dashboard-tasks-title-header">Overdue</div>
-    for _, task := range tasks {
-      if currentCategory != task.Category {
-        {{currentCategory = task.Category}}
-        <div>@CategoryHeader(task.Category, 0)</div>
-      }
-
-      <div>@ListItem(task, defaultTask)</div>
+templ OverdueTasks(taskMap map[string]task.TaskList) {
+  {{
+    var sortedCategories []string
+    for k := range taskMap {
+      sortedCategories = append(sortedCategories, k)
     }
+    slices.Sort(sortedCategories)
+  }}
+  <div class="dashboard-overdue-tasks dashboard-tasks-container fill-parent">
+    <div class="dashboard-tasks-title-header-container">
+      <div class="dashboard-tasks-title-header">Overdue</div>
+    </div>
+    <div class="dashboard-categories-container">
+    for _, category := range sortedCategories {
+      <div class="dashboard-category-container">@CategoryTasks(taskMap[category], 0, "")</div>
+    }
+    </div>
   </div>
 }

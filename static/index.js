@@ -5,6 +5,7 @@ const maxCategorySelections = 5;
 
 let categorySuggestionIndex = -1;
 let categoryInputTimeout;
+let draggedTask = null;
 
 function removeCompletedTask(taskEl) {
   let parent;
@@ -189,3 +190,44 @@ function registerCategorySuggestions() {
     }
   });
 }
+
+// func registerDashboardForDrags() {
+//   const dashboard = document.getElementById("dashboard")
+//   if (dashboard == null) { return }
+//
+//   dashboard.addEventListener("mousemove", (e) => {
+//     if (draggedTask == null || draggedTask.task == null) { return }
+//
+//     // update the x and y values for draggedTask 
+//     //    clientX/Y - getBoundingClientRect().left/top
+//     // change its positioning. style.top, style.left
+//   })
+//
+//   dashboard.addEventListener("mouseup", (e) => {
+//     if (draggedTask == null || draggedTask.task == null) { return }
+//
+//     // get the element underneath the current mouse position. document.elementFromPoint(x, y).closest("droppable_container")
+//     // if there is no droppable container 
+//     //    revert back to previous parent. parent.insertBefore(draggedTask, nextSib)
+//     // else
+//     //    see if the droppable container has a matching category header
+//     //    if they do 
+//     //      iterate through its children until we find a child that has a title that comes after draggedTask
+//     //      if we reach the end of the children then just parent.appendChild(draggedTask)
+//     //    else 
+//     //      hit an endpoint that sends the taskID and containers date so create a new category
+//     // reset pointerevents. style.pointerEvents = "auto"
+//     // draggedTask = null
+//   })
+// }
+//
+// func registerDraggable(el) {
+//   if (el == null) { return }
+//
+//   el.addEventListener("mousedown", (e) => {
+//     // grab the parent and nextSibling from draggedTask 
+//     // grab the category
+//     // move draggedTask to a child of the <body> instead of its parent doc.body.appendChild(draggedEl)
+//     // remove pointer events from the draggedTask .style.pointerEvents = "none"
+//   })
+// }

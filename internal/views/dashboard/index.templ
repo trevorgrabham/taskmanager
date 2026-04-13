@@ -10,9 +10,9 @@ var defaultTask task.Task
 templ Index(pi views.PageInfo) {
   <div id="dashboard" class="fill-parent">
     <div id="dashboard-side-panel">
-      <div>@OverdueTasks(pi.OverdueTasks)</div>
-      <div>@UnscheduledTasks(pi.UnscheduledTasks)</div>
-      <div>@CategoryTasks(pi.FavCategoryTasks, 0, "dashboard-fav-category-tasks")</div>
+      <div id="dashboard-overdue-container">@OverdueTasks(pi.OverdueTasks)</div>
+      <div id="dashboard-unscheduled-container">@UnscheduledTasks(pi.UnscheduledTasks)</div>
+      // <div id="dashboard-fav-container">@FavCategoryTasks(pi.FavCategoryTasks)</div>
     </div>
     <div id="dashboard-main-panel">
       @WeekTaskList(pi)

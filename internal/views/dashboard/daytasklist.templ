@@ -7,15 +7,17 @@ import (
 )
 
 templ DayTaskList(tasksByCategory map[string]task.TaskList, sortedKeys []string, unixDate int64) {
-  <div class="dashboard-day-of-tasks fill-parent">
-    <div class="dashboard-daily-header">
+  <div class="dashboard-day-of-tasks dashboard-tasks-container fill-parent">
+    <div class="dashboard-tasks-title-header-container">
       <div class="dashboard-tasks-title-header">
         {time.Unix(unixDate, 0).Format("Mon Jan 2")}
       </div>
       <div class="dashboard-date-add-button">@AddTaskButton(fmt.Sprintf("/add-task?due-date=%s", time.Unix(unixDate, 0).Format("2006-01-02")))</div>
     </div>
+    <div class="dashboard-categories-container">
     for _, k := range sortedKeys {
-      <div>@CategoryTasks(tasksByCategory[k], unixDate, "dashboard-category-container")</div>
+      <div class="dashboard-category-container">@CategoryTasks(tasksByCategory[k], unixDate, "")</div>
     }
+    </div>
   </div>
 }

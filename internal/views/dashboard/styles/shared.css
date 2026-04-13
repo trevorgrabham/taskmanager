@@ -1,0 +1,21 @@
+.dashboard-default-borders {
+  border: var(--default-border);
+  border-radius: var(--default-border-radius);
+}
+
+.dashboard-tasks-title-header-container {
+  display: flex;
+  justify-content: space-between;
+
+  font-size: var(--default-date-header-font-size);
+}
+
+.dashboard-categories-container {
+  display: flex;
+  flex-direction: column;
+  row-gap: var(--default-category-container-gap);
+}
+
+.dashboard-tasks-container {
+  padding: var(--default-task-container-padding);
+}

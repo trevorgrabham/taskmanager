@@ -70,18 +70,28 @@ func (h Handlers) IndexHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// Get overdue tasks
-	info.OverdueTasks, err = sqlite.OverdueTasks(h.DB)
+	var overdue task.TaskList
+	overdue, err = sqlite.OverdueTasks(h.DB)
 	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		log.Printf("index: %s", err)
 		return
 	}
+	info.OverdueTasks = make(map[string]task.TaskList)
+	for _, t := range overdue {
+		info.OverdueTasks[t.Category] = append(info.OverdueTasks[t.Category], t)
+	}
 
-	info.UnscheduledTasks, err = sqlite.UnscheduledTasks(h.DB)
+	var unscheduled task.TaskList
+	unscheduled, err = sqlite.UnscheduledTasks(h.DB)
 	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		log.Printf("index: %s", err)
 		return
+	}
+	info.UnscheduledTasks = make(map[string]task.TaskList)
+	for _, t := range unscheduled {
+		info.UnscheduledTasks[t.Category] = append(info.UnscheduledTasks[t.Category], t)
 	}
 
 	w.Header().Set("Content-Type", "text/html")

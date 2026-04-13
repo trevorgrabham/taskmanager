@@ -1,3 +1,15 @@
+:root {
+  --default-border: 1px solid white;
+  --default-border-radius: 15px;
+  --default-dashboard-gap: 5vh;
+  --default-task-container-padding: 1em;
+  --default-date-header-font-size: 1.5em;
+  --default-category-container-gap: 1vh;
+  --default-category-banner-gap: 0.75em;
+  --default-category-banner-font-size: 1.3em;
+  --default-category-banner-margin: 0.2em;
+}
+
 body {
   margin: 0 10%;
 }

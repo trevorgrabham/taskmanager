@@ -1,0 +1,8 @@
+#dashboard-fav-container {
+  border: var(--default-border);
+  border-radius: var(--default-border-radius);
+}
+
+.dashboard-fav-category-title-header {
+  margin-block-end: var(--default-category-banner-margin);
+}

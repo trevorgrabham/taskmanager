@@ -1,21 +1,27 @@
 package dashboard
 
-import "local/taskmanager/internal/task"
+import (
+  "local/taskmanager/internal/task"
+  "slices"
+)
 
-templ UnscheduledTasks(tasks task.TaskList) {
-  {{var currentCategory string}}
-  <div class="dashboard-unscheduled-tasks fill-parent">
-    <div class="dashboard-unscheduled-header">
-      <div class="dashboard-unscheduled-title-header">Unscheduled</div>
+templ UnscheduledTasks(taskMap map[string]task.TaskList) {
+  {{
+    var sortedCategories []string
+    for k := range taskMap {
+      sortedCategories = append(sortedCategories, k)
+    }
+    slices.Sort(sortedCategories)
+  }}
+  <div class="dashboard-unscheduled-tasks dashboard-tasks-container fill-parent">
+    <div class="dashboard-tasks-title-header-container">
+      <div class="dashboard-tasks-title-header">Unscheduled</div>
       <div class="dashboard-unscheduled-add-button">@AddTaskButton("/add-task")</div>
     </div>
-    for _, task := range tasks {
-      if currentCategory != task.Category {
-        {{currentCategory = task.Category}}
-        <div>@CategoryHeader(task.Category, 0)</div>
-      }
-
-      <div>@ListItem(task, defaultTask)</div>
+    <div class="dashboard-categories-container">
+    for _, category := range sortedCategories {
+      <div class="dashboard-category-container">@CategoryTasks(taskMap[category], 0, "")</div>
     }
+    </div>
   </div>
 }

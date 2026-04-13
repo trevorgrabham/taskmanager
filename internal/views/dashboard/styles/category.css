@@ -1,0 +1,7 @@
+.dashboard-category-banner {
+  display: flex;
+  column-gap: var(--default-category-banner-gap);
+
+  font-size: var(--default-category-banner-font-size);
+  margin-block-end: var(--default-category-banner-margin);
+}

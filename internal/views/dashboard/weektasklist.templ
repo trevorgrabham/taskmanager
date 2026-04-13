@@ -6,9 +6,9 @@ import (
 )
 
 templ WeekTaskList(pi views.PageInfo) { 
-  <div class="dashboard-week-of-tasks fill-parent dashboard-default-borders">
+  <div id="dashboard-week-of-tasks" class="fill-parent dashboard-default-borders">
     for i := range 7 {
-      <div>@DayTaskList(pi.WeekOfTasks[(int(pi.StartDay.Weekday()) + i) % 7], pi.WeekCategoryOrderedKeys[(int(pi.StartDay.Weekday()) + i) % 7], time.Now().AddDate(0, 0, i).Unix())</div>
+      <div class="dashboard-day-of-tasks-container">@DayTaskList(pi.WeekOfTasks[(int(pi.StartDay.Weekday()) + i) % 7], pi.WeekCategoryOrderedKeys[(int(pi.StartDay.Weekday()) + i) % 7], time.Now().AddDate(0, 0, i).Unix())</div>
     }
   </div>
 }

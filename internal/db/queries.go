@@ -114,14 +114,14 @@ func QueryTasks(db *sql.DB, params TaskQueryParams) (task.TaskList, error) {
 	)
 	if len(queryFilters) > 0 {
 		rows, err = db.Query(fmt.Sprintf(`
-			SELECT id, title, category, description, due_date, completion_date, done, period 
+			SELECT task.id, title, category, description, due_date, completion_date, done, period 
 			FROM task 
 			LEFT JOIN recurring ON recurring.id = task.recurring_id
 			WHERE %s 
 			ORDER BY category, done DESC, completion_date, due_date`, strings.Join(queryFilters, " AND ")), queryArgs...)
 	} else {
 		rows, err = db.Query(`
-			SELECT id, title, category, description, due_date, completion_date, done, period 
+			SELECT task.id, title, category, description, due_date, completion_date, done, period 
 			FROM task 
 			LEFT JOIN recurring ON recurring.id = task.recurring_id
 			ORDER BY category, done DESC, completion_date, due_date`)

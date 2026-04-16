@@ -3,9 +3,10 @@ package dashboard
 import (
   "local/taskmanager/internal/task"
   "fmt" 
+  "time"
 )
 
-templ CategoryTasks(tasks task.TaskList, unixDate int64, class string) {
+templ CategoryTasks(tasks task.TaskList, date time.Time, class string) {
 {{
   if class == "" {
     class = "dashboard-category fill-parent"
@@ -15,10 +16,10 @@ templ CategoryTasks(tasks task.TaskList, unixDate int64, class string) {
 }}
 
   <div class={class}>
-    <div class="dashboard-category-header-container">@CategoryHeader(tasks[0].Category, unixDate)</div>
+    <div class="dashboard-category-header-container">@CategoryHeader(tasks[0].Category, date)</div>
     <div class="dashboard-list-items-container">
     for _, task := range tasks {
-      <div class="dashboard-list-item-container">@ListItem(task, defaultTask)</div>
+      <div class="dashboard-list-item-container" hx-on:mousedown="onMouseDown(event, this)">@ListItem(task, defaultTask)</div>
     }
     </div>
   </div>

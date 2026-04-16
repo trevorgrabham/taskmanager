@@ -5,11 +5,11 @@ import (
   "time"
 )
 
-templ CategoryHeader(category string, unixDate int64) {
+templ CategoryHeader(category string, date time.Time) {
   <div class="dashboard-category-banner fill-parent">
     <div class="dashboard-category-header">{category}</div>
-    if unixDate > 0 {
-      <div class="dashboard-category-add-button">@AddTaskButton(fmt.Sprintf("/add-task?due-date=%s&category=%s", time.Unix(unixDate, 0).Format("2006-01-02"), category))</div> 
+    if !date.IsZero() {
+      <div class="dashboard-category-add-button">@AddTaskButton(fmt.Sprintf("/add-task?due-date=%s&category=%s", date.Format("2006-01-02"), category))</div> 
     } else {
       <div class="dashboard-category-add-button">@AddTaskButton(fmt.Sprintf("/add-task?category=%s", category))</div> 
     }

@@ -27,6 +27,7 @@ func main() {
 	http.HandleFunc("/task", handlers.TaskInfoHandler)
 	http.HandleFunc("/edit-task", handlers.EditTaskHandler)
 	http.HandleFunc("/delete-task", handlers.DeleteTaskHandler)
+	http.HandleFunc("/update-task-duedate", handlers.UpdateTaskDueDateHandler)
 
 	_ = http.ListenAndServe("127.0.0.1:8080", nil)
 }

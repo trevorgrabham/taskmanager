@@ -4,19 +4,29 @@ import (
   "local/taskmanager/internal/task" 
   "time" 
 	"fmt"
+  "slices"
 )
 
-templ DayTaskList(tasksByCategory map[string]task.TaskList, sortedKeys []string, unixDate int64) {
-  <div class="dashboard-day-of-tasks dashboard-tasks-container fill-parent">
+templ DayTaskList(tasksByCategory map[string]task.TaskList, date time.Time) {
+  {{
+    sortedKeys := make([]string, 0)
+    for k := range tasksByCategory {
+      sortedKeys = append(sortedKeys, k)
+    }
+    slices.Sort(sortedKeys)
+  }}
+  <div 
+    id={fmt.Sprintf("date-%s", date.Format("2006-01-02"))} 
+    class="dashboard-day-of-tasks dashboard-tasks-container dashboard-droppable-container fill-parent" >
     <div class="dashboard-tasks-title-header-container">
       <div class="dashboard-tasks-title-header">
-        {time.Unix(unixDate, 0).Format("Mon Jan 2")}
+        {date.Format("Mon Jan 2")}
       </div>
-      <div class="dashboard-date-add-button">@AddTaskButton(fmt.Sprintf("/add-task?due-date=%s", time.Unix(unixDate, 0).Format("2006-01-02")))</div>
+      <div class="dashboard-date-add-button">@AddTaskButton(fmt.Sprintf("/add-task?due-date=%s", date.Format("2006-01-02")))</div>
     </div>
     <div class="dashboard-categories-container">
     for _, k := range sortedKeys {
-      <div class="dashboard-category-container">@CategoryTasks(tasksByCategory[k], unixDate, "")</div>
+      <div class="dashboard-category-container" data-category={k}>@CategoryTasks(tasksByCategory[k], date, "")</div>
     }
     </div>
   </div>

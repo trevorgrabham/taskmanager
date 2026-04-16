@@ -40,16 +40,12 @@ func (h Handlers) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get the week of tasks in order
 	tasksPerCategory := make(map[string]task.TaskList)
-	info.WeekCategoryOrderedKeys = make(map[int][]string)
 	for dateKey := range info.WeekOfTasks {
-		info.WeekCategoryOrderedKeys[dateKey] = make([]string, 0)
 		for catKey := range info.WeekOfTasks[dateKey] {
-			info.WeekCategoryOrderedKeys[dateKey] = append(info.WeekCategoryOrderedKeys[dateKey], catKey)
 			for _, t := range info.WeekOfTasks[dateKey][catKey] {
 				tasksPerCategory[t.Category] = append(tasksPerCategory[t.Category], t)
 			}
 		}
-		slices.Sort(info.WeekCategoryOrderedKeys[dateKey])
 	}
 
 	// Get the FavCategory (most tasks upcoming)

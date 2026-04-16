@@ -19,3 +19,7 @@
 .dashboard-tasks-container {
   padding: var(--default-task-container-padding);
 }
+
+.dashboard-dragged-item {
+  user-select: none;
+}

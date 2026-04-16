@@ -3,6 +3,7 @@ package dashboard
 import (
   "local/taskmanager/internal/task"
   "slices"
+  "time"
 )
 
 templ OverdueTasks(taskMap map[string]task.TaskList) {
@@ -19,7 +20,7 @@ templ OverdueTasks(taskMap map[string]task.TaskList) {
     </div>
     <div class="dashboard-categories-container">
     for _, category := range sortedCategories {
-      <div class="dashboard-category-container">@CategoryTasks(taskMap[category], 0, "")</div>
+      <div class="dashboard-category-container">@CategoryTasks(taskMap[category], time.Time{}, "")</div>
     }
     </div>
   </div>

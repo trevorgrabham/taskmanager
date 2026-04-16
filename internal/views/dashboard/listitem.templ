@@ -12,12 +12,14 @@ templ ListItem(t, newTask task.Task) {
   }
 
   <div 
+    data-id={t.ID}
     class={fmt.Sprintf("dashboard-list-item fill-parent div-button%s", completedClass)}
     tabindex="0"
     role="button"
     hx-get={fmt.Sprintf("/task?id=%d", t.ID)}
     hx-trigger="click"
     hx-target="#content"
+    hx-on:click="console.log('list item clicked')"
     hx-on:contextmenu={templ.JSUnsafeFuncCall(fmt.Sprintf("event.preventDefault(); htmx.ajax('GET', '/toggle-complete?id=%d', { target: this, swap: 'outerHTML' })", t.ID))}
     hx-on::load="removeCompletedTask(this)"
   >{t.Title}</div>

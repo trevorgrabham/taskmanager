@@ -19,3 +19,7 @@
   flex: 1;
   flex-grow: 0;
 }
+
+.dashboard-hovered-droppable-container {
+  border: 5px solid green;
+}

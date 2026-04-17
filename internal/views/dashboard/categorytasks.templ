@@ -19,7 +19,7 @@ templ CategoryTasks(tasks task.TaskList, date time.Time, class string) {
     <div class="dashboard-category-header-container">@CategoryHeader(tasks[0].Category, date)</div>
     <div class="dashboard-list-items-container">
     for _, task := range tasks {
-      <div class="dashboard-list-item-container" hx-on:mousedown="onMouseDown(event, this)">@ListItem(task, defaultTask)</div>
+      <div class="dashboard-list-item-container" >@ListItem(task, defaultTask)</div>
     }
     </div>
   </div>

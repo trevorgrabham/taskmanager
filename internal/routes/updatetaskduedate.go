@@ -29,7 +29,7 @@ func (h Handlers) UpdateTaskDueDateHandler(w http.ResponseWriter, r *http.Reques
 		log.Println("update task duedate: no id")
 		return
 	}
-	newDate := r.URL.Query().Get("date")
+	newDate := r.URL.Query().Get("duedate")
 	if newDate == "" {
 		err = sqlite.UpdateDueDate(h.DB, task.Task{ID: id})
 		if err != nil {

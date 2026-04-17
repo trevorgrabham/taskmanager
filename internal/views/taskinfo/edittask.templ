@@ -8,7 +8,13 @@ import (
 )
 
 templ EditTaskInfo(t task.Task) {
-  {{dueDate := time.Time(t.DueDate)}}
+  {{
+    dueDate := time.Time(t.DueDate) 
+    var description string
+    if t.Description == "" {
+      description = "Description..."
+    }
+  }}
   <form hx-post="/edit-task" hx-target=".task-info-content" class="task-info-content fill-parent">
     <div class="task-info-header">
       <input type="hidden" name="id" value={t.ID}>
@@ -65,11 +71,14 @@ templ EditTaskInfo(t task.Task) {
           <div id="task-info-recurring-period-input"></div>
         }
     </div>
-    <input 
+    <textarea 
       type="text"
       name="description"
-      value={t.Description}
-      class="task-info-description">
+      class="task-info-description"
+      placeholder={description}
+    >
+      {t.Description}
+    </textarea>
     <button type="submit">Done</button>
   </form>
 }

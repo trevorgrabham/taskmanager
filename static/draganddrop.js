@@ -1,20 +1,20 @@
-const draggableClassName = "dashboard-list-item";
-const taskClassName = "dashboard-list-item-container";
-const taskParentClassName = "dashboard-list-items-container";
-const droppableContainerClassName = "dashboard-droppable-container";
-const hoveredDroppableContainerClassName =
+const DRAGGABLE_CLASS_NAME = "dashboard-list-item";
+const TASK_CLASS_NAME = "dashboard-list-item-container";
+const TASK_PARENT_CLASS_NAME = "dashboard-list-items-container";
+const DROPPABLE_CONTAINER_CLASS_NAME = "dashboard-droppable-container";
+const HOVERED_DROPPABLE_CONTAINER_CLASS_NAME =
   "dashboard-hovered-droppable-container";
-const categoryContainerClassName = "dashboard-category-container";
+const CATEGORY_CONTAINER_CLASS_NAME = "dashboard-category-container";
 
 let draggedTask;
 
 class DraggableItem {
   constructor(element, event, id) {
-    this.el = element.closest("." + taskClassName);
+    this.el = element.closest("." + TASK_CLASS_NAME);
     this.moving = false;
 
     // for reverting back to previous spot
-    this.parent = element.closest("." + taskParentClassName);
+    this.parent = element.closest("." + TASK_PARENT_CLASS_NAME);
     this.nextSib = this.el.nextSibling;
 
     // for styling
@@ -22,7 +22,7 @@ class DraggableItem {
     this.offsetX = event.clientX - rect.left;
     this.offsetY = event.clientY - rect.top;
     this.originalDroppableContainer = element.closest(
-      "." + droppableContainerClassName,
+      "." + DROPPABLE_CONTAINER_CLASS_NAME,
     );
     this.hoveredDroppableContainer = this.originalDroppableContainer;
     // for backend database
@@ -45,12 +45,41 @@ class DraggableItem {
     this.el.style.position = "";
     document.body.style.userSelect = "";
   }
+
+  trackCategoryContainer() {
+    this.categoryContainer = this.parent.closest(
+      "." + CATEGORY_CONTAINER_CLASS_NAME,
+    );
+    this.categoryContainerParent = this.categoryContainer.parentElement;
+    this.categoryContainerSib = this.categoryContainer.nextSibling;
+  }
+
+  removeHoveredDroppableContainer() {
+    if (this.hoveredDroppableContainer == null) return;
+
+    this.hoveredDroppableContainer.classList.remove(
+      HOVERED_DROPPABLE_CONTAINER_CLASS_NAME,
+    );
+  }
+
+  revertCategoryAndTask() {
+    if (this.categoryContainer != null) {
+      console.log("re-adding original category container");
+
+      this.categoryContainerParent.insertBefore(
+        this.categoryContainer,
+        this.categoryContainerSib,
+      );
+    }
+
+    this.parent.insertBefore(this.el, this.nextSib);
+  }
 }
 
 // on mouse down
 //
 const registerDraggable = (event) => {
-  if (!event.target.classList.contains(draggableClassName)) return;
+  if (!event.target.classList.contains(DRAGGABLE_CLASS_NAME)) return;
 
   console.log("mouse down event triggered. target is");
   console.log(event.target);
@@ -70,29 +99,17 @@ document.addEventListener("mousemove", (event) => {
   console.log("mouse move event triggered");
 
   if (!draggedTask.moving) {
-    console.log("started moving");
-
     draggedTask.moving = true;
     document.body.appendChild(draggedTask.el);
 
-    console.log("added dragged task to body");
-
     if (draggedTask.parent.children.length <= 0) {
-      console.log("parent container is now empty");
-
-      draggedTask.categoryContainer = draggedTask.parent.closest(
-        "." + categoryContainerClassName,
-      );
-      draggedTask.categoryContainerParent =
-        draggedTask.categoryContainer.parentElement;
-      draggedTask.categoryContainerSib =
-        draggedTask.categoryContainer.nextSibling;
+      draggedTask.trackCategoryContainer();
       draggedTask.categoryContainer.remove();
     }
     draggedTask.initStyles();
     if (draggedTask.hoveredDroppableContainer != null) {
       draggedTask.hoveredDroppableContainer.classList.add(
-        hoveredDroppableContainerClassName,
+        HOVERED_DROPPABLE_CONTAINER_CLASS_NAME,
       );
     }
   }
@@ -100,22 +117,18 @@ document.addEventListener("mousemove", (event) => {
   draggedTask.updatePosition(event);
   let hoveredDroppableContainer = document
     .elementFromPoint(event.clientX, event.clientY)
-    ?.closest("." + droppableContainerClassName);
+    ?.closest("." + DROPPABLE_CONTAINER_CLASS_NAME);
 
   if (hoveredDroppableContainer == null) {
-    if (draggedTask.hoveredDroppableContainer != null)
-      draggedTask.hoveredDroppableContainer.classList.remove(
-        hoveredDroppableContainerClassName,
-      );
+    draggedTask.removeHoveredDroppableContainer();
     draggedTask.hoveredDroppableContainer = null;
   } else if (
     hoveredDroppableContainer !== draggedTask.hoveredDroppableContainer
   ) {
-    if (draggedTask.hoveredDroppableContainer != null)
-      draggedTask.hoveredDroppableContainer.classList.remove(
-        hoveredDroppableContainerClassName,
-      );
-    hoveredDroppableContainer.classList.add(hoveredDroppableContainerClassName);
+    draggedTask.removeHoveredDroppableContainer();
+    hoveredDroppableContainer.classList.add(
+      HOVERED_DROPPABLE_CONTAINER_CLASS_NAME,
+    );
     draggedTask.hoveredDroppableContainer = hoveredDroppableContainer;
   }
 });
@@ -127,65 +140,34 @@ document.addEventListener("mouseup", (event) => {
     return;
   }
 
-  console.log("mouse up event triggered");
-
-  draggedTask.hoveredDroppableContainer?.classList.remove(
-    hoveredDroppableContainerClassName,
-  );
+  draggedTask.removeHoveredDroppableContainer();
   hoveredDroppableContainer = document
     .elementFromPoint(event.clientX, event.clientY)
-    .closest("." + droppableContainerClassName);
+    ?.closest("." + DROPPABLE_CONTAINER_CLASS_NAME);
   if (
     hoveredDroppableContainer == null ||
     hoveredDroppableContainer === draggedTask.originalDroppableContainer
   ) {
     draggedTask.revertStyles();
-
-    console.log("dropped outside of a container or back in original container");
-
-    if (draggedTask.categoryContainer != null) {
-      console.log("re-adding original category container");
-
-      draggedTask.categoryContainerParent.insertBefore(
-        draggedTask.categoryContainer,
-        draggedTask.categoryContainerSib,
-      );
-    }
-
-    draggedTask.parent.insertBefore(draggedTask.el, draggedTask.nextSib);
+    draggedTask.revertCategoryAndTask();
     draggedTask = null;
     return;
   }
+
   let endpoint = "/update-task-duedate?id=" + draggedTask.id;
   duedate = hoveredDroppableContainer.id;
   if (duedate == null) {
     console.log(
-      "dropping dragged item: no id on ." +
-        droppableContainerClassName +
-        " container",
+      "dropping dragged item: no data-id on " + draggedTask.el + " container",
     );
     draggedTask.revertStyles();
-
-    if (draggedTask.categoryContainer != null) {
-      console.log("re-adding original category container");
-
-      draggedTask.categoryContainerParent.insertBefore(
-        draggedTask.categoryContainer,
-        draggedTask.categoryContainerSib,
-      );
-    }
-    draggedTask.parent.insertBefore(draggedTask.el, draggedTask.nextSib);
+    draggedTask.revertCategoryAndTask();
     draggedTask = null;
     return;
-  } else if (duedate === "dashboard-unscheduled-tasks") {
-    console.log("dropped into unscheduled");
+  }
 
-    // do nothing
-  } else {
-    duedate = duedate.replace("date-", "");
-    endpoint = endpoint + "&duedate=" + duedate;
-
-    console.log("dropped into " + duedate);
+  if (/^date-\d{4}-\d{2}-\d{2}$/.test(duedate)) {
+    endpoint = endpoint + "&duedate=" + duedate.replace("date-", "");
   }
 
   htmx.ajax("GET", endpoint, {

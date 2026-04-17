@@ -15,12 +15,12 @@ templ AddTaskForm(partial task.Task, categories []string) {
       autofocus
       required>
 
-    <input 
+    <textarea 
       id="add-form-description" 
       class="add-form-optional-input" 
-      type="text" 
       name="description" 
       placeholder="Description...">
+    </textarea>
 
     if partial.Category == "" {
       <input 

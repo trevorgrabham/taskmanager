@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	sqlite "local/taskmanager/internal/db"
 	"local/taskmanager/internal/task"
 	"local/taskmanager/internal/views/dashboard"
@@ -60,8 +61,20 @@ func (h Handlers) UpdateTaskDueDateHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	var (
+		oldTask    task.Task
+		oldDueDate time.Time
+	)
+	oldTask, err = sqlite.TaskByID(h.DB, id)
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		log.Printf("update task duedate: %s\n", err)
+		return
+	}
+	oldDueDate = time.Time(oldTask.DueDate)
+
 	var newDueDate time.Time
-	newDueDate, err = time.ParseInLocation("2006-01-02", newDate, time.Local)
+	newDueDate, err = time.ParseInLocation("2006-01-02 15:04", fmt.Sprintf("%s %2d:%2d", newDate, oldDueDate.Hour(), oldDueDate.Minute()), time.Local)
 	if err != nil {
 		http.Error(w, "Error bad date", http.StatusBadRequest)
 		log.Printf("update task duedate: %s\n", err)

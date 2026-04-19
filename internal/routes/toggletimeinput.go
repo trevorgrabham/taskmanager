@@ -4,11 +4,10 @@ import (
 	"fmt"
 	sqlite "local/taskmanager/internal/db"
 	"local/taskmanager/internal/task"
-	"local/taskmanager/internal/views/addtaskform"
+	"local/taskmanager/internal/views/shared"
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 func (h Handlers) ToggleTimeHandler(w http.ResponseWriter, r *http.Request) {
@@ -24,58 +23,41 @@ func (h Handlers) ToggleTimeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var err error
-	switch strings.TrimPrefix(r.URL.Path, "/toggle-time/") {
-	case "add-task":
-		w.Header().Set("Content-Type", "text/html")
-		if r.URL.Query().Get("all-day") == "on" {
-			fmt.Fprint(w, "")
-		} else {
-			err = addtaskform.TimeInput(task.Task{}).Render(r.Context(), w)
-			if err != nil {
-				http.Error(w, "Rendering error", http.StatusInternalServerError)
-				log.Printf("toggle time: %s\n", err)
-				return
-			}
+	if r.URL.Query().Get("all-day") == "on" {
+		fmt.Fprint(w, "")
+	} else {
+		idString := r.URL.Query().Get("id")
+		if idString == "" {
+			http.Error(w, "Error no id", http.StatusBadRequest)
+			log.Println("toggle time handler: no id")
+			return
 		}
-	case "edit-task":
-		if r.URL.Query().Get("all-day") == "on" {
-			fmt.Fprint(w, "")
-		} else {
-			idString := r.URL.Query().Get("id")
-			if idString == "" {
-				http.Error(w, "Error no id", http.StatusBadRequest)
-				log.Println("toggle time: no id")
-				return
-			}
 
-			var (
-				id int
-				t  task.Task
-			)
-			id, err = strconv.Atoi(idString)
-			if err != nil {
-				http.Error(w, "Error bad id", http.StatusBadRequest)
-				log.Printf("toggle time: %s\n", err)
-				return
-			}
+		var (
+			id int
+			t  task.Task
+		)
+		id, err = strconv.Atoi(idString)
+		if err != nil {
+			http.Error(w, "Error bad id", http.StatusBadRequest)
+			log.Printf("toggle time handler: %s\n", err)
+			return
+		}
 
+		if id != 0 {
 			t, err = sqlite.TaskByID(h.DB, id)
 			if err != nil {
 				http.Error(w, "Database error", http.StatusInternalServerError)
-				log.Printf("toggle time: %s\n", err)
-				return
-			}
-
-			err = addtaskform.TimeInput(t).Render(r.Context(), w)
-			if err != nil {
-				http.Error(w, "Rendering error", http.StatusInternalServerError)
-				log.Printf("toggle time: %s\n", err)
+				log.Printf("toggle time handler: %s\n", err)
 				return
 			}
 		}
-	default:
-		http.Error(w, "Error bad path", http.StatusBadRequest)
-		log.Printf("toggle time: unknown path %s\n", r.URL.RawPath)
-		return
+
+		err = shared.TimeInput(t).Render(r.Context(), w)
+		if err != nil {
+			http.Error(w, "Rendering error", http.StatusInternalServerError)
+			log.Printf("toggle time handler: %s\n", err)
+			return
+		}
 	}
 }

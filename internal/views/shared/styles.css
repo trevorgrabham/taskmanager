@@ -28,3 +28,16 @@ body {
 #main-title {
   display: inline-block;
 }
+
+.task-form-category-suggestion {
+  display: none;
+}
+
+.task-form-category-matched {
+  display: block;
+  color: #00f;
+}
+
+.task-form-category-matched.active {
+  color: #0f0;
+}

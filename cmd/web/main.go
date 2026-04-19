@@ -26,8 +26,9 @@ func main() {
 	http.HandleFunc("/delete", handlers.DeleteTaskHandler)
 	http.HandleFunc("/task", handlers.TaskInfoHandler)
 	http.HandleFunc("/toggle-complete", handlers.ToggleCompleteHandler)
-	http.HandleFunc("/toggle-recurring/", handlers.ToggleRecurringTaskHandler)
-	http.HandleFunc("/toggle-time/", handlers.ToggleTimeHandler)
+	http.HandleFunc("/toggle-recurring", handlers.ToggleRecurringTaskHandler)
+	http.HandleFunc("/toggle-time", handlers.ToggleTimeHandler)
+	http.HandleFunc("/update-task", handlers.ParseTaskForm)
 	http.HandleFunc("/update-task-duedate", handlers.UpdateTaskDueDateHandler)
 
 	_ = http.ListenAndServe("127.0.0.1:8080", nil)

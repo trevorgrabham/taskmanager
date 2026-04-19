@@ -1,4 +1,4 @@
-package taskinfo
+package shared
 
 import (
 	"local/taskmanager/internal/task"
@@ -6,17 +6,18 @@ import (
 
 templ RecurringPeriodInput(t task.Task) {
   {{ periodValue, _ := t.PeriodValue() }}
-  <div id="task-info-recurring-period-input">
+  <div id="task-form-recurring-period-input">
     <input 
+      id="task-form-recurring-value"
       type="text"
       name="period-value"
-      onchange="updateRecurringUnits(event)"
+      oninput="updateRecurringUnits(event)"
       if t.RecurringPeriod != "" {
         value={periodValue}
       }
       required>
     <select 
-      id="edit-task-recurring-unit"
+      id="task-form-recurring-unit"
       name="period-unit"
       required>
       <option 
@@ -34,7 +35,7 @@ templ RecurringPeriodInput(t task.Task) {
         if t.RecurringPeriod != "" && t.RecurringPeriod[len(t.RecurringPeriod)-2:] == "hs" {
           selected
         }
-      >Days</option>
+      >Months</option>
     </select>
   </div>
 }

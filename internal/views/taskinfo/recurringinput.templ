@@ -10,11 +10,13 @@ templ RecurringPeriodInput(t task.Task) {
     <input 
       type="text"
       name="period-value"
+      onchange="updateRecurringUnits(event)"
       if t.RecurringPeriod != "" {
         value={periodValue}
       }
       required>
     <select 
+      id="edit-task-recurring-unit"
       name="period-unit"
       required>
       <option 

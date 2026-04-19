@@ -6,6 +6,8 @@ import (
 )
 
 templ TaskInfo(t task.Task) {
+  <script src="/static/confirmdelete.js" defer></script>
+
   <div class="task-info-content fill-parent">
     <div class="task-info-header">
       <div class="task-info-title">{t.Title}</div>
@@ -16,10 +18,16 @@ templ TaskInfo(t task.Task) {
           hx-target=".task-info-content"
         >Edit</div>
         <div 
+          id="task-info-confirm-complete-button" 
           class="task-info-delete-button div-button"
-          hx-get={fmt.Sprintf("/delete-task?id=%d", t.ID)}
-          hx-target=".task-info-content"
-          hx-swap="outerHTML"
+          onclick="confirmComplete(event)"
+          data-id={t.ID}
+        >Complete</div>
+        <div 
+          id="task-info-confirm-delete-button" 
+          class="task-info-delete-button div-button"
+          onclick="confirmDelete(event)"
+          data-id={t.ID}
         >Delete</div>
       </div>
     </div>

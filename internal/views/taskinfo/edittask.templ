@@ -15,6 +15,7 @@ templ EditTaskInfo(t task.Task) {
       description = "Description..."
     }
   }}
+  <script src="/static/recurringinput.js" defer></script>
   <form hx-post="/edit-task" hx-target=".task-info-content" class="task-info-content fill-parent">
     <div class="task-info-header">
       <input type="hidden" name="id" value={t.ID}>

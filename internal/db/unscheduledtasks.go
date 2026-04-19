@@ -16,7 +16,7 @@ func UnscheduledTasks(db *sql.DB) (task.TaskList, error) {
 		FROM task 
 		LEFT JOIN recurring ON task.recurring_id = recurring.id
 		WHERE due_date IS NULL AND done = 0
-		ORDER BY category`)
+		ORDER BY category, title`)
 	if err != nil {
 		return nil, fmt.Errorf("unscheduled tasks: %s", err)
 	}

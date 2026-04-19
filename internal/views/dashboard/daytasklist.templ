@@ -5,6 +5,7 @@ import (
   "time" 
 	"fmt"
   "slices"
+  "strings"
 )
 
 templ DayTaskList(tasksByCategory map[string]task.TaskList, date time.Time) {
@@ -12,6 +13,7 @@ templ DayTaskList(tasksByCategory map[string]task.TaskList, date time.Time) {
     sortedKeys := make([]string, 0)
     for k := range tasksByCategory {
       sortedKeys = append(sortedKeys, k)
+      slices.SortFunc(tasksByCategory[k], func(a, b task.Task) int { return strings.Compare(a.Title, b.Title) })
     }
     slices.Sort(sortedKeys)
   }}

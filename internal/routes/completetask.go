@@ -1,37 +1,23 @@
 package routes
 
 import (
-	sqlite "local/taskmanager/internal/db"
-	"local/taskmanager/internal/task"
-	"log"
 	"net/http"
-	"strconv"
 )
 
 func (h Handlers) CompleteTaskHandler(w http.ResponseWriter, r *http.Request) {
-	if h.DB == nil {
-		http.Error(w, "Database error", http.StatusInternalServerError)
-		log.Println("completing task: no database set up")
+	var (
+		ok bool
+		id int
+	)
+	if ok = h.checkConnection(w); !ok {
 		return
 	}
 
-	idString := r.URL.Query().Get("id")
-	if idString == "" {
-		http.Error(w, "Error no id", http.StatusBadRequest)
-		log.Println("completing task: no id")
-		return
-	}
-	id, err := strconv.Atoi(idString)
-	if err != nil {
-		http.Error(w, "Error bad id", http.StatusBadRequest)
-		log.Printf("completing task: %s\n", err)
+	if id, ok = h.parseID(w, r.URL.Query().Get("id")); !ok {
 		return
 	}
 
-	err = sqlite.CompleteTask(h.DB, task.Task{ID: id})
-	if err != nil {
-		http.Error(w, "Database error", http.StatusInternalServerError)
-		log.Printf("completing task: %s\n", err)
+	if ok = h.completeTask(w, id); !ok {
 		return
 	}
 

@@ -1,43 +1,24 @@
 package routes
 
 import (
-	sqlite "local/taskmanager/internal/db"
-	"local/taskmanager/internal/task"
-	"log"
 	"net/http"
-	"strconv"
 )
 
 // Hits the backend db.DeleteTask() and redirects to "/"
 func (h Handlers) DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
-	if h.DB == nil {
-		http.Error(w, "Database error", http.StatusInternalServerError)
-		log.Println("delete task: nil database")
-		return
-	}
-
-	idString := r.URL.Query().Get("id")
-	if idString == "" {
-		http.Error(w, "Error no id", http.StatusBadRequest)
-		log.Println("delete task: no id")
-		return
-	}
-
 	var (
-		t   task.Task
-		err error
+		ok bool
+		id int
 	)
-	t.ID, err = strconv.Atoi(idString)
-	if idString == "" {
-		http.Error(w, "Error bad id", http.StatusBadRequest)
-		log.Printf("delete task: %s\n", err)
+	if ok = h.checkConnection(w); !ok {
 		return
 	}
 
-	err = sqlite.DeleteTask(h.DB, t)
-	if err != nil {
-		http.Error(w, "Database error", http.StatusBadRequest)
-		log.Printf("delete task: %s\n", err)
+	if id, ok = h.parseID(w, r.URL.Query().Get("id")); !ok {
+		return
+	}
+
+	if ok = h.deleteTask(w, id); !ok {
 		return
 	}
 

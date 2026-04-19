@@ -2,118 +2,73 @@ package routes
 
 import (
 	"fmt"
-	sqlite "local/taskmanager/internal/db"
 	"local/taskmanager/internal/task"
 	"local/taskmanager/internal/views/taskinfo"
 	"log"
 	"net/http"
-	"strconv"
-	"time"
 )
 
 func (h Handlers) ParseTaskForm(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("HX-Request") != "true" {
-		http.Error(w, "Endpoint expected an HTMX request", http.StatusBadRequest)
-		log.Println("parsing task form: endpoint hit without HTMX")
+	var (
+		ok            bool
+		t             task.Task
+		dueDateString string
+		timeString    string
+	)
+	if ok = h.checkHXRequest(w, r); !ok {
 		return
 	}
-	if r.Method != http.MethodPost {
-		http.Error(w, "Expected POST request", http.StatusBadRequest)
-		log.Println("parsing task form: not a POST request")
+
+	if ok = h.checkConnection(w); !ok {
 		return
 	}
-	if h.DB == nil {
-		http.Error(w, "Database error", http.StatusInternalServerError)
-		log.Println("parsing task form: no database provided to handler")
+
+	if ok = h.checkMethod(w, r, http.MethodPost); !ok {
 		return
 	}
 
 	err := r.ParseForm()
 	if err != nil {
-		http.Error(w, "Unable to parse New Task Form", http.StatusBadRequest)
-		log.Println("parsing task form: error parsing form")
+		http.Error(w, "Error bad form", http.StatusBadRequest)
+		log.Printf("ParseTaskForm: %s\n", err)
 		return
 	}
 
-	var (
-		t       task.Task
-		dueDate time.Time
-	)
-	t.Title = r.FormValue("title")
-	if t.Title == "" {
-		http.Error(w, "Error no title", http.StatusBadRequest)
-		log.Println("parsing task form: no title provided")
+	if t.Title, ok = h.parseTitle(w, r); !ok {
 		return
 	}
 
 	t.Category = r.FormValue("category")
 	t.Description = r.FormValue("description")
-	timeString := r.FormValue("time")
-	dueDateString := r.FormValue("due-date")
 	if dueDateString != "" {
 		if timeString == "" {
-			dueDate, err = time.ParseInLocation("2006-01-02 3:04PM", dueDateString+" 12:00AM", time.Local)
+			if t.DueDate, ok = h.parseDueDate(w, fmt.Sprintf("%s %s", dueDateString, "00:00")); !ok {
+				return
+			}
 		} else {
-			dueDate, err = time.ParseInLocation("2006-01-02 15:04", dueDateString+" "+timeString, time.Local)
+			if t.DueDate, ok = h.parseDueDate(w, fmt.Sprintf("%s %s", dueDateString, timeString)); !ok {
+				return
+			}
 		}
-		if err != nil {
-			http.Error(w, "Error bad due date", http.StatusBadRequest)
-			log.Printf("parsing task form: %s\n", err)
-			return
-		}
-
-		t.DueDate = task.TaskDueDate(dueDate)
 	}
 
-	idString := r.FormValue("id")
-	if idString == "" {
-		http.Error(w, "Error bad id", http.StatusBadRequest)
-		log.Println("parsing task form: no id")
+	if t.ID, ok = h.parseID(w, r.FormValue("id")); !ok {
 		return
 	}
 
-	t.ID, err = strconv.Atoi(idString)
-	if err != nil {
-		http.Error(w, "Error bad id", http.StatusBadRequest)
-		log.Printf("parsing task form: %s\n", err)
+	if t.RecurringPeriod, ok = h.parseRecurringPeriod(w, r.FormValue("period-value"), r.FormValue("period-unit")); !ok {
 		return
-	}
-
-	recurringPeriodValue := r.FormValue("period-value")
-	recurringPeriodUnit := r.FormValue("period-unit")
-	if recurringPeriodValue != "" && recurringPeriodUnit != "" {
-		if recurringPeriodUnit != "days" && recurringPeriodUnit != "weeks" && recurringPeriodUnit != "months" {
-			http.Error(w, "Bad value for recurring unit", http.StatusBadRequest)
-			log.Printf("parsing task form: bad value for recurring period unit %s\n", recurringPeriodUnit)
-			return
-		}
-
-		var value int
-		value, err = strconv.Atoi(recurringPeriodValue)
-		if err != nil {
-			http.Error(w, "Bad value for recurring value", http.StatusBadRequest)
-			log.Printf("parsing task form: bad value for recurring period value %s\n", recurringPeriodValue)
-			return
-		}
-
-		t.RecurringPeriod = fmt.Sprintf("%d %s", value, recurringPeriodUnit)
 	}
 
 	switch {
 	case t.ID == 0:
-		_, err = sqlite.AddTask(h.DB, t)
-		if err != nil {
-			http.Error(w, "Database error", http.StatusInternalServerError)
-			log.Printf("parsing task form: %s\n", err)
+		if ok = h.addTask(w, t); !ok {
 			return
 		}
 
 		w.Header().Set("HX-Redirect", "/")
 	case t.ID > 1:
-		err = sqlite.UpdateTask(h.DB, t)
-		if err != nil {
-			http.Error(w, "Database error", http.StatusInternalServerError)
-			log.Printf("parsing task form: %s\n", err)
+		if ok = h.updateTask(w, t); !ok {
 			return
 		}
 

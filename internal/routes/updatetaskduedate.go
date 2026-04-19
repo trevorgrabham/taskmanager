@@ -2,56 +2,39 @@ package routes
 
 import (
 	"fmt"
-	sqlite "local/taskmanager/internal/db"
 	"local/taskmanager/internal/task"
 	"local/taskmanager/internal/views/dashboard"
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 )
 
 func (h Handlers) UpdateTaskDueDateHandler(w http.ResponseWriter, r *http.Request) {
-	if h.DB == nil {
-		http.Error(w, "Database error", http.StatusInternalServerError)
-		log.Println("update task duedate: nil database")
+	var (
+		ok               bool
+		t                task.Task
+		unscheduledTasks map[string]task.TaskList
+		dueDate          time.Time
+		daysTasks        map[string]task.TaskList
+	)
+	if ok = h.checkConnection(w); !ok {
 		return
 	}
 
-	idString := r.URL.Query().Get("id")
-	if idString == "" {
-		http.Error(w, "Error no id", http.StatusBadRequest)
-		log.Println("update task duedate: no id")
-		return
-	}
-	id, err := strconv.Atoi(idString)
-	if err != nil {
-		http.Error(w, "Error no id", http.StatusBadRequest)
-		log.Println("update task duedate: no id")
+	if t.ID, ok = h.parseID(w, r.URL.Query().Get("id")); !ok {
 		return
 	}
 	newDate := r.URL.Query().Get("duedate")
 	if newDate == "" {
-		err = sqlite.UpdateDueDate(h.DB, task.Task{ID: id})
-		if err != nil {
-			http.Error(w, "Database error", http.StatusInternalServerError)
-			log.Printf("update task duedate: %s\n", err)
+		if ok = h.updateDueDate(w, t); !ok {
 			return
 		}
 
-		var unscheduledTasks task.TaskList
-		unscheduledTasks, err = sqlite.UnscheduledTasks(h.DB)
-		if err != nil {
-			http.Error(w, "Database error", http.StatusInternalServerError)
-			log.Printf("update task duedate: %s\n", err)
+		if unscheduledTasks, ok = h.getUnscheduledTasks(w); !ok {
 			return
 		}
 
-		unscheduledMap := make(map[string]task.TaskList)
-		for _, t := range unscheduledTasks {
-			unscheduledMap[t.Category] = append(unscheduledMap[t.Category], t)
-		}
-		err = dashboard.UnscheduledTasks(unscheduledMap).Render(r.Context(), w)
+		err := dashboard.UnscheduledTasks(unscheduledTasks).Render(r.Context(), w)
 		if err != nil {
 			http.Error(w, "Rendering error", http.StatusInternalServerError)
 			log.Printf("update task duedate: %s\n", err)
@@ -61,48 +44,25 @@ func (h Handlers) UpdateTaskDueDateHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	var (
-		oldTask    task.Task
-		oldDueDate time.Time
-	)
-	oldTask, err = sqlite.TaskByID(h.DB, id)
-	if err != nil {
-		http.Error(w, "Database error", http.StatusInternalServerError)
-		log.Printf("update task duedate: %s\n", err)
-		return
-	}
-	oldDueDate = time.Time(oldTask.DueDate)
-
-	var newDueDate time.Time
-	newDueDate, err = time.ParseInLocation("2006-01-02 15:04", fmt.Sprintf("%s %2d:%2d", newDate, oldDueDate.Hour(), oldDueDate.Minute()), time.Local)
-	if err != nil {
-		http.Error(w, "Error bad date", http.StatusBadRequest)
-		log.Printf("update task duedate: %s\n", err)
+	if t, ok = h.getTask(w, t.ID); !ok {
 		return
 	}
 
-	err = sqlite.UpdateDueDate(h.DB, task.Task{ID: id, DueDate: task.TaskDueDate(newDueDate)})
-	if err != nil {
-		http.Error(w, "Database error", http.StatusInternalServerError)
-		log.Printf("update task duedate: %s\n", err)
+	dueDate = time.Time(t.DueDate)
+	if t.DueDate, ok = h.parseDueDate(w, fmt.Sprintf("%s %2d:%2d", newDate, dueDate.Hour(), dueDate.Minute())); !ok {
 		return
 	}
 
-	start := time.Date(newDueDate.Year(), newDueDate.Month(), newDueDate.Day(), 0, 0, 0, 0, time.Local)
-	end := time.Date(newDueDate.Year(), newDueDate.Month(), newDueDate.Day(), 23, 59, 0, 0, time.Local)
-	var daysTasks task.TaskList
-	daysTasks, err = sqlite.QueryTasks(h.DB, sqlite.TaskQueryParams{WhichTasks: sqlite.IncTasks, From: start, To: end})
-	if err != nil {
-		http.Error(w, "Database error", http.StatusInternalServerError)
-		log.Printf("update task duedate: %s\n", err)
+	if ok = h.updateDueDate(w, t); !ok {
 		return
 	}
 
-	dayMap := make(map[string]task.TaskList)
-	for _, t := range daysTasks {
-		dayMap[t.Category] = append(dayMap[t.Category], t)
+	dueDate = time.Time(t.DueDate)
+	if daysTasks, ok = h.getTasksForDay(w, dueDate); !ok {
+		return
 	}
-	err = dashboard.DayTaskList(dayMap, newDueDate).Render(r.Context(), w)
+
+	err := dashboard.DayTaskList(daysTasks, dueDate).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, "Rendering error", http.StatusInternalServerError)
 		log.Printf("update task duedate: %s\n", err)

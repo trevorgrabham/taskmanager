@@ -49,7 +49,7 @@ func (h Handlers) UpdateTaskDueDateHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	dueDate = time.Time(t.DueDate)
-	if t.DueDate, ok = h.parseDueDate(w, fmt.Sprintf("%s %2d:%2d", newDate, dueDate.Hour(), dueDate.Minute())); !ok {
+	if t.DueDate, ok = h.parseDueDate(w, fmt.Sprintf("%s %02d:%02d", newDate, dueDate.Hour(), dueDate.Minute())); !ok {
 		return
 	}
 

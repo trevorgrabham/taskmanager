@@ -2,56 +2,91 @@ package db
 
 import (
 	"database/sql"
+	"embed"
 	"fmt"
+	"io/fs"
+	"log"
+	"strconv"
 )
 
-func Setup(db *sql.DB) error {
-	if db == nil {
-		return fmt.Errorf("setting up: cannot setup a nil db")
-	}
+//go:embed migrations/*.sql
+var migrationFiles embed.FS
 
-	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS recurring (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	period TEXT UNIQUE NOT NULL
-	);`)
-	if err != nil {
-		return fmt.Errorf("setting up: %s", err)
-	}
+func createMigrationTable(db *sql.DB) error {
+	_, err := db.Exec(`
+		CREATE TABLE IF NOT EXISTS schema_migrations (
+			version INTEGER PRIMARY KEY,
+			applied_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+		);`)
 
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS task (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	title TEXT NOT NULL,
-	category TEXT,
-	description TEXT,
-	due_date INTEGER,
-	completion_date INTEGER,
-	done INTEGER NOT NULL DEFAULT 0
-		CHECK (done IN (0, 1)),
-	recurring_id INTEGER,
-	FOREIGN KEY (recurring_id) REFERENCES recurring(id)
-);`)
-	if err != nil {
-		return fmt.Errorf("setting up: %s", err)
-	}
-
-	return nil
+	return err
 }
 
-func TearDown(db *sql.DB) error {
-	if db == nil {
-		return fmt.Errorf("tearing down: cannot tear down a nil db")
-	}
-
-	_, err := db.Exec(`DROP TABLE IF EXISTS task;`)
+func Migrate(db *sql.DB) error {
+	var (
+		err                                   error
+		tx                                    *sql.Tx
+		dirEntries                            []fs.DirEntry
+		versionString                         string
+		version, countAppliedFutureMigrations int
+		versionExists                         bool
+		migrationOperation                    []byte
+	)
+	err = createMigrationTable(db)
 	if err != nil {
-		return fmt.Errorf("tearing down: %s", err)
+		return fmt.Errorf("Migrate: %s", err)
 	}
 
-	_, err = db.Exec(`DROP TABLE IF EXISTS recurring;`)
+	dirEntries, err = migrationFiles.ReadDir("migrations") // returns dirEntries in sorted (alphabetical) order. So versions appear in the order they should be applied
 	if err != nil {
-		return fmt.Errorf("tearing down: %s", err)
+		return fmt.Errorf("Migrate: %s", err)
 	}
 
+	for _, entry := range dirEntries {
+		versionString = entry.Name()[:3] // of the form "XXX-description.sql". i.e. "001-initial-tasks-and-recurring-tables.sql"
+		version, err = strconv.Atoi(versionString)
+		if err != nil {
+			return fmt.Errorf("Migrate: %s", err)
+		}
+
+		if tx, err = startDBSession(db); err != nil {
+			return err
+		}
+		defer func() { _ = tx.Rollback() }()
+
+		err = tx.QueryRow(`SELECT COUNT(*) FROM schema_migrations WHERE version = ?`, version).Scan(&versionExists)
+		if err != nil {
+			return fmt.Errorf("Migrate: %s", err)
+		}
+
+		if versionExists {
+			continue
+		}
+
+		// unapplied migration
+		err = tx.QueryRow(`SELECT COUNT(*) FROM schema_migrations WHERE version > ?`, version).Scan(&countAppliedFutureMigrations)
+		if err != nil {
+			return fmt.Errorf("Migrate: %s", err)
+		}
+		if countAppliedFutureMigrations > 0 {
+			log.Fatalf("migration state corrupted: version %d unapplied, but future version is applied", version)
+		}
+
+		migrationOperation, err = migrationFiles.ReadFile(fmt.Sprintf("migrations/%s", entry.Name()))
+		if err != nil {
+			return fmt.Errorf("Migrate: %s", err)
+		}
+
+		if _, err = tx.Exec(string(migrationOperation)); err != nil {
+			return fmt.Errorf("Migrate: %s", err)
+		}
+
+		if _, err = tx.Exec(`INSERT INTO schema_migrations(version) VALUES (?)`, version); err != nil {
+			return fmt.Errorf("Migrate: %s", err)
+		}
+
+		_ = tx.Commit()
+	}
 	return nil
 }
 
@@ -69,6 +104,10 @@ func Connect() (*sql.DB, error) {
 	_, err = db.Exec(`PRAGMA foreign_keys = ON`)
 	if err != nil {
 		return nil, fmt.Errorf("connecting: %s", err)
+	}
+
+	if err = Migrate(db); err != nil {
+		return nil, err
 	}
 
 	return db, nil

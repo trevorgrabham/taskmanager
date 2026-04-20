@@ -12,7 +12,9 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var dbFileName = "/home/trevorgrabham/.config/taskmanager/tasks.db"
+var dbFileName = "internal/db/backups/taskmanager_20260420_164207.db"
+
+// var dbFileName = "/home/trevorgrabham/.config/taskmanager/tasks.db"
 
 type dbConn interface {
 	Exec(query string, args ...any) (sql.Result, error)

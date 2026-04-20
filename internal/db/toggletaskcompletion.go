@@ -38,7 +38,7 @@ func ToggleTaskComplete(db *sql.DB, taskToToggle task.Task) (updatedTask, newTas
 
 	// Just completed a recurring task. Add a new one to task table
 	if updatedTask.Done {
-		if nextDueDate, err = computeNextDueDate(taskToToggle.RecurringPeriod); err != nil {
+		if nextDueDate, err = computeNextDueDate(updatedTask.RecurringPeriod); err != nil {
 			return task.Task{}, task.Task{}, err
 		}
 

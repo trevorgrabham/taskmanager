@@ -40,6 +40,7 @@ func (h Handlers) ParseTaskForm(w http.ResponseWriter, r *http.Request) {
 
 	t.Category = r.FormValue("category")
 	t.Description = r.FormValue("description")
+	dueDateString = r.FormValue("due-date")
 	if dueDateString != "" {
 		if timeString == "" {
 			if t.DueDate, ok = h.parseDueDate(w, fmt.Sprintf("%s %s", dueDateString, "00:00")); !ok {

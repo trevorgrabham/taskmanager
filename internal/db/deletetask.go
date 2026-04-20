@@ -2,22 +2,19 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 	"local/taskmanager/internal/task"
 )
 
 func DeleteTask(db *sql.DB, taskToDelete task.Task) error {
-	if db == nil {
-		return fmt.Errorf("deleting task: cannot complete task for nil database")
+	var (
+		err error
+	)
+	if err = checkDBConnection(db); err != nil {
+		return err
 	}
-	if taskToDelete.IsZero() {
-		return fmt.Errorf("deleting task: cannot delete an emtpy task")
-	}
-
-	_, err := db.Exec(`DELETE FROM task WHERE id = ?`, taskToDelete.ID)
-	if err != nil {
-		return fmt.Errorf("deleting task: %s", err)
+	if err = checkTaskNotEmpty(taskToDelete); err != nil {
+		return err
 	}
 
-	return nil
+	return deleteTask(db, taskToDelete.ID)
 }

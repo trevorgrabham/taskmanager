@@ -60,7 +60,7 @@ func (h Handlers) checkKnownPath(w http.ResponseWriter, r *http.Request) (ok boo
 func (h Handlers) checkMethod(w http.ResponseWriter, r *http.Request, method string) (ok bool) {
 	if r.Method != method {
 		http.Error(w, fmt.Sprintf("Expected %s request", method), http.StatusBadRequest)
-		log.Println("%s: not a %s request", getCallingFunc(2), method)
+		log.Printf("%s: not a %s request", getCallingFunc(2), method)
 		return false
 	}
 
@@ -142,9 +142,7 @@ func (h Handlers) getTask(w http.ResponseWriter, id int) (t task.Task, ok bool) 
 }
 
 func (h Handlers) getTasksForDay(w http.ResponseWriter, date time.Time) (daysTasks map[string]task.TaskList, ok bool) {
-	start := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.Local)
-	end := time.Date(date.Year(), date.Month(), date.Day(), 23, 59, 0, 0, time.Local)
-	tasks, err := sqlite.QueryTasks(h.DB, sqlite.TaskQueryParams{WhichTasks: sqlite.IncTasks, From: start, To: end})
+	tasks, err := sqlite.ListDailyTasks(h.DB, date)
 	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		log.Printf("%s: %s\n", getCallingFunc(2), err)

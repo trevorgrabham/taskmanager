@@ -2,6 +2,7 @@ package routes
 
 import (
 	"fmt"
+	"local/taskmanager/internal/account"
 	"local/taskmanager/internal/task"
 	"local/taskmanager/internal/views/taskinfo"
 	"log"
@@ -14,6 +15,7 @@ func (h Handlers) ParseTaskForm(w http.ResponseWriter, r *http.Request) {
 		t             task.Task
 		dueDateString string
 		timeString    string
+		userID int
 	)
 	if ok = h.checkHXRequest(w, r); !ok {
 		return
@@ -27,15 +29,16 @@ func (h Handlers) ParseTaskForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseForm()
-	if err != nil {
-		http.Error(w, "Error bad form", http.StatusBadRequest)
-		log.Printf("ParseTaskForm: %s\n", err)
+	if ok = h.parseForm(w, r); !ok {
 		return
 	}
 
 	if t.Title, ok = h.parseTitle(w, r); !ok {
 		return
+	}
+
+	if userID, ok = r.Context().Value(account.UserContextKey).(int); ok {
+		t.UserID = userID
 	}
 
 	t.Category = r.FormValue("category")
@@ -74,7 +77,7 @@ func (h Handlers) ParseTaskForm(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.Header().Set("Content-Type", "text/html")
-		err = taskinfo.TaskInfo(t).Render(r.Context(), w)
+		err := taskinfo.TaskInfo(t).Render(r.Context(), w)
 		if err != nil {
 			http.Error(w, "Error rendering page", http.StatusInternalServerError)
 			log.Printf("parsing task form: %s\n", err)

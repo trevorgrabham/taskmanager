@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"local/taskmanager/internal/account"
 	"local/taskmanager/internal/task"
 	"runtime"
 	"strconv"
@@ -12,9 +13,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var dbFileName = "internal/db/backups/taskmanager_20260420_164207.db"
-
-// var dbFileName = "/home/trevorgrabham/.config/taskmanager/tasks.db"
+var dbFileName = "/home/trevorgrabham/.config/taskmanager/tasks.db"
 
 type dbConn interface {
 	Exec(query string, args ...any) (sql.Result, error)
@@ -222,6 +221,15 @@ func getTaskByID(db dbConn, taskID int) (t task.Task, err error) {
 	return t, nil
 }
 
+func getUserID(db dbConn, sessionID string) (userID int, err error) {
+	err = db.QueryRow(`SELECT user_id FROM session WHERE id = ? AND expires_at > ?`, sessionID, time.Now().Unix()).Scan(&userID)
+	if err != nil {
+		return 0, fmt.Errorf("%s: %s", getCallingFunc(2), err)
+	}
+
+	return userID, nil
+}
+
 func parseTask(r scannableRow) (task.Task, error) {
 	var (
 		id, done                               int64
@@ -281,10 +289,24 @@ func parseTasks(r *sql.Rows) (tasks task.TaskList, err error) {
 	return tasks, nil
 }
 
+func parseUser(r scannableRow) (user account.User, err error) {
+	var (
+		unixCreatedAt, unixUpdatedAt int64
+	)
+	if err = r.Scan(&user.ID, &user.Username, &user.HashedPassword, &unixCreatedAt, &unixUpdatedAt); err != nil {
+		return account.User{}, fmt.Errorf("%s: %s", getCallingFunc(2), err)
+	}
+
+	user.CreatedAt = time.Unix(unixCreatedAt, 0)
+	user.UpdatedAt = time.Unix(unixUpdatedAt, 0)
+
+	return user, nil
+}
+
 func setupQueryParams(db dbConn, t task.Task) (columns, placeholders []string, args []any, err error) {
-	columns = []string{"title"}
-	placeholders = []string{"?"}
-	args = []any{t.Title}
+	columns = []string{"title", "user_id"}
+	placeholders = []string{"?", "?"}
+	args = []any{t.Title, t.UserID}
 
 	if t.Category != "" {
 		columns = append(columns, "category")

@@ -29,6 +29,12 @@ body {
   display: inline-block;
 }
 
+.nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .task-form-category-suggestion {
   display: none;
 }

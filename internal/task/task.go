@@ -16,6 +16,7 @@ type Task struct {
 	CompletionDate  TaskDueDate
 	Done            bool
 	RecurringPeriod string // n days || n weeks || n months
+	UserID          int
 }
 
 func (t Task) ANSICode() string {
@@ -55,7 +56,7 @@ func (t Task) String() string {
 }
 
 func (t Task) IsZero() bool {
-	return t.ID == 0 && t.Title == "" && t.Category == "" && t.Description == "" && t.DueDate.IsZero() && t.CompletionDate.IsZero() && !t.Done
+	return t.ID == 0 && t.Title == "" && t.Category == "" && t.Description == "" && t.DueDate.IsZero() && t.CompletionDate.IsZero() && !t.Done && t.RecurringPeriod == "" && t.UserID == 0
 }
 
 func (t Task) PeriodValue() (int, error) {

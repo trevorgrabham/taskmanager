@@ -22,15 +22,62 @@ func createMigrationTable(db *sql.DB) error {
 	return err
 }
 
+func applyMigration(db *sql.DB, version int, fileName string) error {
+	var (
+		tx                                         *sql.Tx
+		err                                        error
+		versionCount, countAppliedFutureMigrations int
+		migrationOperation                         []byte
+	)
+	if tx, err = startDBSession(db); err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	err = tx.QueryRow(`SELECT COUNT(*) FROM schema_migrations WHERE version = ?`, version).Scan(&versionCount)
+	if err != nil {
+		return fmt.Errorf("Migrate: %s", err)
+	}
+
+	if versionCount > 0 {
+		return nil
+	}
+
+	// unapplied migration
+	err = tx.QueryRow(`SELECT COUNT(*) FROM schema_migrations WHERE version > ?`, version).Scan(&countAppliedFutureMigrations)
+	if err != nil {
+		return fmt.Errorf("Migrate: %s", err)
+	}
+	if countAppliedFutureMigrations > 0 {
+		log.Fatalf("migration state corrupted: version %d unapplied, but future version is applied", version)
+	}
+
+	migrationOperation, err = migrationFiles.ReadFile(fmt.Sprintf("migrations/%s", fileName))
+	if err != nil {
+		return fmt.Errorf("Migrate: %s", err)
+	}
+
+	if _, err = tx.Exec(string(migrationOperation)); err != nil {
+		return fmt.Errorf("Migrate: %s", err)
+	}
+
+	if _, err = tx.Exec(`INSERT INTO schema_migrations(version) VALUES (?)`, version); err != nil {
+		return fmt.Errorf("Migrate: %s", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func Migrate(db *sql.DB) error {
 	var (
-		err                                   error
-		tx                                    *sql.Tx
-		dirEntries                            []fs.DirEntry
-		versionString                         string
-		version, countAppliedFutureMigrations int
-		versionExists                         bool
-		migrationOperation                    []byte
+		err           error
+		dirEntries    []fs.DirEntry
+		versionString string
+		version       int
 	)
 	err = createMigrationTable(db)
 	if err != nil {
@@ -49,43 +96,10 @@ func Migrate(db *sql.DB) error {
 			return fmt.Errorf("Migrate: %s", err)
 		}
 
-		if tx, err = startDBSession(db); err != nil {
-			return err
-		}
-		defer func() { _ = tx.Rollback() }()
-
-		err = tx.QueryRow(`SELECT COUNT(*) FROM schema_migrations WHERE version = ?`, version).Scan(&versionExists)
-		if err != nil {
+		if err = applyMigration(db, version, entry.Name()); err != nil {
 			return fmt.Errorf("Migrate: %s", err)
 		}
 
-		if versionExists {
-			continue
-		}
-
-		// unapplied migration
-		err = tx.QueryRow(`SELECT COUNT(*) FROM schema_migrations WHERE version > ?`, version).Scan(&countAppliedFutureMigrations)
-		if err != nil {
-			return fmt.Errorf("Migrate: %s", err)
-		}
-		if countAppliedFutureMigrations > 0 {
-			log.Fatalf("migration state corrupted: version %d unapplied, but future version is applied", version)
-		}
-
-		migrationOperation, err = migrationFiles.ReadFile(fmt.Sprintf("migrations/%s", entry.Name()))
-		if err != nil {
-			return fmt.Errorf("Migrate: %s", err)
-		}
-
-		if _, err = tx.Exec(string(migrationOperation)); err != nil {
-			return fmt.Errorf("Migrate: %s", err)
-		}
-
-		if _, err = tx.Exec(`INSERT INTO schema_migrations(version) VALUES (?)`, version); err != nil {
-			return fmt.Errorf("Migrate: %s", err)
-		}
-
-		_ = tx.Commit()
 	}
 	return nil
 }

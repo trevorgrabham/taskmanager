@@ -7,25 +7,15 @@ let categorySuggestionIndex = -1;
 let categoryInputTimeout;
 
 function removeCompletedTask(taskEl) {
-  let listItemsContainer = taskEl;
-  let categoryContainer;
   setTimeout(() => {
+    let listItemsContainer = taskEl.closest(".dashboard-list-items-container");
+    let categoryContainer = taskEl.closest(".dashboard-category-container");
     if (taskEl.classList.contains("completed-task")) {
-      while (
-        listItemsContainer != null &&
-        !listItemsContainer.classList.contains("dashboard-list-items-container")
-      )
-        listItemsContainer = listItemsContainer.parentElement;
-      categoryContainer = listItemsContainer;
-      while (
-        categoryContainer != null &&
-        !categoryContainer.classList.contains("dashboard-category")
-      )
-        categoryContainer = categoryContainer.parentElement;
-
-      taskEl.parentNode.remove();
+      let wrapperToDelete = taskEl.closest(".dashboard-list-item-container");
+      if (wrapperToDelete == null) return;
+      wrapperToDelete.remove();
       setTimeout(() => {
-        if (listItemsContainer.children.length <= 1) {
+        if (listItemsContainer.children.length < 1) {
           categoryContainer.remove();
         }
       }, 0);

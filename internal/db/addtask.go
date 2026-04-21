@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"local/taskmanager/internal/task"
 )
 
@@ -25,6 +26,9 @@ func AddTask(db *sql.DB, newTask task.Task) (id int, err error) {
 	if queryColumns, queryPlaceholders, queryArgs, err = setupQueryParams(tx, newTask); err != nil {
 		return 0, err
 	}
+
+	fmt.Println(queryColumns)
+	fmt.Println(queryArgs...)
 
 	if id, err = addNewTask(tx, queryColumns, queryPlaceholders, queryArgs); err != nil {
 		return 0, err

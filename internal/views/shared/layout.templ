@@ -29,13 +29,20 @@ templ Layout(content templ.Component) {
     <link rel="icon" type="image/png" href="/static/favicon.png">
   </head>
   <body id="app">
-    <h1 
-      id="main-title" 
-      class="div-button"
-      hx-get="/" 
-      hx-trigger="click"
-      hx-target="#app"
-    >Task Manager</h1>
+    <div class="nav-header">
+      <h1 
+        id="main-title" 
+        class="div-button"
+        hx-get="/" 
+        hx-trigger="click"
+        hx-target="#app"
+      >Task Manager</h1>
+
+      <div class="account-buttons">
+        <div id="sign-up" class="div-button" hx-get="/signup" hx-trigger="click" hx-target="#content">Sign up</div>
+        <div id="log-in" class="div-button" hx-get="/login" hx-trigger="click" hx-target="#content">Log in</div>
+      </div>
+    </div>
 
     <div id="content">
       @content

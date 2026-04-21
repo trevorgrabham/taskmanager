@@ -2,7 +2,9 @@ package routes
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"local/taskmanager/internal/account"
 	sqlite "local/taskmanager/internal/db"
 	"local/taskmanager/internal/task"
 	"log"
@@ -11,6 +13,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	sqlite3 "github.com/mattn/go-sqlite3"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Handlers struct {
@@ -19,6 +24,44 @@ type Handlers struct {
 
 func (h Handlers) addTask(w http.ResponseWriter, t task.Task) (ok bool) {
 	_, err := sqlite.AddTask(h.DB, t)
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		log.Printf("%s: %s\n", getCallingFunc(2), err)
+		return false
+	}
+
+	return true
+}
+
+func (h Handlers) addUser(w http.ResponseWriter, username, password string) (ok bool) {
+	var (
+		err            error
+		hashedPassword []byte
+	)
+	if username == "" {
+		http.Error(w, "Error no username", http.StatusBadRequest)
+		log.Printf("%s: no username\n", getCallingFunc(2))
+		return false
+	}
+	if password == "" {
+		http.Error(w, "Error no password", http.StatusBadRequest)
+		log.Printf("%s: no password\n", getCallingFunc(2))
+		return false
+	}
+
+	hashedPassword, err = bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+		log.Printf("%s: %s\n", getCallingFunc(2), err)
+		return false
+	}
+
+	err = sqlite.AddUser(h.DB, username, string(hashedPassword))
+	if isUniqueConstraintError(err) {
+		http.Error(w, "Error username already exists", http.StatusBadRequest)
+		log.Printf("%s: username %s already exists\n", getCallingFunc(2), username)
+		return false
+	}
 	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		log.Printf("%s: %s\n", getCallingFunc(2), err)
@@ -61,6 +104,27 @@ func (h Handlers) checkMethod(w http.ResponseWriter, r *http.Request, method str
 	if r.Method != method {
 		http.Error(w, fmt.Sprintf("Expected %s request", method), http.StatusBadRequest)
 		log.Printf("%s: not a %s request", getCallingFunc(2), method)
+		return false
+	}
+
+	return true
+}
+
+func (h Handlers) comparePassword(w http.ResponseWriter, hashed, password string) (ok bool) {
+	if hashed == "" {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		log.Printf("%s: no hashed password. Should not be possible", getCallingFunc(2))
+		return false
+	}
+	if password == "" {
+		http.Error(w, "Error no password", http.StatusBadRequest)
+		log.Printf("%s: no password", getCallingFunc(2))
+		return false
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(hashed), []byte(password)); err != nil {
+		http.Error(w, "Error wrong password", http.StatusBadRequest)
+		log.Printf("%s: wrong password", getCallingFunc(2))
 		return false
 	}
 
@@ -185,6 +249,18 @@ func (h Handlers) getUpcomingWeek(w http.ResponseWriter) (weekOfTasks map[int]ma
 	return weekOfTasks, true
 }
 
+func (h Handlers) getUserByUsername(w http.ResponseWriter, username string) (user account.User, ok bool) {
+	var err error
+	user, err = sqlite.GetUserByUsername(h.DB, username)
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		log.Printf("%s: %s", getCallingFunc(2), err)
+		return user, false
+	}
+
+	return user, true
+}
+
 func (h Handlers) getUserCategorySuggestions(w http.ResponseWriter) (categorySuggestions []string, ok bool) {
 	var err error
 	categorySuggestions, err = sqlite.Categories(h.DB)
@@ -208,6 +284,17 @@ func (h Handlers) parseDueDate(w http.ResponseWriter, dateString string) (dueDat
 		dueDate = task.TaskDueDate(date)
 	}
 	return dueDate, true
+}
+
+func (h Handlers) parseForm(w http.ResponseWriter, r *http.Request) (ok bool) {
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "Error bad form", http.StatusBadRequest)
+		log.Printf("ParseTaskForm: %s\n", err)
+		return false
+	}
+
+	return true
 }
 
 func (h Handlers) parseID(w http.ResponseWriter, idString string) (id int, ok bool) {
@@ -257,6 +344,29 @@ func (h Handlers) parseTitle(w http.ResponseWriter, r *http.Request) (title stri
 	}
 
 	return title, true
+}
+
+func (h Handlers) startSession(w http.ResponseWriter, userID int) (sessionID string, ok bool) {
+	if userID < 1 {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		log.Printf("%s: bad user id", getCallingFunc(2))
+		return "", false
+	}
+
+	sessionID, err := account.GenerateSessionID()
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		log.Printf("%s: %s", getCallingFunc(2), err)
+		return "", false
+	}
+
+	if err = sqlite.AddSession(h.DB, userID, sessionID); err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		log.Printf("%s: %s", getCallingFunc(2), err)
+		return "", false
+	}
+
+	return sessionID, true
 }
 
 func (h Handlers) toggleTaskComplete(w http.ResponseWriter, t task.Task) (toggledTask, nextTask task.Task, ok bool) {
@@ -309,4 +419,13 @@ func getCallingFunc(skip int) string {
 
 	split := strings.Split(fn.Name(), ".")
 	return split[len(split)-1]
+}
+
+func isUniqueConstraintError(err error) bool {
+	var sqliteErr sqlite3.Error
+	if errors.As(err, &sqliteErr) {
+		return sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique
+	}
+
+	return false
 }

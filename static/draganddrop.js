@@ -167,7 +167,7 @@ document.addEventListener("mouseup", (event) => {
   }
 
   if (/^date-\d{4}-\d{2}-\d{2}$/.test(duedate)) {
-    endpoint = endpoint + "&duedate=" + duedate.replace("date-", "");
+    endpoint = endpoint + "&due-date=" + duedate.replace("date-", "");
   }
 
   htmx.ajax("GET", endpoint, {

@@ -1,0 +1,105 @@
+package views
+
+
+templ TaskForm(viewData TaskFormViewData) {
+  <form hx-post="/update-task" hx-target="#content" hx-on::load="registerCategorySuggestions()" id="task-form">
+    <input id="task-form-id" type="hidden" name="id" value={viewData.TaskID}>
+    <input 
+      id="task-form-title" 
+      if viewData.Title == "" {
+        placeholder="Title..." 
+      } else {
+        value={viewData.Title}
+      }
+      type="text" 
+      name="title" 
+      autofocus
+      required
+    >
+
+    <textarea 
+      id="task-form-description" 
+    if viewData.Description == "" {
+      placeholder="Description..."
+    } 
+      onkeydown="enterSubmitForm(event)"
+      class="task-form-optional-input" 
+      name="description">
+    {viewData.Description}
+    </textarea>
+
+    <input 
+      id="task-form-category" 
+    if viewData.Category == "" {
+      placeholder="Category..."
+    } else {
+      value={viewData.Category}
+    }
+      class="task-form-optional-input" 
+      type="text" 
+      name="category" 
+    >
+
+    <div id="task-form-category-suggestions">
+      for _, category := range viewData.CategorySuggestions {
+        <div class="task-form-category-suggestion">{category}</div>
+      }
+    </div>
+
+    <input 
+      id="task-form-due-date" 
+    if viewData.DueDateDay != "" {
+      value={viewData.DueDateDay}
+    }
+      class="task-form-optional-input" 
+      type="date" 
+      name="due-date"
+    >
+
+    <input 
+      id="task-form-all-day-toggle" 
+    if viewData.DueDateTime == "" {
+      checked
+    }
+      class="task-form-optional-input" 
+      type="checkbox" 
+      name="all-day" 
+      hx-get="/toggle-time" 
+      hx-trigger="change" 
+      hx-target="#task-form-time-input" 
+      hx-swap="innerHTML" 
+      hx-include="#task-form-id"
+    >
+    Any time
+
+    <div id="task-form-time-input">
+    if viewData.DueDateTime != "" {
+      @TimeInput(viewData.DueDateTime)
+    }
+    </div>
+
+    <input 
+      id="task-form-recurring-toggle"
+    if viewData.RecurringValue != "" && viewData.RecurringUnit != "" {
+      checked
+    }
+      class="task-form-optional-input" 
+      type="checkbox" 
+      name="recurring" 
+      hx-get="/toggle-recurring" 
+      hx-trigger="change" 
+      hx-target="#task-form-recurring-period-input" 
+      hx-swap="innerHTML"
+      hx-include="#task-form-id"
+    >
+
+    <div id="task-form-recurring-period-input">
+    if viewData.RecurringValue != "" && viewData.RecurringUnit != "" {
+      @RecurringPeriodInput(viewData.RecurringValue, viewData.RecurringUnit)
+    }
+    </div>
+
+    <button id="task-form-submit-button" type="submit">Submit</button>
+
+  </form>
+}

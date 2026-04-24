@@ -1,0 +1,26 @@
+package dashboard
+
+import (
+  "fmt" 
+	"local/taskmanager/views"
+  "time"
+)
+
+templ CategoryTasks(data views.CategoryViewData, date time.Time, class string) {
+{{
+  if class == "" {
+    class = "dashboard-category fill-parent"
+  } else {
+    class = fmt.Sprintf("%s dashboard-category fill-parent", class) 
+  }
+}}
+
+  <div class={class}>
+    <div class="dashboard-category-header-container">@CategoryHeader(data.Category, date)</div>
+    <div class="dashboard-list-items-container">
+    for _, task := range data.Tasks {
+      <div class="dashboard-list-item-container" >@ListItem(task)</div>
+    }
+    </div>
+  </div>
+}

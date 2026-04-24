@@ -1,0 +1,18 @@
+package dashboard 
+
+import (
+	"local/taskmanager/views"
+)
+
+templ Index(data views.DashboardViewData) {
+  <div id="dashboard" class="fill-parent">
+    <div id="dashboard-side-panel">
+      <div id="dashboard-overdue-container">@OverdueTasks(data.OverdueTasks)</div>
+      <div id="dashboard-unscheduled-container">@UnscheduledTasks(data.UnscheduledTasks)</div>
+      // <div id="dashboard-fav-container">@FavCategoryTasks(pi.FavCategoryTasks)</div>
+    </div>
+    <div id="dashboard-main-panel">
+      @WeekTaskList(data.WeekOfTasks, data.StartDay)
+    </div>
+  </div>
+}

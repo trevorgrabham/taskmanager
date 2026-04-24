@@ -1,0 +1,36 @@
+package views
+
+templ RecurringPeriodInput(recurringValue, recurringUnit string) {
+  <div id="task-form-recurring-period-input">
+    <input 
+      id="task-form-recurring-value"
+      type="text"
+      name="period-value"
+      oninput="updateRecurringUnits(event)"
+      if recurringValue != "" && recurringUnit != "" {
+        value={recurringValue}
+      }
+      required>
+    <select 
+      id="task-form-recurring-unit"
+      name="period-unit"
+      required>
+      <option 
+        value="days"
+        if recurringUnit == "days" {
+          selected
+        }
+      >Days</option>
+      <option value="weeks"
+        if recurringUnit == "weeks" {
+          selected
+        }
+      >Weeks</option>
+      <option value="months"
+        if recurringUnit == "months" {
+          selected
+        }
+      >Months</option>
+    </select>
+  </div>
+}

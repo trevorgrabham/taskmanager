@@ -1,0 +1,14 @@
+package dashboard
+
+import (
+  "time"
+	"local/taskmanager/views"
+)
+
+templ WeekTaskList(data map[int]views.TaskGroupViewData, startDay time.Time) { 
+  <div id="dashboard-week-of-tasks" class="fill-parent dashboard-default-borders">
+    for i := range 7 {
+      <div class="dashboard-day-of-tasks-container">@DayTaskList(data[(int(startDay.Weekday()) + i) % 7])</div>
+    }
+  </div>
+}

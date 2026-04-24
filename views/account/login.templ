@@ -1,0 +1,9 @@
+package account
+
+templ LoginForm() {
+  <form hx-post="/login" hx-target="#content" id="login-form">
+    <input id="login-username" type="text" name="username" placeholder="Username...">
+    <input id="login-password" type="text" name="password" placeholder="Password...">
+    <button id="login-submit-button" type="submit">Submit</button>
+  </form>
+}

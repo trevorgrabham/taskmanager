@@ -1,0 +1,30 @@
+package dashboard
+
+import (
+  "time"
+  "slices"
+	"local/taskmanager/views"
+)
+
+templ UnscheduledTasks(data views.UnscheduledViewData) {
+  {{
+    var sortedCategories []string
+    for k := range data.Categories {
+      sortedCategories = append(sortedCategories, k)
+    }
+    slices.Sort(sortedCategories)
+  }}
+  <div 
+    id="dashboard-unscheduled-tasks"
+    class="dashboard-unscheduled-tasks dashboard-tasks-container dashboard-droppable-container fill-parent">
+    <div class="dashboard-tasks-title-header-container">
+      <div class="dashboard-tasks-title-header">Unscheduled</div>
+      <div class="dashboard-unscheduled-add-button">@AddTaskButton("/add-task")</div>
+    </div>
+    <div class="dashboard-categories-container">
+    for _, category := range sortedCategories {
+      <div class="dashboard-category-container" data-category={category}>@CategoryTasks(data.Categories[category], time.Time{}, "")</div>
+    }
+    </div>
+  </div>
+}

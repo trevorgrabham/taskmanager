@@ -1,0 +1,27 @@
+package dashboard
+
+import (
+  "slices"
+  "time"
+	"local/taskmanager/views"
+)
+
+templ OverdueTasks(data views.OverdueViewData) {
+  {{
+    var sortedCategories []string
+    for k := range data.Categories {
+      sortedCategories = append(sortedCategories, k)
+    }
+    slices.Sort(sortedCategories)
+  }}
+  <div class="dashboard-overdue-tasks dashboard-tasks-container fill-parent">
+    <div class="dashboard-tasks-title-header-container">
+      <div class="dashboard-tasks-title-header">Overdue</div>
+    </div>
+    <div class="dashboard-categories-container">
+    for _, category := range sortedCategories {
+      <div class="dashboard-category-container">@CategoryTasks(data.Categories[category], time.Time{}, "")</div>
+    }
+    </div>
+  </div>
+}

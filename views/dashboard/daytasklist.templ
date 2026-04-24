@@ -1,0 +1,34 @@
+package dashboard 
+
+import (
+	"fmt"
+  "slices"
+  "strings"
+	"local/taskmanager/views"
+)
+
+templ DayTaskList(data views.TaskGroupViewData) {
+  {{
+    sortedKeys := make([]string, 0)
+    for k := range data.Categories {
+      sortedKeys = append(sortedKeys, k)
+      slices.SortFunc(data.Categories[k].Tasks, func(a, b views.TaskViewData) int { return strings.Compare(a.Title, b.Title) })
+    }
+    slices.Sort(sortedKeys)
+  }}
+  <div 
+    id={fmt.Sprintf("date-%s", data.Date.Format("2006-01-02"))} 
+    class="dashboard-day-of-tasks dashboard-tasks-container dashboard-droppable-container fill-parent" >
+    <div class="dashboard-tasks-title-header-container">
+      <div class="dashboard-tasks-title-header">
+        {data.Date.Format("Mon Jan 2")}
+      </div>
+      <div class="dashboard-date-add-button">@AddTaskButton(fmt.Sprintf("/add-task?due-date=%s", data.Date.Format("2006-01-02")))</div>
+    </div>
+    <div class="dashboard-categories-container">
+    for _, k := range sortedKeys {
+      <div class="dashboard-category-container" data-category={k}>@CategoryTasks(data.Categories[k], data.Date, "")</div>
+    }
+    </div>
+  </div>
+}

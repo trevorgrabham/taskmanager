@@ -1,0 +1,13 @@
+package views
+
+templ TimeInput(timeString string) {
+  <div id="time-input">
+    <input 
+      type="time" 
+      name="time"
+      if timeString != "" {
+        value={timeString}
+      }
+      required>
+  </div>
+}

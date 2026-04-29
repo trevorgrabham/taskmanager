@@ -1,6 +1,10 @@
 package views
 
-import "time"
+import (
+	"time"
+
+	"github.com/a-h/templ"
+)
 
 type TaskFormViewData struct {
 	TaskID              int
@@ -15,24 +19,29 @@ type TaskFormViewData struct {
 	RecurringUnit       string
 }
 
+type LayoutViewData struct {
+	UserID  int
+	Content templ.Component
+}
+
 type DashboardViewData struct {
 	StartDay         time.Time
-	WeekOfTasks      map[int]TaskGroupViewData
+	WeekOfTasks      map[int]*TaskGroupViewData
 	OverdueTasks     OverdueViewData
 	UnscheduledTasks UnscheduledViewData
 }
 
 type OverdueViewData struct {
-	Categories map[string]CategoryViewData
+	Categories map[string]*CategoryViewData
 }
 
 type UnscheduledViewData struct {
-	Categories map[string]CategoryViewData
+	Categories map[string]*CategoryViewData
 }
 
 type TaskGroupViewData struct {
 	Date       time.Time
-	Categories map[string]CategoryViewData
+	Categories map[string]*CategoryViewData
 }
 
 type CategoryViewData struct {

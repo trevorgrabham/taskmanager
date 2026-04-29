@@ -7,12 +7,14 @@ import (
 	"io/fs"
 	"log"
 	"strconv"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
 //go:embed migrations/*.sql
 var migrationFiles embed.FS
 
+// createMigrationTableIfNotExists creates a table to track applied migrations if it doesn't already exist.
 func createMigrationTableIfNotExists(db *sql.DB) error {
 	_, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -23,6 +25,10 @@ func createMigrationTableIfNotExists(db *sql.DB) error {
 	return err
 }
 
+// applyMigration applies the SQL commands in the .sql file identified by fileName if it has not already been applied.
+// Propogates errors back to the calling function.
+//
+// Exits if the migration state becomes corrupted. This would happen by migrations being applied in the wrong order, such as having a future migration applied before the current one under inspection.
 func applyMigration(db *sql.DB, fileName string) error {
 	var (
 		tx                                                  *sql.Tx
@@ -79,6 +85,7 @@ func applyMigration(db *sql.DB, fileName string) error {
 	return nil
 }
 
+// Migrate applies any migration files that have not yet been applied.
 func Migrate(db *sql.DB) (err error) {
 	var dirEntries []fs.DirEntry
 	err = createMigrationTableIfNotExists(db)
@@ -100,6 +107,7 @@ func Migrate(db *sql.DB) (err error) {
 	return nil
 }
 
+// Connect opens a database connection pool for the Repo and applies any unapplied migrations.
 func (r *Repo) Connect() error {
 	var (
 		caller = "Connect"
@@ -108,21 +116,21 @@ func (r *Repo) Connect() error {
 
 	r.db, err = sql.Open("sqlite3", dbFileName)
 	if err != nil {
-		return fmt.Errorf("%s: %w", caller, NewErrRepo(err))
+		return fmt.Errorf("%s: %w: %s", caller, ErrInternalRepo, err)
 	}
 
 	err = r.db.Ping()
 	if err != nil {
-		return fmt.Errorf("%s: %w", caller, NewErrRepo(err))
+		return fmt.Errorf("%s: %w: %s", caller, ErrInternalRepo, err)
 	}
 
 	_, err = r.db.Exec(`PRAGMA foreign_keys = ON`)
 	if err != nil {
-		return fmt.Errorf("%s: %w", caller, NewErrRepo(err))
+		return fmt.Errorf("%s: %w: %s", caller, ErrInternalRepo, err)
 	}
 
 	if err = Migrate(r.db); err != nil {
-		return fmt.Errorf("%s: %w", caller, NewErrRepo(err))
+		return fmt.Errorf("%s: %w: %s", caller, ErrInternalRepo, err)
 	}
 
 	return nil

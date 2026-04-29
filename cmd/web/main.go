@@ -10,8 +10,10 @@ import (
 )
 
 func main() {
-	repo, err := sqlite.NewRepo() 
-	if err != nil { log.Fatal(err) }
+	repo, err := sqlite.NewRepo()
+	if err != nil {
+		log.Fatal(err)
+	}
 	handler := routes.NewHandler(services.NewService(&repo))
 
 	fs := http.FileServer(http.Dir("./static"))
@@ -23,6 +25,7 @@ func main() {
 	http.HandleFunc("/edit-task", middleware.SessionIDCookieMiddleware(handler.EditTaskHandler))
 	http.HandleFunc("/delete", middleware.SessionIDCookieMiddleware(handler.DeleteTaskHandler))
 	http.HandleFunc("/login", middleware.SessionIDCookieMiddleware(handler.LoginHandler))
+	http.HandleFunc("/logout", middleware.SessionIDCookieMiddleware(handler.LogoutHandler))
 	http.HandleFunc("/signup", middleware.SessionIDCookieMiddleware(handler.SignupHandler))
 	http.HandleFunc("/task", middleware.SessionIDCookieMiddleware(handler.TaskInfoHandler))
 	http.HandleFunc("/toggle-complete", middleware.SessionIDCookieMiddleware(handler.ToggleCompleteHandler))

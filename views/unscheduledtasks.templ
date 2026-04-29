@@ -1,12 +1,11 @@
-package dashboard
+package views
 
 import (
   "time"
   "slices"
-	"local/taskmanager/views"
 )
 
-templ UnscheduledTasks(data views.UnscheduledViewData) {
+templ UnscheduledTasks(data UnscheduledViewData) {
   {{
     var sortedCategories []string
     for k := range data.Categories {
@@ -23,7 +22,7 @@ templ UnscheduledTasks(data views.UnscheduledViewData) {
     </div>
     <div class="dashboard-categories-container">
     for _, category := range sortedCategories {
-      <div class="dashboard-category-container" data-category={category}>@CategoryTasks(data.Categories[category], time.Time{}, "")</div>
+      <div class="dashboard-category-container" data-category={category}>@CategoryTasks(*data.Categories[category], time.Time{}, "")</div>
     }
     </div>
   </div>

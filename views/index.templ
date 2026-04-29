@@ -1,10 +1,7 @@
-package dashboard 
+package views 
 
-import (
-	"local/taskmanager/views"
-)
 
-templ Index(data views.DashboardViewData) {
+templ Index(data DashboardViewData) {
   <div id="dashboard" class="fill-parent">
     <div id="dashboard-side-panel">
       <div id="dashboard-overdue-container">@OverdueTasks(data.OverdueTasks)</div>

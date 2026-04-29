@@ -3,7 +3,6 @@ package services
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"fmt"
 	"time"
 )
 
@@ -13,13 +12,12 @@ const SessionCookieKey = "session_id"
 // 30 days
 const SessionTimeoutDuration = 30 * 24 * time.Hour
 
-func GenerateSessionID() (sessionID string, err error) {
+// GenerateSessionID creates a random 32 byte string.
+func GenerateSessionID() (sessionID string) {
 	bytes := make([]byte, 32)
-	if _, err = rand.Read(bytes); err != nil {
-		return "", fmt.Errorf("CreateSession: %s", err)
-	}
+	_, _ = rand.Read(bytes)
 
 	sessionID = hex.EncodeToString(bytes)
 
-	return sessionID, nil
+	return sessionID
 }

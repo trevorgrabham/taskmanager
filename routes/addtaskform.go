@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"local/taskmanager/internal/context"
 	"local/taskmanager/services"
 	"local/taskmanager/views"
@@ -8,8 +9,13 @@ import (
 	"time"
 )
 
-// GET: Renders the add-task form
-func (h Handlers) AddTaskHandler(w http.ResponseWriter, r *http.Request) {
+// AddTaskHandler renders the TaskForm view.
+//
+// If a 'due-date' query string parameter is present, it is parsed and used to fill out the 'due-date' input for the form. If 'due-date' is not a valid date-time string, then it is ignored and an ErrInvalidDueDate is logged.
+// If a 'category' query string parameter is present, it is used to fill out the 'category' input for the form.
+//
+// Requires that the user be authenticated.
+func (h Handler) AddTaskHandler(w http.ResponseWriter, r *http.Request) {
 	var (
 		caller              = "AddTaskHandler"
 		err                 error
@@ -20,29 +26,32 @@ func (h Handlers) AddTaskHandler(w http.ResponseWriter, r *http.Request) {
 		categorySuggestions []string
 	)
 
+	// Check for an active session
 	if sessionID, err = context.GetSessionID(r.Context()); err != nil {
-		h.HandleError(w, NewSessionIDCookieParseError(caller, err))
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, err))
 		return
 	}
 	if sessionID == "" {
-		h.HandleError(w, NewUnauthenticatedError(caller))
+		h.HandleError(w, r, fmt.Errorf("%s: %w %s", caller, ErrInvalidSessionID, sessionID))
 		return
 	}
 
 	if user, err = h.services.GetUserBySessionID(sessionID); err != nil {
-		// TODO: wrap the returned error
-		h.HandleError(w, err)
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, err))
+		return
+	}
+	if user.ID == 0 {
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, ErrEmptySessionID))
 		return
 	}
 
 	if categorySuggestions, err = h.services.GetUserCategorySuggestions(user.ID); err != nil {
-		// TODO: wrap the returned error
-		h.HandleError(w, err)
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, err))
 		return
 	}
 
 	if dueDay, err = h.parseDay(r.URL.Query().Get("due-date")); err != nil {
-		h.HandleError(w, NewDayParseError(caller, err))
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, err))
 		return
 	}
 
@@ -58,7 +67,7 @@ func (h Handlers) AddTaskHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	err = views.TaskForm(taskViewData).Render(r.Context(), w)
 	if err != nil {
-		h.HandleError(w, NewTemplateRenderError(caller, "TaskForm", err))
+		h.HandleError(w, r, fmt.Errorf("%s: %w TaskForm: %s", caller, ErrRenderingTemplate, err))
 		return
 	}
 }

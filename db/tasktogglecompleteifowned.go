@@ -4,97 +4,125 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"strconv"
-	"strings"
 	"time"
 )
 
+// TaskToggleCompleteIfOwned toggles the completion status for the task identified by taskID if it is owned by userID.
+//
+// If Repo is not initialized, returns an ErrNotConnected.
+// If taskID is empty or not task matches, returns an ErrTaskNotExist.
+// If userID is empty, returns an ErrUserNotExist.
+// If an error occurs in the Repo, returns an ErrInternalRepo.
+// If the task is not owned by userID, returns an ErrNotOwner.
+// If no task was not toggled, but the task exists and is owned by userID, returns an ErrorUnknown. This should never happen.
 func (r *Repo) TaskToggleCompleteIfOwned(taskID, userID int) (task Task, err error) {
 	var (
-		caller = "TaskToggleCompleteIfOwned"
-		tx     *sql.Tx
-		row    *sql.Row
-    split []string
-    recurringValue int
-    recurringUnit string 
-    today time.Time
-    nextTask Task
+		tx           *sql.Tx
+		res          sql.Result
+		rowsAffected int64
+		row          *sql.Row
+		nextDueDate  time.Time
+		nextTask     Task
 	)
 	if !r.isConnected() {
-		return Task{}, fmt.Errorf("%s: %w", caller, ErrNotConnected)
+		return Task{}, ErrNotConnected
+	}
+	if taskID < 1 {
+		return Task{}, fmt.Errorf("%w for id %d", ErrTaskNotExist, taskID)
+	}
+	if userID < 1 {
+		return Task{}, fmt.Errorf("%w for id %d", ErrUserNotExist, userID)
 	}
 
 	if tx, err = r.db.Begin(); err != nil {
-		return Task{}, fmt.Errorf("%s: %w", caller, NewErrRepo(err))
+		return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	row = tx.QueryRow(`
+	res, err = tx.Exec(`
     UPDATE task 
     SET done = (done + 1) % 2, completion_date = 
       CASE 
         WHEN completion_date IS NULL THEN ?
         ELSE NULL
       END
-    WHERE id = ? AND user_id = ?
-    RETURNING id, title, category, description, due_date, completion_date, done, recurring_id, user_id,  (
-      SELECT period FROM recurring WHERE recurring.id = task.recurring_id
-    )`, taskID, userID)
+    WHERE id = ? AND user_id = ?`, time.Now().Unix(), taskID, userID)
+	if err != nil {
+		return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
+	}
+	if rowsAffected, err = res.RowsAffected(); err != nil {
+		return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
+	}
 
-  if task, err = scanRow(row); err != nil { 
-    if errors.Is(err, sql.ErrNoRows) { return Task{}, NewErrNotOwner(userID, taskID) }
-    return Task{}, fmt.Errorf("%s: %w", caller, NewErrRepo(err)) 
-  }
+	row = tx.QueryRow(fmt.Sprintf(`
+		%s 
+		WHERE task.id = ?`, defaultTaskSelect),
+		taskID)
 
-  // Not recurring, nothing more to do
-  if !task.RecurringID.Valid || task.RecurringID.Int64 == 0 {
-    if err = tx.Commit(); err != nil { return Task{}, fmt.Errorf("%s: %w", caller, NewErrTransactionCommit(err)) }
+	// Nothing was updated
+	if rowsAffected != 1 {
+		if task, err = scanRow(row); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return Task{}, fmt.Errorf("%w for %d", ErrTaskNotExist, taskID)
+			}
+			return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
+		}
 
-    return task, nil
-  }
-  // Just uncompleted a task. There is still a task in the database that was added when the recurring task was initially completed, but attempting to remove it may cause errors.
-  // We may consider adding a "recurring_parent" field that references the taskID for recurring tasks, but until then, we don't want to accidentally remove the wrong task
-  if !task.Done {
-    if err = tx.Commit(); err != nil { return Task{}, fmt.Errorf("%s: %w", caller, NewErrTransactionCommit(err)) }
+		if task.UserID != userID {
+			return Task{}, ErrNotOwner
+		}
 
-    return task, nil
-  }
+		return Task{}, ErrUnknown
+	}
 
-  // If we completed a recurring task, add the next one
-  nextTask = task
-  nextTask.Done = false
-  nextTask.CompletionDate.Valid = false
-  split = strings.Split(task.RecurringPeriod.String, " ")
-  if len(split) != 2 { return Task{}, fmt.Errorf("%s: %w", caller, ErrTaskBadRecurringPeriod) }
-  if recurringValue, err = strconv.Atoi(split[0]); err != nil { return Task{}, fmt.Errorf("%s: %w", caller, err) }
+	if task, err = scanRow(row); err != nil {
+		return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
+	}
 
-  today = time.Now()
-  today = time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, time.Local)
-  recurringUnit = split[1]
-  switch recurringUnit {
-  case "days":
-    nextTask.DueDate.Valid = true
-    nextTask.DueDate.Int64 = today.AddDate(0, 0, recurringValue).Unix()
-  case "weeks":
-    nextTask.DueDate.Valid = true
-    nextTask.DueDate.Int64 = today.AddDate(0, 0, 7 * recurringValue).Unix()
-  case "months":
-    nextTask.DueDate.Valid = true
-    nextTask.DueDate.Int64 = today.AddDate(0, recurringValue, 0).Unix()
-  default:
-    return Task{}, fmt.Errorf("%s: %w", caller, ErrTaskBadRecurringPeriod)
-  }
+	// Not recurring, nothing more to do
+	if !task.RecurringID.Valid || task.RecurringID.Int64 == 0 {
+		if err = tx.Commit(); err != nil {
+			return Task{}, fmt.Errorf("%w: %s", ErrTransactionCommit, err)
+		}
 
-  row = tx.QueryRow(`
+		return task, nil
+	}
+
+	// TODO: either figure out how we want to manage this, or merge the behaviour together with the non-recurring ones
+	// Just uncompleted a task. There is still a task in the database that was added when the recurring task was initially completed, but attempting to remove it may cause errors.
+	// We may consider adding a "recurring_parent" field that references the taskID for recurring tasks, but until then, we don't want to accidentally remove the wrong task
+	if !task.Done {
+		if err = tx.Commit(); err != nil {
+			return Task{}, fmt.Errorf("%w: %s", ErrTransactionCommit, err)
+		}
+
+		return task, nil
+	}
+
+	// If we completed a recurring task, add the next one
+	nextTask = task
+
+	if nextDueDate, err = parseRecurringPeriod(nextTask.RecurringPeriod.String); err != nil {
+		return Task{}, err
+	}
+
+	nextTask.DueDate.Valid = true
+	nextTask.DueDate.Int64 = nextDueDate.Unix()
+
+	row = tx.QueryRow(`
     INSERT INTO task(title, category, description, due_date, recurring_id, user_id) 
     VALUES (?, ?, ?, ?, ?, ?)
     RETURNING task.id, title, category, description, due_date, completion_date, done, recurring_id, user_id, (
-      SELECT period FROM recurring WHERE recurring.id = task.recurring_id)`, 
-    nextTask.Title, nextTask.Category, nextTask.Description, nextTask.DueDate, nextTask.RecurringID, nextTask.UserID)
+      SELECT period FROM recurring WHERE recurring.id = task.recurring_id)`,
+		nextTask.Title, nextTask.Category, nextTask.Description, nextTask.DueDate, nextTask.RecurringID, nextTask.UserID)
 
-  if nextTask, err = scanRow(row); err != nil { return Task{}, fmt.Errorf("%s: %w", caller, NewErrRepo(err)) }
+	if nextTask, err = scanRow(row); err != nil {
+		return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
+	}
 
-  if err = tx.Commit(); err != nil { return Task{}, fmt.Errorf("%s: %w", caller, NewErrTransactionCommit(err)) }
+	if err = tx.Commit(); err != nil {
+		return Task{}, fmt.Errorf("%w: %s", ErrTransactionCommit, err)
+	}
 
-  return task, nil
+	return task, nil
 }

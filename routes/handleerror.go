@@ -1,8 +1,32 @@
 package routes
 
 import (
+	"errors"
 	"fmt"
+	"local/taskmanager/internal/context"
+	"local/taskmanager/services"
+	"log"
 	"net/http"
+)
+
+var (
+	ErrInvalidSessionID  = errors.New("invalid session_id")
+	ErrEmptySessionID    = errors.New("empty session_id")
+	ErrParsingDay        = errors.New("day parsing error")
+	ErrParsingDate       = errors.New("date parsing error")
+	ErrParsingInt        = errors.New("int parsing error")
+	ErrRenderingTemplate = errors.New("error rendering template")
+	ErrInvalidDueDate    = errors.New("invalid due-date")
+	ErrUnknownPath       = errors.New("unknown path")
+	ErrParsingForm       = errors.New("request form parsing error")
+	ErrEmptyUsername     = errors.New("empty username")
+	ErrEmptyPassword     = errors.New("empty password")
+	ErrEmptyConfirmPassword     = errors.New("empty confirm password")
+	ErrUsernameTaken = errors.New("error username taken")
+	ErrPasswordsNotMatch = errors.New("password and confirm password do not match")
+	ErrEmptyTitle = errors.New("empty title")
+	ErrWrongMethod       = errors.New("unsupported method")
+	ErrInvalidRecurringPeriod = errors.New("invalid recurring period")
 )
 
 type ParseFormError struct {
@@ -89,13 +113,14 @@ func NewDatabaseError(callingFunc string, err error) error {
 
 type UnknownPathError struct {
 	Caller string
+	Path   string
 }
 
 func (e *UnknownPathError) Error() string {
-	return fmt.Sprintf("%s: uknown path", e.Caller)
+	return fmt.Sprintf("%s: unknown path %s", e.Caller, e.Path)
 }
-func NewUnknownPathError(callingFunc string) error {
-	return &UnknownPathError{Caller: callingFunc}
+func NewUnknownPathError(callingFunc, path string) error {
+	return &UnknownPathError{Caller: callingFunc, Path: path}
 }
 
 type WrongMethodError struct {
@@ -145,8 +170,8 @@ func NewNoPasswordError(callingFunc string) error {
 }
 
 type MismatchPasswordError struct {
-	Caller string
-	Password string 
+	Caller          string
+	Password        string
 	ConfirmPassword string
 }
 
@@ -170,8 +195,8 @@ func NewNoTitleError(callingFunc string) error {
 
 type DateTimeParseError struct {
 	Caller string
-	Value string
-	Err error
+	Value  string
+	Err    error
 }
 
 func (e *DateTimeParseError) Error() string {
@@ -183,7 +208,7 @@ func NewDateTimeParseError(callingFunc, value string, err error) error {
 
 type RecurringParseError struct {
 	Caller string
-	Err error
+	Err    error
 }
 
 func (e *RecurringParseError) Error() string {
@@ -194,9 +219,9 @@ func NewRecurringParseError(callingFunc string, err error) error {
 }
 
 type TemplateRenderError struct {
-	Caller string
+	Caller   string
 	Template string
-	Err error
+	Err      error
 }
 
 func (e *TemplateRenderError) Error() string {
@@ -206,41 +231,17 @@ func NewTemplateRenderError(callingFunc, template string, err error) error {
 	return &TemplateRenderError{Caller: callingFunc, Template: template, Err: err}
 }
 
-func (h Handlers) HandleError(w http.ResponseWriter, err error) {
-	switch err.(type) {
-	case *ParseFormError:
-	// Unrecoverable. Log error and let user know
-	case *SessionIDCookieParseError:
-	// Recoverable. Signal user to delete sessionID cookie and redirect to login page
-	case *UnauthenticatedError:
-		// Recoverable. Redirect to login page
-	case *DayParseError:
-	// Depending on the caller, we can do different things.
-	// If it was from a form, use an oob swap to return the date input with .error attached.
-	// If it was from a drag and drop, we need to think about wether the element was removed from the list, and if it needs to be re-added. If the javascript waits for a response then we can just send an error
-	case *RecurringParseError:
-	// If it was from a form, use an oob swap to return the date input with .error attached.
-	case *IDParseError:
-	// Unrecoverable. Log error and let user know
-	case *NoIDError:
-	// Unrecoverable. Log error and let user know
-	case *DatabaseError:
-	// Unrecoverable. Log error and let user know
-	case *UnknownPathError:
-	// Unrecoverable. Log error and let user know
-	case *WrongMethodError:
-	// Unrecoverable. Log error and let user know
-	case *NoConfirmPasswordError:
-	// Recoverable. Should be from the login or signup page, so we can use an oob-swap with a .error class to highlight the error
-	case *NoPasswordError:
-	// Recoverable. Should be from the login or signup page, so we can use an oob-swap with a .error class to highlight the error
-	case *MismatchPasswordError:
-	// Recoverable. Should be from the login or signup page, so we can use an oob-swap with a .error class to highlight the error
-	case *NoUsernameError:
-		// Recoverable. Should be from the login or signup page, so we can use an oob-swap with a .error class to highlight the error
-	case *NoTitleError:
-	// Unrecoverable. Log error and let user know
-	case *DateTimeParseError:
-	// Unrecoverable. Log error and let user know
+func (h Handler) HandleError(w http.ResponseWriter, r *http.Request, err error) {
+	if errors.Is(err, context.ErrWrongContextType) {
+		// SessionID cookie exists, but is not a string
+	} else if errors.Is(err, services.ErrInvalidSessionID) || errors.Is(err, ErrInvalidSessionID) {
+		// User is unauthenticated
+	} else if errors.Is(err, services.ErrInternalRepo) {
+	} else if errors.Is(err, ErrParsingInt) {
+	} else if errors.Is(err, services.ErrInvalidTaskID) {
+		// taskID < 1
+	} else if errors.Is(err, services.ErrNotOwner) {
+		// task.UserID != userID
 	}
+	log.Println(err)
 }

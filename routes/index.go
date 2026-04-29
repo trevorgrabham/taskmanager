@@ -1,16 +1,18 @@
 package routes
 
 import (
+	"fmt"
 	"local/taskmanager/internal/context"
 	"local/taskmanager/services"
 	"local/taskmanager/views"
-	"local/taskmanager/views/dashboard"
 	"net/http"
 	"time"
 )
 
-// Renders the index.html page
-func (h Handlers) IndexHandler(w http.ResponseWriter, r *http.Request) {
+// Renders the index.html page.
+//
+// Requires that the user be authenticated.
+func (h Handler) IndexHandler(w http.ResponseWriter, r *http.Request) {
 	var (
 		caller         = "IndexHandler"
 		err            error
@@ -20,40 +22,40 @@ func (h Handlers) IndexHandler(w http.ResponseWriter, r *http.Request) {
 		dashboardData  views.DashboardViewData
 	)
 
+	// Check user authenticated and grab User
 	if r.URL.Path != "/" {
-		h.HandleError(w, NewUnknownPathError(caller))
+		h.HandleError(w, r, fmt.Errorf("%s: %w %s", caller, ErrUnknownPath, r.URL.Path))
 		return
 	}
 
 	if sessionID, err = context.GetSessionID(r.Context()); err != nil {
-		h.HandleError(w, NewSessionIDCookieParseError(caller, err))
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, err))
 		return
 	}
 	if sessionID == "" {
-		h.HandleError(w, NewUnauthenticatedError(caller))
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, ErrEmptySessionID))
 		return
 	}
 
 	if user, err = h.services.GetUserBySessionID(sessionID); err != nil {
-		// TODO: wrap the returned error
-		h.HandleError(w, err)
+		h.HandleError(w, r, fmt.Errorf("%s: %w", err))
 		return
 	}
 
 	if dashboardTasks, err = h.services.GetDashboardData(user.ID); err != nil {
-		// TODO: wrap the returned error
-		h.HandleError(w, err)
+		h.HandleError(w, r, fmt.Errorf("%s: %w", err))
 		return
 	}
 
 	dashboardData.WeekOfTasks = h.parseTaskListToWeekOfTasks(dashboardTasks.WeekOfTasks, time.Now())
 	dashboardData.OverdueTasks = h.parseTaskListToOverdueTasks(dashboardTasks.OverdueTasks)
 	dashboardData.UnscheduledTasks = h.parseTaskListToUnscheduledTasks(dashboardTasks.UnscheduledTasks)
+	dashboardData.StartDay = time.Now()
 
 	w.Header().Set("Content-Type", "text/html")
-	err = views.Layout(dashboard.Index(dashboardData)).Render(r.Context(), w)
+	err = views.Layout(views.LayoutViewData{UserID: user.ID, Content: views.Index(dashboardData)}).Render(r.Context(), w)
 	if err != nil {
-		h.HandleError(w, NewTemplateRenderError(caller, "Layout", err))
+		h.HandleError(w, r, fmt.Errorf("%s: %w Layout: %s", caller, ErrRenderingTemplate, err))
 		return
 	}
 }

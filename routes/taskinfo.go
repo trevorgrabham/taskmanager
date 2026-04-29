@@ -1,14 +1,17 @@
 package routes
 
 import (
+	"fmt"
 	"local/taskmanager/internal/context"
 	"local/taskmanager/services"
 	"local/taskmanager/views/taskinfo"
 	"net/http"
 )
 
-// Renders task-info page
-func (h Handlers) TaskInfoHandler(w http.ResponseWriter, r *http.Request) {
+// TaskInfoHandler renders the TaskInfo view for the task identified by 'id'.
+//
+// Requires that the user be authenticated.
+func (h Handler) TaskInfoHandler(w http.ResponseWriter, r *http.Request) {
 	var (
 		caller       = "TaskInfoHandler"
 		err          error
@@ -18,33 +21,32 @@ func (h Handlers) TaskInfoHandler(w http.ResponseWriter, r *http.Request) {
 		t            services.Task
 		taskInfoData taskinfo.TaskInfoViewData
 	)
+	// Check for an active session
 	if sessionID, err = context.GetSessionID(r.Context()); err != nil {
-		h.HandleError(w, NewSessionIDCookieParseError(caller, err))
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, err))
 		return
 	}
 	if sessionID == "" {
-		h.HandleError(w, NewUnauthenticatedError(caller))
+		h.HandleError(w, r, fmt.Errorf("%s: %w %s", caller, ErrInvalidSessionID, sessionID))
 		return
 	}
 
 	if user, err = h.services.GetUserBySessionID(sessionID); err != nil {
-		// TODO: wrap the returned error
-		h.HandleError(w, err)
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, err))
+		return
+	}
+	if user.ID == 0 {
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, ErrEmptySessionID))
 		return
 	}
 
 	if taskID, err = h.parseID(r.URL.Query().Get("id")); err != nil {
-		h.HandleError(w, NewIDParseError(caller, err))
-		return
-	}
-	if taskID == -1 {
-		h.HandleError(w, NewNoIDError(caller))
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, err))
 		return
 	}
 
 	if t, err = h.services.GetTaskByID(taskID, user.ID); err != nil {
-		// TODO: wrap the returned error
-		h.HandleError(w, err)
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, err))
 		return
 	}
 
@@ -53,7 +55,7 @@ func (h Handlers) TaskInfoHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	err = taskinfo.TaskInfo(taskInfoData).Render(r.Context(), w)
 	if err != nil {
-		h.HandleError(w, NewTemplateRenderError(caller, "TaskInfo", err))
+		h.HandleError(w, r, fmt.Errorf("%s: %w TaskInfo: %s", caller, ErrRenderingTemplate, err))
 		return
 	}
 }

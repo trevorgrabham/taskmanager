@@ -1,3 +1,4 @@
+// Package routes provides HTTP request handlers and their supporting types.
 package routes
 
 import (
@@ -10,16 +11,20 @@ import (
 	"time"
 )
 
-type Handlers struct {
+// Handler is a wrapper around a service layer interface. It exposes methods to respond to http requests.
+type Handler struct {
 	services Services
 }
 
-func NewHandler(s Services) Handlers { return Handlers{services: s} }
+// NewHandler initializes a Handler using s to perform our service logic.
+func NewHandler(s Services) Handler { return Handler{services: s} }
 
+// Services defines the service layer functions needed by Handler to respond to requests.
 type Services interface {
-	AddTask(t services.Task, userID int) (addedTask services.Task, err error)
+	AddTask(t services.Task) (addedTask services.Task, err error)
 	CompleteTask(taskID, userID int) error
 	DeleteTask(taskID, userID int) error
+	DeleteSession(sessionID string) error
 	GetDashboardData(userID int) (services.Dashboard, error) // Aggregate WeekOfTasks, Unscheduled, Overdue
 	GetOverdueTasks(userID int) (services.TaskList, error)   // no need to sort the data
 	GetTaskByID(taskID, userID int) (services.Task, error)
@@ -32,24 +37,30 @@ type Services interface {
 	SignupUser(username, password string) (sessionID string, err error)  // username and password are not "". Does not need to SetSessionIDCookie(), but should start session
 	TaskToggleComplete(taskID, userID int) (updatedTask services.Task, err error)
 	UpdateDueDate(taskID, userID int, dueDate time.Time) (updatedTask services.Task, err error) // if dueDate.IsZero() remove due date. Otherwise, keep the original time, but replace the day
-	UpdateTask(t services.Task, userID int) (updatedTask services.Task, err error)
+	UpdateTask(t services.Task) (updatedTask services.Task, err error)
 }
 
-// To parse taskform.templ
+// TaskFormData represents the raw data submitted from a TaskForm.
 type TaskFormData struct {
 	SessionID      string
-	ID             string
+	ID             string // expected format: "n", n > 1
 	Title          string
 	Description    string
 	Category       string
-	DueDateDay     string
-	DueDateTime    string
-	RecurringValue string
-	RecurringUnit  string
+	DueDateDay     string // expected format: "2006-01-02"
+	DueDateTime    string // expected format: "15:04"
+	RecurringValue string // expected format: "n", n > 1
+	RecurringUnit  string // expected format: "days" | "weeks" | "months"
 }
 
 // ============================== Translate to Service Data ==========================================
-func (h Handlers) parseDateAndTime(dayString, timeString string) (dateTime time.Time, err error) {
+
+// parseDateAndTime combines a date string and time string into a time.Time value.
+//
+// If date string is empty, returns time.Time{}.
+// If time string is empty, populates it to "00:00".
+// Returns an ErrParsingDate if the combined input is not a valid date-time string.
+func (h Handler) parseDateAndTime(dayString, timeString string) (dateTime time.Time, err error) {
 	if dayString == "" {
 		return time.Time{}, nil
 	}
@@ -58,46 +69,60 @@ func (h Handlers) parseDateAndTime(dayString, timeString string) (dateTime time.
 	}
 
 	if dateTime, err = time.ParseInLocation("2006-01-02 15:04", fmt.Sprintf("%s %s", dayString, timeString), time.Local); err != nil {
-		return time.Time{}, err
+		return time.Time{}, fmt.Errorf("%w: %s", ErrParsingDate, fmt.Sprintf("%s %s", dayString, timeString))
 	}
 
 	return dateTime, nil
 }
 
-func (h Handlers) parseDay(dayString string) (day time.Time, err error) {
+// parseDay parses a date string into a time.Time value.
+//
+// If date string is empty, returns time.Time{}.
+// Returns an ErrParsingDay if date string is not a valid date-time string.
+func (h Handler) parseDay(dayString string) (day time.Time, err error) {
 	if dayString == "" {
 		return time.Time{}, nil
 	}
 
 	day, err = time.Parse("2006-01-02", dayString)
 	if err != nil {
-		return time.Time{}, fmt.Errorf("parsing day from %s: %w", dayString, err)
+		return time.Time{}, fmt.Errorf("%w: %s", ErrParsingDay, dayString)
 	}
 
 	return day, nil
 }
 
-func (h Handlers) parseID(idString string) (id int, err error) {
+// parseID parses a string value into an integer.
+//
+// If id string is empty, returns 0.
+// Returns an error if the string cannot be parsed into a valid integer.
+func (h Handler) parseID(idString string) (id int, err error) {
 	if idString == "" {
-		return -1, nil
+		return 0, nil
 	}
 
 	id, err = strconv.Atoi(idString)
 	if err != nil {
-		return -1, fmt.Errorf("parsing ID %s: %w", idString, err)
+		return -1, fmt.Errorf("%w %s", ErrParsingInt, id)
 	}
 
 	return id, nil
 }
 
-func (h Handlers) parseRecurringPeriod(value, unit string) (recurringPeriod string, err error) {
+// parseRecurringPeriod combines a value and unit string of the form "<value> <unit>" (e.g. "2 weeks").
+//
+// If any of the inputs are empty, an empty string is returned.
+// If value does not hold a valid integer, an ErrBadRecurringValue is returned.
+// The unit string is not validated, validation is left up to the service layer.
+func (h Handler) parseRecurringPeriod(value, unit string) (recurringPeriod string, err error) {
 	if value == "" || unit == "" {
 		return "", nil
 	}
 
-	if unit != "days" && unit != "weeks" && unit != "months" {
-		return "", fmt.Errorf("%s is not a valid recurring unit", unit)
-	}
+	// TODO: remove this code block once the validation in the service layer is set up
+	// if unit != "days" && unit != "weeks" && unit != "months" {
+	// return "", fmt.Errorf("%s is not a valid recurring unit", unit)
+	// }
 
 	var valueCheck int
 	if valueCheck, err = strconv.Atoi(value); err != nil {
@@ -109,22 +134,25 @@ func (h Handlers) parseRecurringPeriod(value, unit string) (recurringPeriod stri
 
 // ============================== Translate to ViewData ==========================================
 
-func (h Handlers) parseTaskListToOverdueTasks(tasks services.TaskList) (sortedTasks views.OverdueViewData) {
-	sortedTasks.Categories = make(map[string]views.CategoryViewData)
+// parseTaskListToOverdueTasks maps tasks to OverdueViewData, grouped by category.
+func (h Handler) parseTaskListToOverdueTasks(tasks services.TaskList) (sortedTasks views.OverdueViewData) {
+	sortedTasks.Categories = make(map[string]*views.CategoryViewData)
 	for _, t := range tasks {
-		newTaskViewData := views.TaskViewData{
-			ID:    t.ID,
-			Title: t.Title,
-			Done:  t.Done,
+		category := sortedTasks.Categories[t.Category]
+		if category == nil {
+			// Must initialize because we are storing pointers
+			category = &views.CategoryViewData{Category: t.Category, Tasks: nil}
 		}
-		updatedTasks := append(sortedTasks.Categories[t.Category].Tasks, newTaskViewData)
-		sortedTasks.Categories[t.Category] = views.CategoryViewData{Category: t.Category, Tasks: updatedTasks}
+
+		category.Tasks = append(category.Tasks, h.parseTaskToTaskViewData(t))
+		sortedTasks.Categories[t.Category] = category
 	}
 
 	return sortedTasks
 }
 
-func (h Handlers) parseTaskToTaskInfoViewData(t services.Task) (taskInfoData taskinfo.TaskInfoViewData) {
+// parseTaskToTaskInfoViewData maps a task to TaskInfoViewData.
+func (h Handler) parseTaskToTaskInfoViewData(t services.Task) (taskInfoData taskinfo.TaskInfoViewData) {
 	taskInfoData.ID = t.ID
 	taskInfoData.Title = t.Title
 	taskInfoData.Category = t.Category
@@ -135,7 +163,8 @@ func (h Handlers) parseTaskToTaskInfoViewData(t services.Task) (taskInfoData tas
 	return taskInfoData
 }
 
-func (h Handlers) parseTaskToTaskViewData(taskData services.Task) (taskViewData views.TaskViewData) {
+// parseTaskToTaskViewData maps a task to TaskViewData.
+func (h Handler) parseTaskToTaskViewData(taskData services.Task) (taskViewData views.TaskViewData) {
 	taskViewData.ID = taskData.ID
 	taskViewData.Title = taskData.Title
 	taskViewData.Done = taskData.Done
@@ -143,7 +172,8 @@ func (h Handlers) parseTaskToTaskViewData(taskData services.Task) (taskViewData 
 	return taskViewData
 }
 
-func (h Handlers) parseTaskToTaskFormViewData(taskData services.Task) (taskFormViewData views.TaskFormViewData, err error) {
+// parseTaskToTaskFormViewData maps a task to TaskFormViewData.
+func (h Handler) parseTaskToTaskFormViewData(taskData services.Task) (taskFormViewData views.TaskFormViewData, err error) {
 	var split []string
 	taskFormViewData.TaskID = taskData.ID
 	taskFormViewData.UserID = taskData.UserID
@@ -152,89 +182,88 @@ func (h Handlers) parseTaskToTaskFormViewData(taskData services.Task) (taskFormV
 	taskFormViewData.Description = taskData.Description
 	if taskData.RecurringPeriod != "" {
 		split = strings.Split(taskData.RecurringPeriod, " ")
-		if len(split) != 2 {
-			return views.TaskFormViewData{}, fmt.Errorf("unknown recurring period format %s", taskData.RecurringPeriod)
-		}
-		if _, err = strconv.Atoi(split[0]); err != nil {
-			return views.TaskFormViewData{}, fmt.Errorf("unknown recurring period value %v", split[0])
-		}
-		switch split[1] {
-		case "days", "weeks", "months":
+		taskFormViewData.RecurringValue = split[0]
+		taskFormViewData.RecurringUnit = split[1]
+		// TODO: remove this code block once the recurring period validation is setup at the service layer. Needs to validate both incoming and outgoing.
+		// if len(split) != 2 {
+		// return views.TaskFormViewData{}, fmt.Errorf("unknown recurring period format %s", taskData.RecurringPeriod)
+		// }
+		// if _, err = strconv.Atoi(split[0]); err != nil {
+		// return views.TaskFormViewData{}, fmt.Errorf("unknown recurring period value %v", split[0])
+		// }
+		// switch split[1] {
+		// case "days", "weeks", "months":
 		// do nothing
-		default:
-			return views.TaskFormViewData{}, fmt.Errorf("unknown recurring period unit %v", split[1])
-		}
+		// default:
+		// return views.TaskFormViewData{}, fmt.Errorf("unknown recurring period unit %v", split[1])
+		// }
 
-		taskFormViewData.RecurringValue, taskFormViewData.RecurringUnit = split[0], split[1]
+		// taskFormViewData.RecurringValue, taskFormViewData.RecurringUnit = split[0], split[1]
 	}
 
 	if !taskData.DueDate.IsZero() {
-		dateString := time.Time(taskData.DueDate).Format("2006-01-02 15:04")
+		dateString := taskData.DueDate.Format("2006-01-02 15:04")
 		split = strings.Split(dateString, " ")
-		if len(split) != 2 {
-			return views.TaskFormViewData{}, fmt.Errorf("unknown due date format %v", taskData.DueDate)
-		}
 		taskFormViewData.DueDateDay, taskFormViewData.DueDateTime = split[0], split[1]
 	}
 
 	return taskFormViewData, nil
 }
 
-func (h Handlers) parseTaskListToTaskGroupViewData(tasks services.TaskList) (sortedTasks views.TaskGroupViewData) {
-	sortedTasks.Categories = make(map[string]views.CategoryViewData)
+// parseTaskListToTaskGroupViewData maps tasks to TaskGroupViewData, grouped by category. It is assumed that all tasks share the same due date.
+func (h Handler) parseTaskListToTaskGroupViewData(tasks services.TaskList) (sortedTasks views.TaskGroupViewData) {
+	if len(tasks) < 1 {
+		return
+	}
+	sortedTasks.Categories = make(map[string]*views.CategoryViewData)
 	sortedTasks.Date = tasks[0].DueDate
 	for _, t := range tasks {
-		newTaskViewData := views.TaskViewData{
-			ID:    t.ID,
-			Title: t.Title,
-			Done:  t.Done,
+		category := sortedTasks.Categories[t.Category]
+		if category == nil {
+			category = &views.CategoryViewData{Category: t.Category, Tasks: nil}
 		}
-		updatedTasks := append(sortedTasks.Categories[t.Category].Tasks, newTaskViewData)
-		sortedTasks.Categories[t.Category] = views.CategoryViewData{Category: t.Category, Tasks: updatedTasks}
+		category.Tasks = append(category.Tasks, h.parseTaskToTaskViewData(t))
+		sortedTasks.Categories[t.Category] = category
 	}
 
 	return sortedTasks
 }
 
-func (h Handlers) parseTaskListToUnscheduledTasks(tasks services.TaskList) (sortedTasks views.UnscheduledViewData) {
-	sortedTasks.Categories = make(map[string]views.CategoryViewData)
+// parseTaskListToUnscheduledTasks maps tasks to UnscheduledViewData, grouped by category.
+func (h Handler) parseTaskListToUnscheduledTasks(tasks services.TaskList) (sortedTasks views.UnscheduledViewData) {
+	sortedTasks.Categories = make(map[string]*views.CategoryViewData)
 	for _, t := range tasks {
-		newTaskViewData := views.TaskViewData{
-			ID:    t.ID,
-			Title: t.Title,
-			Done:  t.Done,
+		category := sortedTasks.Categories[t.Category]
+		if category == nil {
+			category = &views.CategoryViewData{Category: t.Category, Tasks: nil}
 		}
-		updatedTasks := append(sortedTasks.Categories[t.Category].Tasks, newTaskViewData)
-		sortedTasks.Categories[t.Category] = views.CategoryViewData{Category: t.Category, Tasks: updatedTasks}
+		category.Tasks = append(category.Tasks, h.parseTaskToTaskViewData(t))
+		sortedTasks.Categories[t.Category] = category
 	}
 
 	return sortedTasks
 }
 
-func (h Handlers) parseTaskListToWeekOfTasks(tasks services.TaskList, startDay time.Time) (sortedTasks map[int]views.TaskGroupViewData) {
-	sortedTasks = make(map[int]views.TaskGroupViewData)
-	for i := range 7 {
-		if i != 0 {
-			startDay = startDay.AddDate(0, 0, 1)
-		}
-		sortedTasks[int(startDay.Weekday())] = views.TaskGroupViewData{Date: startDay, Categories: make(map[string]views.CategoryViewData)}
+// parseTaskListToWeekOfTasks maps tasks to a map[int]*TaskGroupViewData object, grouped by due date, category. tasks are assumed to have due dates that are >= startDay and <= (startDay + 7 days).
+func (h Handler) parseTaskListToWeekOfTasks(tasks services.TaskList, startDay time.Time) (sortedTasks map[int]*views.TaskGroupViewData) {
+	// initialize sortedTasks
+	sortedTasks = make(map[int]*views.TaskGroupViewData)
+	sortedTasks[int(startDay.Weekday())] = &views.TaskGroupViewData{Date: startDay, Categories: make(map[string]*views.CategoryViewData)}
+	for range 6 {
+		startDay = startDay.AddDate(0, 0, 1)
+		sortedTasks[int(startDay.Weekday())] = &views.TaskGroupViewData{Date: startDay, Categories: make(map[string]*views.CategoryViewData)}
 	}
-	fmt.Printf("WeekOfTasks map intialized\n\n%v\n", sortedTasks)
+
 	for _, t := range tasks {
 		weekday := int(t.DueDate.Weekday())
-		newTaskViewData := views.TaskViewData{ID: t.ID, Title: t.Title, Done: t.Done}
 
-		if sortedTasks[weekday].Date.IsZero() {
-			sortedTasks[weekday] = views.TaskGroupViewData{
-				Date:       time.Time(t.DueDate),
-				Categories: make(map[string]views.CategoryViewData),
-			}
+		category := sortedTasks[weekday].Categories[t.Category]
+		if category == nil {
+			category = &views.CategoryViewData{Category: t.Category, Tasks: nil}
 		}
-
-		updatedTasks := append(sortedTasks[weekday].Categories[t.Category].Tasks, newTaskViewData)
-		sortedTasks[weekday].Categories[t.Category] = views.CategoryViewData{Category: t.Category, Tasks: updatedTasks}
+		category.Tasks = append(category.Tasks, h.parseTaskToTaskViewData(t))
+		sortedTasks[weekday].Categories[t.Category] = category
 	}
 
-	fmt.Printf("WeekOfTasks map finished\n\n%v\n", sortedTasks)
 	return sortedTasks
 }

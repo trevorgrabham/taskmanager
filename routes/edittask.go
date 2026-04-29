@@ -1,14 +1,19 @@
 package routes
 
 import (
+	"fmt"
 	"local/taskmanager/internal/context"
 	"local/taskmanager/services"
 	"local/taskmanager/views"
 	"net/http"
 )
 
-// GET request: Renders task-info page in view mode
-func (h Handlers) EditTaskHandler(w http.ResponseWriter, r *http.Request) {
+// EditTaskHandler renders the EditPage view for the task matching 'id'.
+//
+// If id is empty, an ErrInvalidID is returned.
+//
+// Requires that the user be authenticated.
+func (h Handler) EditTaskHandler(w http.ResponseWriter, r *http.Request) {
 	var (
 		caller              = "EditTaskHandler"
 		err                 error
@@ -19,45 +24,39 @@ func (h Handlers) EditTaskHandler(w http.ResponseWriter, r *http.Request) {
 		taskViewData        views.TaskFormViewData
 		categorySuggestions []string
 	)
+	// Check user authenticated and grab User
 	if sessionID, err = context.GetSessionID(r.Context()); err != nil {
-		h.HandleError(w, NewSessionIDCookieParseError(caller, err))
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, err))
 		return
 	}
 	if sessionID == "" {
-		h.HandleError(w, NewUnauthenticatedError(caller))
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, ErrEmptySessionID))
 		return
 	}
 
 	if user, err = h.services.GetUserBySessionID(sessionID); err != nil {
-		// TODO: wrap the returned error
-		h.HandleError(w, err)
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, err))
 		return
 	}
 
+	// Get taskID
 	if taskID, err = h.parseID(r.URL.Query().Get("id")); err != nil {
-		h.HandleError(w, NewIDParseError(caller, err))
-		return
-	}
-	if taskID == -1 {
-		h.HandleError(w, NewNoIDError(caller))
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, err))
 		return
 	}
 
 	if taskData, err = h.services.GetTaskByID(taskID, user.ID); err != nil {
-		// TODO: wrap the returned error
-		h.HandleError(w, err)
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, err))
 		return
 	}
 
 	if taskViewData, err = h.parseTaskToTaskFormViewData(taskData); err != nil {
-		// TODO: wrap the returned error
-		h.HandleError(w, err)
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, err))
 		return
 	}
 
 	if categorySuggestions, err = h.services.GetUserCategorySuggestions(user.ID); err != nil {
-		// TODO: wrap the returned error
-		h.HandleError(w, err)
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, err))
 		return
 	}
 
@@ -66,7 +65,7 @@ func (h Handlers) EditTaskHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	err = views.TaskForm(taskViewData).Render(r.Context(), w)
 	if err != nil {
-		h.HandleError(w, NewTemplateRenderError(caller, "TaskForm", err))
+		h.HandleError(w, r, fmt.Errorf("%s: %w TaskForm: %s", caller, ErrRenderingTemplate, err))
 		return
 	}
 }

@@ -1,18 +1,17 @@
-package dashboard 
+package views 
 
 import (
 	"fmt"
   "slices"
   "strings"
-	"local/taskmanager/views"
 )
 
-templ DayTaskList(data views.TaskGroupViewData) {
+templ DayTaskList(data TaskGroupViewData) {
   {{
     sortedKeys := make([]string, 0)
     for k := range data.Categories {
       sortedKeys = append(sortedKeys, k)
-      slices.SortFunc(data.Categories[k].Tasks, func(a, b views.TaskViewData) int { return strings.Compare(a.Title, b.Title) })
+      slices.SortFunc(data.Categories[k].Tasks, func(a, b TaskViewData) int { return strings.Compare(a.Title, b.Title) })
     }
     slices.Sort(sortedKeys)
   }}
@@ -27,7 +26,7 @@ templ DayTaskList(data views.TaskGroupViewData) {
     </div>
     <div class="dashboard-categories-container">
     for _, k := range sortedKeys {
-      <div class="dashboard-category-container" data-category={k}>@CategoryTasks(data.Categories[k], data.Date, "")</div>
+      <div class="dashboard-category-container" data-category={k}>@CategoryTasks(*data.Categories[k], data.Date, "")</div>
     }
     </div>
   </div>

@@ -1,58 +1,61 @@
 package routes
 
 import (
+	"fmt"
 	"local/taskmanager/internal/context"
 	"local/taskmanager/services"
 	"local/taskmanager/views"
-	"local/taskmanager/views/dashboard"
 	"net/http"
 )
 
-func (h Handlers) ToggleCompleteHandler(w http.ResponseWriter, r *http.Request) {
+// ToggleCompleteHandler renders a ListItem view with the updated completion status of the task.
+//
+// Requires that the user be authenticated.
+func (h Handler) ToggleCompleteHandler(w http.ResponseWriter, r *http.Request) {
 	var (
-		caller    = "ToggleCompleteHandler"
-		err       error
-		sessionID string
-		user services.User
-		t         services.Task
+		caller       = "ToggleCompleteHandler"
+		err          error
+		sessionID    string
+		user         services.User
+		taskID int
+		t            services.Task
 		taskViewData views.TaskViewData
 	)
+	// Check for an active session
 	if sessionID, err = context.GetSessionID(r.Context()); err != nil {
-		h.HandleError(w, NewSessionIDCookieParseError(caller, err))
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, err))
 		return
 	}
 	if sessionID == "" {
-		h.HandleError(w, NewUnauthenticatedError(caller))
-		return
-	}
-
-	if t.ID, err = h.parseID(r.URL.Query().Get("id")); err != nil {
-		h.HandleError(w, NewIDParseError(caller, err))
-		return
-	}
-	if t.ID == -1 {
-		h.HandleError(w, NewNoIDError(caller))
+		h.HandleError(w, r, fmt.Errorf("%s: %w %s", caller, ErrInvalidSessionID, sessionID))
 		return
 	}
 
 	if user, err = h.services.GetUserBySessionID(sessionID); err != nil {
-		// TODO: wrap the returned error
-		h.HandleError(w, err)
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, err))
+		return
+	}
+	if user.ID == 0 {
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, ErrEmptySessionID))
 		return
 	}
 
-	if t, err = h.services.TaskToggleComplete(t.ID, user.ID); err != nil {
-		// TODO: wrap the returned error
-		h.HandleError(w, err)
+	if taskID, err = h.parseID(r.URL.Query().Get("id")); err != nil {
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, err))
 		return
 	}
 
-	taskViewData = h.parseTaskToTaskViewData(t) 
+	if t, err = h.services.TaskToggleComplete(taskID, user.ID); err != nil {
+		h.HandleError(w, r, fmt.Errorf("%s: %w", caller, err))
+		return
+	}
+
+	taskViewData = h.parseTaskToTaskViewData(t)
 
 	w.Header().Set("Content-Type", "text/html")
-	err = dashboard.ListItem(taskViewData).Render(r.Context(), w)
+	err = views.ListItem(taskViewData).Render(r.Context(), w)
 	if err != nil {
-		h.HandleError(w, NewTemplateRenderError(caller, "ListItem", err))
+		h.HandleError(w, r, fmt.Errorf("%s: %w ListItem: %s", caller, ErrRenderingTemplate, err))
 		return
 	}
 }

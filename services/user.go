@@ -15,6 +15,8 @@ type User struct {
 	UpdatedAt time.Time
 }
 
+// checkPassword compares a plain text password against a hashed version.
+// Returns true if the passwords match. Returns false otherwise, including if either the plain text or hashed passwords are empty.
 func checkPassword(plainPass, hashedPass string) bool {
 	if plainPass == "" || hashedPass == "" {
 		return false
@@ -27,7 +29,11 @@ func checkPassword(plainPass, hashedPass string) bool {
 	return true
 }
 
+// hashPassword generates a hashed password from the plain text string.
+//
+// Returns an error if the password length is too long.
 func hashPassword(plainPass string) (string, error) {
+	// TODO: validate the password length
 	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(plainPass), bcrypt.DefaultCost)
 	if err != nil {
 		return "", err
@@ -36,6 +42,7 @@ func hashPassword(plainPass string) (string, error) {
 	return string(hashedBytes), nil
 }
 
+// parseRepoUserToUser maps repo data to a User object.
 func parseRepoUserToUser(repoUser sqlite.User) (user User) {
 	user.ID = repoUser.ID
 	user.Username = repoUser.Username

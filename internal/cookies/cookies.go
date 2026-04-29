@@ -14,9 +14,20 @@ func SetSessionIDCookie(w http.ResponseWriter, sessionID string) {
 		Value:    sessionID,
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   false,			// TODO: switch to 'true' once https enabled
-		SameSite: http.SameSiteLaxMode,		// Look into swapping this once I don't need to debug using chrome dev tools anymore
+		Secure:   false,                // TODO: switch to 'true' once https enabled
+		SameSite: http.SameSiteLaxMode, // Look into swapping this once I don't need to debug using chrome dev tools anymore
 		Expires:  time.Now().Add(SessionTimeoutDuration),
+		MaxAge:   int(SessionTimeoutDuration.Seconds()),
+	})
+}
+
+// DeleteSessionIDCookie removes the SessionID cookie from the clients browser, through a call to SetCookie() with a MaxAge: -1.
+func DeleteSessionIDCookie(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:   SessionCookieKey,
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1,
 	})
 }
 

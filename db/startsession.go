@@ -2,62 +2,67 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"time"
 )
 
 // Deletes any other sessions for the user
-func (r *Repo) StartSession(userID int) (sessionID string, err error) {
+
+// StartSession creates a session for userID under sessionID.
+//
+// If the Repo is not initialized an ErrNotConnected is returned.
+// If sessionID is empty, an ErrEmptySessionID is returned.
+// If userID is empty, an ErrUserNotExist is returned.
+// If an error occurs while querying the database, an ErrInternalRepo is returned.
+func (r *Repo) StartSession(sessionID string, userID int) (err error) {
 	var (
-		caller           = "StartSession"
 		rows             *sql.Rows
 		tx               *sql.Tx
-		idToDelete string
+		idToDelete       string
 		sessionsToDelete []string
-		now time.Time
+		now              time.Time
 	)
 	if !r.isConnected() {
-		return "", fmt.Errorf("%s: %w", caller, ErrNotConnected)
+		return ErrNotConnected
 	}
 
 	if tx, err = r.db.Begin(); err != nil {
-		return "", fmt.Errorf("%s: %w", caller, NewErrRepo(err))
+		return fmt.Errorf("%w: %s", ErrInternalRepo, err)
 	}
 
+	// delete any old sessions for the user
 	rows, err = tx.Query(`SELECT id FROM session WHERE user_id = ?`, userID)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return "", fmt.Errorf("%s: %w", caller, NewErrRepo(err))
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrInternalRepo, err)
 	}
 
-	if err == nil {
-		for rows.Next() {
-			if err = rows.Scan(&idToDelete); err != nil {
-				return "", fmt.Errorf("%s: %w", caller, NewErrRepo(err))
-			}
-
-			sessionsToDelete = append(sessionsToDelete, idToDelete)
-		}
-		if err = rows.Err(); err != nil {
-			return "", fmt.Errorf("%s: %w", caller, NewErrRepo(err))
+	for rows.Next() {
+		if err = rows.Scan(&idToDelete); err != nil {
+			return fmt.Errorf("%w: %s", ErrInternalRepo, err)
 		}
 
-		if err = r.deleteSessions(sessionsToDelete); err != nil {
-			return "", fmt.Errorf("%s: %w", caller, NewErrRepo(err))
-		}
+		sessionsToDelete = append(sessionsToDelete, idToDelete)
+	}
+	if err = rows.Err(); err != nil {
+		return fmt.Errorf("%w: %s", ErrInternalRepo, err)
+	}
+
+	if err = r.deleteSessions(sessionsToDelete); err != nil {
+		return fmt.Errorf("%w: %s", ErrInternalRepo, err)
 	}
 
 	now = time.Now()
-	err = tx.QueryRow(`
-		INSERT INTO session (user_id, created_at, expires_at) 
-		VALUES (?, ?, ?)
-		RETURNING id`,
-		userID, now.Unix(), now.Add(sessionExpirationDuration).Unix()).Scan(&sessionID)
-	if err != nil { return "", fmt.Errorf("%s: %w", caller, NewErrRepo(err)) }
-
-	if err = tx.Commit(); err != nil {
-		return "", fmt.Errorf("%s: %w", caller, NewErrTransactionCommit(err)) 
+	_, err = tx.Exec(`
+		INSERT INTO session (id, user_id, created_at, expires_at) 
+		VALUES (?, ?, ?, ?)`,
+		sessionID, userID, now.Unix(), now.Add(sessionExpirationDuration).Unix())
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrInternalRepo, err)
 	}
 
-	return sessionID, nil
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("%w: %s", ErrTransactionCommit, err)
+	}
+
+	return nil
 }

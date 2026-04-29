@@ -2,43 +2,45 @@ package db
 
 import (
 	"errors"
-	"fmt"
 )
 
 var (
-	ErrNotConnected    = errors.New("repo not connected")
-	ErrTaskAlreadyDone = errors.New("task already complete")
-	ErrNilSQLRow       = errors.New("row is nil")
-	ErrUnknown = errors.New("unknown error")
-	ErrUsernameTaken = errors.New("username already taken")
-	ErrTaskBadRecurringPeriod = errors.New("badly formed recurring period")
+	ErrNotConnected           = errors.New("repo not connected")
+	ErrNoLiveSession          = errors.New("no live session")
+	ErrInternalRepo           = errors.New("internal repo error")
+	ErrTaskNotExist           = errors.New("task does not exits")
+	ErrUserNotExist           = errors.New("user does not exits")
+	ErrNotOwner               = errors.New("user does not own task")
+	ErrUnknown                = errors.New("unknown error")
+	ErrEmptyDate              = errors.New("empty date")
+	ErrEmptySessionID         = errors.New("empty session ID")
+	ErrTransactionCommit      = errors.New("error commiting transaction")
+	ErrInvalidTask            = errors.New("invalid task")
+	ErrTaskCompleted          = errors.New("task already completed")
+	ErrUsernameExists         = errors.New("username exists already")
+	ErrInvalidUsername        = errors.New("username is not valid")
+	ErrInvalidPassword        = errors.New("password is not valid")
+	ErrInvalidRecurringPeriod = errors.New("recurring period is not valid")
+	ErrInvalidRecurringValue  = errors.New("recurring value is not valid")
+	ErrInvalidRecurringUnit   = errors.New("recurring unit is not valid")
 )
 
-type ErrTransactionCommit struct {
-	Err error
-}
-
-func (e *ErrTransactionCommit) Error() string { return fmt.Sprintf("commit error: %s", e.Err) }
-func NewErrTransactionCommit(err error) error { return &ErrTransactionCommit{Err: err} }
-
-type ErrRepo struct {
-	Err error
-}
-
-func (e *ErrRepo) Error() string { return fmt.Sprintf("internal repo error: %s", e.Err) }
-func NewErrRepo(err error) error {
-	return &ErrRepo{Err: err}
-}
-
-type ErrTaskNotExist struct {
-	TaskID int
-}
-func (e *ErrTaskNotExist) Error() string { return fmt.Sprintf("taskID %d does not exist", e.TaskID) }
-func NewErrTaskNotExist(taskID int) error { return &ErrTaskNotExist{TaskID: taskID} }
-
-type ErrNotOwner struct {
-	UserID int
-	TaskID int
-}
-func (e *ErrNotOwner) Error() string { return fmt.Sprintf("user #%d is not the owner of task #%d", e.UserID, e.TaskID) }
-func NewErrNotOwner(userID, taskID int) error { return &ErrNotOwner{UserID: userID, TaskID: taskID} }
+var (
+	// ErrNotConnected = errors.New("repo not connected")
+	// ErrInvalidTaskID = errors.New("invalid taskID")
+	// ErrInvalidUserID = errors.New("invalid userID")
+	// ErrEmptyTitle = errors.New("empty title")
+	// ErrInternalRepo = errors.New("repo error")
+	// ErrNotOwner = errors.New("user does not own task")
+	// ErrTaskNotFound = errors.New("task not found")
+	// ErrAlreadyCompleted = errors.New("already completed")
+	// ErrEmptySessionID = errors.New("empty sessionID")
+	// ErrSessionIDNotFound = errors.New("sessionID not found")
+	// ErrSessionExpired = errors.New("session expired")
+	// ErrSessionAlreadyExists = errors.New("session already exists")
+	// ErrInvalidDay = errors.New("invalid day")
+	// ErrEmptyUsername = errors.New("empty username")
+	// ErrUsernameNotFound = errors.New("username not found")
+	// ErrUsernameTaken = errors.New("username taken")
+	// ErrEmptyPassword = errors.New("empty password")
+)

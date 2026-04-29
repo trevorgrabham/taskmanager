@@ -1,12 +1,11 @@
-package dashboard
+package views
 
 import (
   "fmt" 
-	"local/taskmanager/views"
   "time"
 )
 
-templ CategoryTasks(data views.CategoryViewData, date time.Time, class string) {
+templ CategoryTasks(data CategoryViewData, date time.Time, class string) {
 {{
   if class == "" {
     class = "dashboard-category fill-parent"

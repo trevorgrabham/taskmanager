@@ -3,6 +3,8 @@ package services
 import (
 	"database/sql"
 	sqlite "local/taskmanager/db"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -24,6 +26,30 @@ func (t Task) IsZero() bool {
 	return t.ID == 0 && t.Title == "" && t.Category == "" && t.Description == "" && t.DueDate.IsZero() && t.CompletionDate.IsZero() && !t.Done && t.RecurringPeriod == "" && t.UserID == 0
 }
 
+// validateRecurringPeriod validates the format of the RecurringPeriod field. The value must be an integer, and the unit must be one of 'days', 'weeks', or 'months'.
+//
+// If recurringPeriod is empty, no error is returned.
+// If the recurringPeriod format is not recognized, returns ErrInvalidRecurringPeriod.
+// If the value is not an integer, returns ErrInvalidRecurringValue.
+// If the unit is not one of 'days', 'weeks', or 'months', returns ErrInvalidRecurringUnit.
+func validateRecurringPeriod(recurringPeriod string) (err error) {
+	if recurringPeriod == "" { return nil }
+	
+	split := strings.Split(recurringPeriod, " ")
+	if len(split) != 2 { return ErrInvalidRecurringPeriod }
+	recurringValue, recurringUnit := split[0], split[1]
+	switch recurringUnit {
+	case "days", "weeks", "months": // happy path: do nothing
+	default:
+		return ErrInvalidRecurringUnit
+	}
+
+	if _, err = strconv.Atoi(recurringValue); err != nil { return ErrInvalidRecurringValue }
+
+	return nil
+}
+
+// parseRepoTaskToTask maps a repo Task to a Task object.
 func parseRepoTaskToTask(repoTask sqlite.Task) (t Task) {
 	t.ID = repoTask.ID
 	t.UserID = repoTask.UserID
@@ -59,6 +85,7 @@ func parseRepoTaskListToTaskList(repoTasks []sqlite.Task) (tasks TaskList) {
 	return tasks
 }
 
+// parseTaskToRepoTask maps a Task object to a Repo Task.
 func parseTaskToRepoTask(t Task) (repoTask sqlite.Task) {
 	repoTask.ID = t.ID
 	repoTask.UserID = t.UserID
@@ -74,15 +101,19 @@ func parseTaskToRepoTask(t Task) (repoTask sqlite.Task) {
 	return repoTask
 }
 
+// toNullString populates a sql.NullString using a string. It sets the Valid field to true if the string is not empty.
 func toNullString(s string) sql.NullString {
 	return sql.NullString{Valid: s != "", String: s}
 }
 
+// toNullInt64 populates a sql.NullInt64 using an int64. It sets the Valid field to true if the int64 != 0.
 func toNullInt64(n int64) sql.NullInt64 {
 	return sql.NullInt64{Valid: n != 0, Int64: n}
 }
 
+// unixDateToNullInt64 populates a sql.NullInt64 using an int64 representation of a time.Time obejct. It sets the Valid field to true if the int64 > 0.
+//
+// For times on or before Jan 1, 1970, this will set them to non-valid sql.NullInt64 objects. They must be parsed by hand.
 func unixDateToNullInt64(n int64) sql.NullInt64 {
 	return sql.NullInt64{Valid: n > 0, Int64: n}
 }
-

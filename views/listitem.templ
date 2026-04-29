@@ -1,11 +1,10 @@
-package dashboard
+package views
 
 import (
   "fmt"
-	"local/taskmanager/views"
 )
 
-templ ListItem(t views.TaskViewData) {
+templ ListItem(t TaskViewData) {
   {{var completedClass string}}
   if t.Done {
     {{completedClass = " completed-task"}}

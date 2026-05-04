@@ -6,21 +6,16 @@ import (
 	"time"
 )
 
-// GetWeekOfTasks returns the tasks for userID for the range [startDay, startDay+7]. 
+// GetWeekOfTasks returns the tasks for userID for the range [startDay, startDay+7].
 //
-// If Repo is not initialized, returns an ErrNotConnected.
-// If userID is empty, an ErrUserNotExist is returned.
-// If startDay is empty, an ErrEmptyDate is returned.
+// If userID is empty or doesn't exist, treats it as a no-op.
+// If startDay is empty, treats it as a no-op.
 // If an error occurs in the Repo, returns an ErrInternalRepo.
 func (r *Repo) GetWeekOfTasks(userID int, startDay time.Time) (tasks []Task, err error) {
 	var (
 		rows       *sql.Rows
 		start, end time.Time
 	)
-	if !r.isConnected() { return nil, ErrNotConnected }
-	if userID < 1 { return nil, fmt.Errorf("%w for id %d", ErrUserNotExist, userID) }
-	if startDay.IsZero() { return nil, ErrEmptyDate }
-
 	start = time.Date(startDay.Year(), startDay.Month(), startDay.Day(), 0, 0, 0, 0, time.Local)
 	end = time.Date(startDay.Year(), startDay.Month(), startDay.Day()+6, 23, 59, 59, 0, time.Local)
 	rows, err = r.db.Query(fmt.Sprintf(`

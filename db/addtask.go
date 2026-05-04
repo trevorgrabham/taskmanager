@@ -7,27 +7,17 @@ import (
 
 // AddTask adds the task to the Repo.
 //
-// If Repo is not initialized, returns an ErrNotConnected.
-// If taskID is not empty, returns an ErrInvalidTask.
-// If userID is empty, returns an ErrUserNotExist.
-// If the task is completed (done is true, or completiondate is not zero), returns an ErrTaskCompleted.
-// If title is empty, returns an ErrInvalidTask.
-// If an error occurs in the Repo, returns an ErrInternalRepo.
-// If an error occurs commiting the Repo transaction, an ErrTransactionCommit is returned.
+// 'ID', 'Done', and 'CompletionDate' fields are ignored if set.
+//
+// If UserID does not exist, returns ErrInternalRepo (Foreign key constraint)
+// If Title is empty, returns ErrInternalRepo (Check constraint)
+// If a transient error occurs in the Repo, returns ErrInternalRepo.
 func (r *Repo) AddTask(t Task) (addedTask Task, err error) {
 	var (
 		tx          *sql.Tx
 		recurringID int
 		row         *sql.Row
 	)
-	if !r.isConnected() { return Task{}, ErrNotConnected }
-	if t.ID != 0 { return Task{}, ErrInvalidTask }
-	if t.UserID < 1 { return Task{}, ErrUserNotExist }
-	if t.Done || t.CompletionDate.Valid {
-		return Task{}, ErrTaskCompleted
-	}
-	if t.Title == "" { return Task{}, ErrInvalidTask }
-
 	if tx, err = r.db.Begin(); err != nil {
 		return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
 	}
@@ -54,7 +44,7 @@ func (r *Repo) AddTask(t Task) (addedTask Task, err error) {
 	}
 
 	if err = tx.Commit(); err != nil {
-		return Task{}, fmt.Errorf("%w: %s", ErrTransactionCommit, err)
+		return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
 	}
 
 	return addedTask, nil

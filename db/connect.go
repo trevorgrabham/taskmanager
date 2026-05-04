@@ -108,13 +108,13 @@ func Migrate(db *sql.DB) (err error) {
 }
 
 // Connect opens a database connection pool for the Repo and applies any unapplied migrations.
-func (r *Repo) Connect() error {
+func (r *Repo) Connect(file string) error {
 	var (
 		caller = "Connect"
 		err    error
 	)
 
-	r.db, err = sql.Open("sqlite3", dbFileName)
+	r.db, err = sql.Open("sqlite3", file)
 	if err != nil {
 		return fmt.Errorf("%s: %w: %s", caller, ErrInternalRepo, err)
 	}
@@ -134,4 +134,8 @@ func (r *Repo) Connect() error {
 	}
 
 	return nil
+}
+
+func (r *Repo) Close() {
+	r.db.Close()
 }

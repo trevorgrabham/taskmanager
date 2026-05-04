@@ -8,38 +8,33 @@ import (
 
 // UpdateTaskIfOwned updates the task identified by task.ID if it is owned by task.UserID.
 //
-// If Repo is not initialized, returns an ErrNotConnected.
-// If taskID is empty, returns an ErrTaskNotExist.
-// If userID is empty, returns an ErrUserNotExist.
-// If title is empty, returns an ErrInvalidTask.
-// If the task is not owned by task.UserID, returns an ErrNotOwner.
-// If the no task exists with id = task.ID, returns an ErrTaskNotExist.
+// If taskID is empty or doesn't exist, no-op.
+// If userID is empty or not the owner, returns ErrNotOwner.
+// If title is empty, returns ErrInternalRepo.
 // If an error occurs in the Repo, returns an ErrInternalRepo.
-// If an error occurs commiting the Repo transaction, an ErrTransactionCommit is returned.
-func (r *Repo) UpdateTaskIfOwned(t Task, userID int) (updatedTask Task, err error) {
+func (r *Repo) UpdateTaskIfOwned(t Task) (updatedTask Task, err error) {
 	var (
 		tx           *sql.Tx
+		recurringID sql.NullInt64
 		res          sql.Result
 		rowsAffected int64
 		row          *sql.Row
 	)
-	if !r.isConnected() {
-		return Task{}, ErrNotConnected
-	}
-	if t.ID < 1 {
-		return Task{}, ErrTaskNotExist
-	}
-	if t.UserID < 1 {
-		return Task{}, ErrUserNotExist
-	}
-	if t.Title == "" {
-		return Task{}, ErrInvalidTask
-	}
-
 	if tx, err = r.db.Begin(); err != nil {
 		return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
 	}
 	defer func() { _ = tx.Rollback() }()
+
+	if t.RecurringPeriod.Valid && t.RecurringPeriod.String != "" {
+		if err = tx.QueryRow(`
+			INSERT INTO recurring(period) 
+			VALUES (?) 
+			ON CONFLICT(period) DO 
+			UPDATE SET period=excluded.period 
+			RETURNING id`, t.RecurringPeriod).Scan(&recurringID); err != nil { 
+			return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
+		}
+	}
 
 	res, err = tx.Exec(`
     UPDATE task 
@@ -48,11 +43,9 @@ func (r *Repo) UpdateTaskIfOwned(t Task, userID int) (updatedTask Task, err erro
       category = ?,
       description = ?,
       due_date = ?,
-      done = ?,
-      completion_date = ?,
       recurring_id = ?
     WHERE id = ? AND user_id = ?`,
-		t.Title, t.Category, t.Description, t.DueDate, t.Done, t.CompletionDate, t.RecurringID, t.ID, userID)
+		t.Title, t.Category, t.Description, t.DueDate, recurringID, t.ID, t.UserID)
 	if err != nil {
 		return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
 	}
@@ -68,7 +61,7 @@ func (r *Repo) UpdateTaskIfOwned(t Task, userID int) (updatedTask Task, err erro
 	if rowsAffected != 1 {
 		if updatedTask, err = scanRow(row); err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				return Task{}, fmt.Errorf("%w for id %d", ErrTaskNotExist, t.ID)
+				return Task{}, nil
 			}
 			return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
 		}
@@ -76,7 +69,7 @@ func (r *Repo) UpdateTaskIfOwned(t Task, userID int) (updatedTask Task, err erro
 			return Task{}, ErrNotOwner
 		}
 
-		return Task{}, ErrUnknown
+		return Task{}, ErrInternalRepo
 	}
 
 	if updatedTask, err = scanRow(row); err != nil {
@@ -84,7 +77,7 @@ func (r *Repo) UpdateTaskIfOwned(t Task, userID int) (updatedTask Task, err erro
 	}
 
 	if err = tx.Commit(); err != nil {
-		return Task{}, fmt.Errorf("%w: %s", ErrTransactionCommit, err)
+		return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
 	}
 
 	return updatedTask, nil

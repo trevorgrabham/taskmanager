@@ -8,25 +8,23 @@ import (
 
 // GetTaskByID returns the task identified by taskID.
 //
-// If Repo is not initialized, returns an ErrNotConnected.
-// If taskID is empty or no task matches, returns an ErrTaskNotExist.
-// If an error occurs in the Repo, returns an ErrInternalRepo.
-func (r *Repo) GetTaskByID(taskID int) (t Task, err error) {
-	var row *sql.Row
-	if !r.isConnected() {
-		return Task{}, ErrNotConnected
-	}
-	if taskID < 1 {
-		return Task{}, fmt.Errorf("%w for id %d", ErrTaskNotExist, taskID)
-	}
-
-	row = r.db.QueryRow(fmt.Sprintf(`
+// If taskID is empty, or no task matches, acts as a no-op.
+// If userID is not the owner, return ErrNotOwner.
+// If a transient error occurs in the Repo, returns ErrInternalRepo.
+func (r *Repo) GetTaskByID(taskID, userID int) (t Task, err error) {
+	row := r.db.QueryRow(fmt.Sprintf(`
 		%s
-		WHERE task.id = ?`, defaultTaskSelect),
-		taskID)
+		WHERE task.id = ? AND user_id = ?`, defaultTaskSelect),
+		taskID, userID)
 	if t, err = scanRow(row); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return Task{}, fmt.Errorf("%w for id %d", ErrTaskNotExist, taskID)
+			var taskExists int 
+			if err = r.db.QueryRow(`SELECT 1 FROM task WHERE id = ?`, taskID).Scan(&taskExists); err != nil {
+				if errors.Is(err, sql.ErrNoRows) { return Task{}, nil }			// TaskID doesn't exist
+				return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err) 
+			}
+
+			return  Task{}, ErrNotOwner
 		}
 		return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
 	}

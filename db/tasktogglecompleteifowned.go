@@ -9,12 +9,9 @@ import (
 
 // TaskToggleCompleteIfOwned toggles the completion status for the task identified by taskID if it is owned by userID.
 //
-// If Repo is not initialized, returns an ErrNotConnected.
-// If taskID is empty or not task matches, returns an ErrTaskNotExist.
-// If userID is empty, returns an ErrUserNotExist.
+// If taskID is empty or doesn't exist, no-op.
+// If userID is empty or not the owner, returns ErrNotOwner.
 // If an error occurs in the Repo, returns an ErrInternalRepo.
-// If the task is not owned by userID, returns an ErrNotOwner.
-// If no task was not toggled, but the task exists and is owned by userID, returns an ErrorUnknown. This should never happen.
 func (r *Repo) TaskToggleCompleteIfOwned(taskID, userID int) (task Task, err error) {
 	var (
 		tx           *sql.Tx
@@ -24,16 +21,6 @@ func (r *Repo) TaskToggleCompleteIfOwned(taskID, userID int) (task Task, err err
 		nextDueDate  time.Time
 		nextTask     Task
 	)
-	if !r.isConnected() {
-		return Task{}, ErrNotConnected
-	}
-	if taskID < 1 {
-		return Task{}, fmt.Errorf("%w for id %d", ErrTaskNotExist, taskID)
-	}
-	if userID < 1 {
-		return Task{}, fmt.Errorf("%w for id %d", ErrUserNotExist, userID)
-	}
-
 	if tx, err = r.db.Begin(); err != nil {
 		return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
 	}
@@ -63,7 +50,7 @@ func (r *Repo) TaskToggleCompleteIfOwned(taskID, userID int) (task Task, err err
 	if rowsAffected != 1 {
 		if task, err = scanRow(row); err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				return Task{}, fmt.Errorf("%w for %d", ErrTaskNotExist, taskID)
+				return Task{}, nil
 			}
 			return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
 		}
@@ -82,7 +69,7 @@ func (r *Repo) TaskToggleCompleteIfOwned(taskID, userID int) (task Task, err err
 	// Not recurring, nothing more to do
 	if !task.RecurringID.Valid || task.RecurringID.Int64 == 0 {
 		if err = tx.Commit(); err != nil {
-			return Task{}, fmt.Errorf("%w: %s", ErrTransactionCommit, err)
+			return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
 		}
 
 		return task, nil
@@ -93,7 +80,7 @@ func (r *Repo) TaskToggleCompleteIfOwned(taskID, userID int) (task Task, err err
 	// We may consider adding a "recurring_parent" field that references the taskID for recurring tasks, but until then, we don't want to accidentally remove the wrong task
 	if !task.Done {
 		if err = tx.Commit(); err != nil {
-			return Task{}, fmt.Errorf("%w: %s", ErrTransactionCommit, err)
+			return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
 		}
 
 		return task, nil
@@ -121,7 +108,7 @@ func (r *Repo) TaskToggleCompleteIfOwned(taskID, userID int) (task Task, err err
 	}
 
 	if err = tx.Commit(); err != nil {
-		return Task{}, fmt.Errorf("%w: %s", ErrTransactionCommit, err)
+		return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
 	}
 
 	return task, nil

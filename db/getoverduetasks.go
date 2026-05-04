@@ -8,21 +8,13 @@ import (
 
 // GetOverdueTasks returns the tasks for userID that were due before today at 00:00.
 //
-// If Repo is not initialized, returns an ErrNotConnected.
-// If userID is empty, an ErrUserNotExist is returned.
-// If an error occurs in the Repo, returns an ErrInternalRepo.
+// If userID is empty, or doesn't exist, treated as a no-op.
+// If a transient error occurs in the Repo, returns ErrInternalRepo.
 func (r *Repo) GetOverdueTasks(userID int) (tasks []Task, err error) {
 	var (
 		rows                     *sql.Rows
 		now, yesterdayAtMidnight time.Time
 	)
-	if !r.isConnected() {
-		return nil, ErrNotConnected
-	}
-	if userID < 1 {
-		return nil, fmt.Errorf("%w for id %d", ErrUserNotExist, userID)
-	}
-
 	now = time.Now()
 	yesterdayAtMidnight = time.Date(now.Year(), now.Month(), now.Day()-1, 23, 59, 59, 0, time.Local)
 

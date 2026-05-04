@@ -3,7 +3,6 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -20,8 +19,11 @@ type Repo struct {
 	db *sql.DB
 }
 
-func NewRepo() (r Repo, err error) {
-	err = r.Connect()
+func NewRepo(file string) (r Repo, err error) {
+	if file == "" {
+		file = dbFileName
+	}
+	err = r.Connect(file)
 	return r, err
 }
 
@@ -56,26 +58,26 @@ type scannable interface {
 	Scan(...any) error
 }
 
-func (r *Repo) isConnected() bool {
-	return r.db != nil
-}
-
 // parseRecurringPeriod parses the recurringPeriod and adds the parsed period to the current time.
 //
 // If recurringPeriod is empty, an empty time.Time object is returned.
 // If recurringPeriod is not in a recognized format, ErrInvalidRecurringPeriod is returned.
 // If recurring value is not an integer, ErrInvalidRecurringValue is returned.
-// If recurring unit is not one of 'days', 'weeks', 'months', ErrInvalidRecurringUnit is returned. 
+// If recurring unit is not one of 'days', 'weeks', 'months', ErrInvalidRecurringUnit is returned.
 func parseRecurringPeriod(recurringPeriod string) (nextDueDate time.Time, err error) {
 	var (
-		split []string
+		split          []string
 		recurringValue int
-		recurringUnit string
-		today time.Time
+		recurringUnit  string
+		today          time.Time
 	)
 	split = strings.Split(recurringPeriod, " ")
-	if len(split) != 2 { return time.Time{}, ErrInvalidRecurringPeriod }
-	if recurringValue, err = strconv.Atoi(split[0]); err != nil { return time.Time{}, ErrInvalidRecurringValue }
+	if len(split) != 2 {
+		return time.Time{}, ErrInvalidRecurringPeriod
+	}
+	if recurringValue, err = strconv.Atoi(split[0]); err != nil {
+		return time.Time{}, ErrInvalidRecurringValue
+	}
 
 	today = time.Now()
 	today = time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, time.Local)
@@ -100,7 +102,7 @@ func parseRecurringPeriod(recurringPeriod string) (nextDueDate time.Time, err er
 func insertRecurringPeriodIfNotExists(db dbConn, recurringPeriod string) (recurringID int, err error) {
 	err = db.QueryRow(`INSERT INTO recurring(period) VALUES (?) ON CONFLICT(period) DO UPDATE SET period=excluded.period RETURNING id`, recurringPeriod).Scan(&recurringID)
 	if err != nil {
-		return -1, err
+		return 0, err
 	}
 
 	return recurringID, nil
@@ -147,30 +149,4 @@ func scanUser(row *sql.Row) (user User, err error) {
 	err = row.Scan(&user.ID, &user.Username, &user.Password, &user.CreatedAt, &user.UpdatedAt)
 
 	return user, err
-}
-
-// deleteSessions removes all sessions with a matching SessionID in sessionsToDelete.
-//
-// If the Repo is not initialized an ErrNotConnected is returned.
-// If sessionsToDelete is empty, nothing happens.
-func (r *Repo) deleteSessions(sessionsToDelete []string) (err error) {
-	if !r.isConnected() {
-		return ErrNotConnected
-	}
-	if len(sessionsToDelete) < 1 {
-		return nil
-	}
-
-	placeholder := strings.Repeat("?,", len(sessionsToDelete))
-	placeholder = placeholder[:len(placeholder)-1] // trim the trailing comma
-	args := make([]any, len(sessionsToDelete))
-	for i, sessionID := range sessionsToDelete {
-		args[i] = sessionID
-	}
-
-	if _, err = r.db.Exec(fmt.Sprintf(`DELETE FROM session WHERE id IN (%s)`, placeholder), args...); err != nil {
-		return err
-	}
-
-	return nil
 }

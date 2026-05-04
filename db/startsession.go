@@ -2,67 +2,56 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"local/taskmanager/internal/cookies"
 	"time"
-)
 
-// Deletes any other sessions for the user
+	"github.com/mattn/go-sqlite3"
+)
 
 // StartSession creates a session for userID under sessionID.
 //
-// If the Repo is not initialized an ErrNotConnected is returned.
-// If sessionID is empty, an ErrEmptySessionID is returned.
-// If userID is empty, an ErrUserNotExist is returned.
+// If sessionID is empty, returns ErrInternalRepo.
+// If userID is empty or doesn't exist, returns ErrInternalRepo.
+// If userID has another session, deletes the old session and creates a new one.
 // If an error occurs while querying the database, an ErrInternalRepo is returned.
 func (r *Repo) StartSession(sessionID string, userID int) (err error) {
 	var (
-		rows             *sql.Rows
-		tx               *sql.Tx
-		idToDelete       string
-		sessionsToDelete []string
-		now              time.Time
+		targetErr sqlite3.Error
+		tx        *sql.Tx
 	)
-	if !r.isConnected() {
-		return ErrNotConnected
-	}
-
 	if tx, err = r.db.Begin(); err != nil {
 		return fmt.Errorf("%w: %s", ErrInternalRepo, err)
 	}
+	defer func(){_ = tx.Rollback()}()
 
-	// delete any old sessions for the user
-	rows, err = tx.Query(`SELECT id FROM session WHERE user_id = ?`, userID)
+	_, err = tx.Exec(`INSERT INTO session (id, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)`, sessionID, userID, time.Now().Unix(), time.Now().Add(cookies.SessionTimeoutDuration).Unix())
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrInternalRepo, err)
-	}
+		if errors.As(err, &targetErr) {
+			if targetErr.ExtendedCode == sqlite3.ErrConstraintUnique {
+				if _, err = tx.Exec(`DELETE FROM session WHERE user_id = ?`, userID); err != nil {
+					return fmt.Errorf("%w: %s", ErrInternalRepo, err)
+				}
 
-	for rows.Next() {
-		if err = rows.Scan(&idToDelete); err != nil {
-			return fmt.Errorf("%w: %s", ErrInternalRepo, err)
+				_, err = tx.Exec(`
+					INSERT INTO session (id, user_id, created_at, expires_at) 
+					VALUES (?, ?, ?, ?)`, 
+					sessionID, userID, time.Now().Unix(), time.Now().Add(cookies.SessionTimeoutDuration).Unix())
+				if err != nil {
+					return fmt.Errorf("%w: %s", ErrInternalRepo, err)
+				}
+
+				if err = tx.Commit(); err != nil { return fmt.Errorf("%w: %s", ErrInternalRepo, err) }
+
+				return nil
+			}
 		}
 
-		sessionsToDelete = append(sessionsToDelete, idToDelete)
-	}
-	if err = rows.Err(); err != nil {
 		return fmt.Errorf("%w: %s", ErrInternalRepo, err)
 	}
 
-	if err = r.deleteSessions(sessionsToDelete); err != nil {
-		return fmt.Errorf("%w: %s", ErrInternalRepo, err)
-	}
-
-	now = time.Now()
-	_, err = tx.Exec(`
-		INSERT INTO session (id, user_id, created_at, expires_at) 
-		VALUES (?, ?, ?, ?)`,
-		sessionID, userID, now.Unix(), now.Add(sessionExpirationDuration).Unix())
-	if err != nil {
-		return fmt.Errorf("%w: %s", ErrInternalRepo, err)
-	}
-
-	if err = tx.Commit(); err != nil {
-		return fmt.Errorf("%w: %s", ErrTransactionCommit, err)
-	}
+	if err = tx.Commit(); err != nil { return fmt.Errorf("%w: %s", ErrInternalRepo, err) }
 
 	return nil
 }

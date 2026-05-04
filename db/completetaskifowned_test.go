@@ -5,6 +5,18 @@ import (
 	"testing"
 )
 
+// CompleteTask marks the task identified by taskID as completed at the current date and time, if it is owned by userID.
+//
+// Errors:
+//   - ErrTaskNotFound
+//     taskID doesn't exist
+//   - ErrNotOwner
+//     task exists, but userID is not the owner (or doesn't exist)
+//   - ErrInternalRepo
+//     transient database error
+//
+// Happy Path:
+//   - updates the task as completed at time.Now()
 func TestCompleteTask(t *testing.T) {
 	cases := []struct {
 		name string
@@ -14,7 +26,6 @@ func TestCompleteTask(t *testing.T) {
 
 		checkErr func(*testing.T, error)
 	}{
-
 
 		// case: Empty UserID
 		// expected: ErrNotOwner

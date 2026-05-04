@@ -15,9 +15,8 @@ func ResetDB(t *testing.T, r Repo) {
 	if _, err := r.db.Exec(`
 		DELETE FROM task;
 		DELETE FROM session;
-		DELETE FROM recurring;
 		DELETE FROM user;
-		DELETE FROM sqlite_sequence WHERE name IN ('task', 'session', 'recurring', 'user');
+		DELETE FROM sqlite_sequence WHERE name IN ('task', 'session', 'user');
 		`); err != nil {
 		t.Fatal(fmt.Errorf("deleting data: %w", err))
 	}
@@ -39,10 +38,7 @@ var seedData = `
 	INSERT INTO user (username, hashed_password, created_at, updated_at) VALUES ("tester3", "password3", strftime('%s', 'now'), strftime('%s', 'now'));
 	INSERT INTO user (username, hashed_password, created_at, updated_at) VALUES ("tester4", "password4", strftime('%s', 'now'), strftime('%s', 'now'));
 
-	INSERT INTO recurring (period) VALUES ("2 days");
-	INSERT INTO recurring (period) VALUES ("4 weeks");
-
-	INSERT INTO task (title, category, description, due_date, user_id, recurring_id) VALUES (
+	INSERT INTO task (title, category, description, due_date, user_id, recurring_period) VALUES (
 	-- TaskID: 1
 	"First Task",
 	"go tests",
@@ -52,7 +48,7 @@ var seedData = `
 	NULL
 	);
 	-- TaskID: 2
-	INSERT INTO task (title, category, description, due_date, user_id, recurring_id) VALUES (
+	INSERT INTO task (title, category, description, due_date, user_id, recurring_period) VALUES (
 	"Second Task",
 	"go tests",
 	"Another task description",
@@ -62,7 +58,7 @@ var seedData = `
 	NULL
 	);
 	-- TaskID: 3
-	INSERT INTO task (title, category, description, due_date, user_id, recurring_id) VALUES (
+	INSERT INTO task (title, category, description, due_date, user_id, recurring_period) VALUES (
 	"Empty Description", 
 	"general tests", 
 	NULL, 
@@ -71,16 +67,16 @@ var seedData = `
 	NULL
 	);
 	-- TaskID: 4
-	INSERT INTO task (title, category, description, due_date, user_id, recurring_id) VALUES (
+	INSERT INTO task (title, category, description, due_date, user_id, recurring_period) VALUES (
 	"With RecurringPeriod", 
 	"go tests", 
-	"Seeing if the recurring_id works", 
+	"Seeing if the recurring_period works", 
 	strftime('%s', 'now') + 3600 * 24 * 2, 
 	3, 
-	1
+	3600 * 24 * 2
 	);
 	-- TaskID: 5
-	INSERT INTO task (title, category, description, due_date, user_id, recurring_id) VALUES (
+	INSERT INTO task (title, category, description, due_date, user_id, recurring_period) VALUES (
 	"Empty Category", 
 	NULL,
 	"Testing empty category", 
@@ -89,7 +85,7 @@ var seedData = `
 	NULL
 	);
 	-- TaskID: 6
-	INSERT INTO task (title, category, description, due_date, user_id, recurring_id) VALUES (
+	INSERT INTO task (title, category, description, due_date, user_id, recurring_period) VALUES (
 	"Unscheduled Task", 
 	"go tests", 
 	"For checking unscheduled", 
@@ -98,7 +94,7 @@ var seedData = `
 	NULL
 	);
 	-- TaskID: 7
-	INSERT INTO task (title, category, description, due_date, user_id, recurring_id) VALUES (
+	INSERT INTO task (title, category, description, due_date, user_id, recurring_period) VALUES (
 	"Overdue Task", 
 	"go tests", 
 	"For checking overdue", 
@@ -107,7 +103,7 @@ var seedData = `
 	NULL
 	);
 	-- TaskID: 8
-	INSERT INTO task (title, category, description, due_date, user_id, recurring_id) VALUES (
+	INSERT INTO task (title, category, description, due_date, user_id, recurring_period) VALUES (
 	"Another in the go tests group for 1", 
 	"go tests", 
 	"Seeing how the grouping works by category", 
@@ -116,13 +112,13 @@ var seedData = `
 	NULL
 	);
 	-- TaskID: 9
-	INSERT INTO task (title, category, description, due_date, user_id, recurring_id, completion_date, done) VALUES (
+	INSERT INTO task (title, category, description, due_date, user_id, recurring_period, completion_date, done) VALUES (
 	"A completed task", 
 	"go tests", 
 	"For testing with completed tasks", 
 	strftime('%s', 'now') + 3600 * 24 * 21, 
 	3, 
-	NULL,
+	3600 * 24,
 	strftime('%s', 'now'),
 	1
 	);

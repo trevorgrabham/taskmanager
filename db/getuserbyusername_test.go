@@ -5,6 +5,17 @@ import (
 	"testing"
 )
 
+// GetUserByUsername retrieves the user with username
+//
+// Errors:
+//   - ErrInternalRepo
+//     transient database error
+//
+// Empty:
+//   - username doesn't exist
+//
+// Happy Path:
+//   - returns the user with all fields populated
 func TestGetUserByUsername(t *testing.T) {
 	cases := []struct {
 		name string
@@ -15,8 +26,8 @@ func TestGetUserByUsername(t *testing.T) {
 		checkErr func(*testing.T, error)
 	}{
 
-	// case: Empty username
-	// expected: No user, nil error
+		// case: Empty username
+		// expected: No user, nil error
 		{
 			"Empty Username",
 
@@ -26,8 +37,8 @@ func TestGetUserByUsername(t *testing.T) {
 			wantNoErr,
 		},
 
-	// case: Username doesn't exist
-	// expected: No user, nil error
+		// case: Username doesn't exist
+		// expected: No user, nil error
 		{
 			"Username Not Exist",
 
@@ -37,17 +48,16 @@ func TestGetUserByUsername(t *testing.T) {
 			wantNoErr,
 		},
 
-	// case: Happy path
-	// expected: User, nil error
+		// case: Happy path
+		// expected: User, nil error
 		{
 			"Happy Path",
 
 			"tester1",
 
-			sqlite.User{ID: 1, Username: "tester1", Password: "password1", CreatedAt: mustParseDate("1997-10-19").Unix(), UpdatedAt: mustParseDate("1997-10-19").Unix() },
+			sqlite.User{ID: 1, Username: "tester1", Password: "password1", CreatedAt: mustParseDate("1997-10-19").Unix(), UpdatedAt: mustParseDate("1997-10-19").Unix()},
 			wantNoErr,
 		}}
-
 
 	for _, tc := range cases {
 		sqlite.ResetDB(t, r)

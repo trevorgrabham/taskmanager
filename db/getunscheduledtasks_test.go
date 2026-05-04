@@ -6,6 +6,18 @@ import (
 	"testing"
 )
 
+// GetUnscheduledTasks retrieves all incomplete tasks without a dueDate
+//
+// Errors:
+//   - ErrInternalRepo
+//     transient database error
+//
+// Empty:
+//   - userID doesn't exist
+//   - no unscheduled tasks
+//
+// Happy Path:
+//   - returns a list of incomplete unscheduled tasks (empty if no unscheduled tasks)
 func TestGetUnscheduledTasks(t *testing.T) {
 	cases := []struct {
 		name string
@@ -16,8 +28,8 @@ func TestGetUnscheduledTasks(t *testing.T) {
 		checkErr  func(*testing.T, error)
 	}{
 
-// case: UserID that doesn't exist
-// expected: Empty list, nil error
+		// case: UserID that doesn't exist
+		// expected: Empty list, nil error
 		{
 			"UserID Not Exist",
 
@@ -27,19 +39,19 @@ func TestGetUnscheduledTasks(t *testing.T) {
 			wantNoErr,
 		},
 
-// case: No unscheduled tasks
-// expected: Empty list, nil error
+		// case: No unscheduled tasks
+		// expected: Empty list, nil error
 		{
 			"No Unscheduled Tasks",
 
 			2,
 
-			nil, 
+			nil,
 			wantNoErr,
 		},
 
-// case: Happy path
-// expected: List of tasks, nil error
+		// case: Happy path
+		// expected: List of tasks, nil error
 		{
 			"Happy Path",
 

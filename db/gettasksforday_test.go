@@ -7,6 +7,19 @@ import (
 	"time"
 )
 
+// GetTasksForDay retrieves all incomplete tasks with dueDate's in the range of [day 00:00, day 23:59]
+//
+// Errors:
+//   - ErrInternalRepo
+//     transient database error
+//
+// Empty:
+//   - userID doesn't exist
+//   - day wasn't initialized
+//   - no tasks due that day
+//
+// Happy Path:
+//   - returns the list of tasks due on the day (or no tasks if none are due)
 func TestGetTasksForDay(t *testing.T) {
 	cases := []struct {
 		name string
@@ -19,7 +32,7 @@ func TestGetTasksForDay(t *testing.T) {
 	}{
 
 		// case: UserID doesn't exist
-		// expected: nil tasks, nil error 
+		// expected: nil tasks, nil error
 		{
 			"UserID Not Exist",
 
@@ -35,7 +48,7 @@ func TestGetTasksForDay(t *testing.T) {
 		{
 			"Empty Day",
 
-			2, 
+			2,
 			time.Time{},
 
 			nil,
@@ -47,7 +60,7 @@ func TestGetTasksForDay(t *testing.T) {
 		{
 			"No Tasks Due",
 
-			2, 
+			2,
 			time.Now().AddDate(0, 0, 1),
 
 			nil,
@@ -62,7 +75,7 @@ func TestGetTasksForDay(t *testing.T) {
 			2,
 			time.Now().AddDate(0, 0, 3),
 
-			[]sqlite.Task{{ID: 2, UserID: 2, Title: "Second Task", Category: sql.NullString{String: "go tests", Valid: true}, Description: sql.NullString{String: "Another task description", Valid: true}, DueDate: sql.NullInt64{Int64: time.Now().AddDate(0,0,3).Unix(), Valid: true}}},
+			[]sqlite.Task{{ID: 2, UserID: 2, Title: "Second Task", Category: sql.NullString{String: "go tests", Valid: true}, Description: sql.NullString{String: "Another task description", Valid: true}, DueDate: sql.NullInt64{Int64: time.Now().AddDate(0, 0, 3).Unix(), Valid: true}}},
 			wantNoErr,
 		}}
 	for _, tc := range cases {

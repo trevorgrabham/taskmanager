@@ -7,6 +7,20 @@ import (
 	"time"
 )
 
+// TaskUpdateDueDateIfOwned changes the dueDate for the task and returns the updated task
+//
+// Errors:
+//		- ErrNotOwner 
+//			userID doesn't exist 
+//			userID not the owner
+//		- ErrInternalRepo
+//			transient database error
+//
+// Empty:
+//   - taskID doesn't exist
+//
+// Happy Path:
+//   - returns the updated task with its dueDate updated (or removed if day was empty)
 func TestUpdateDueDate(t *testing.T) {
 	cases := []struct {
 		name string
@@ -35,7 +49,7 @@ func TestUpdateDueDate(t *testing.T) {
 		// case: Task not exist
 		// expected: No-op, nil error
 		{
-			"TaskID Not Exist Unscheduled",
+			"Unscheduled TaskID Not Exist",
 
 			0,
 			1,

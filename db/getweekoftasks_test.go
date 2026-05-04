@@ -7,19 +7,32 @@ import (
 	"time"
 )
 
+// GetWeekOfTasks retrieves the list of tasks with dueDate's in the range [day 00:00, day+6 23:59]
+//
+// Errors:
+//   - ErrInternalRepo
+//     transient database error
+//
+// Empty:
+//   - userID doesn't exist
+//   - day not initialized
+//   - no tasks due
+//
+// Happy Path:
+//   - returns the list of tasks due within a week from day
 func TestGetWeekOfTasks(t *testing.T) {
 	cases := []struct {
 		name string
 
 		paramUserID int
-		paramDay time.Time
+		paramDay    time.Time
 
 		wantTasks []sqlite.Task
 		checkErr  func(*testing.T, error)
 	}{
 
-// case: UserID doesn't exist
-// expected: Empty list, nil error
+		// case: UserID doesn't exist
+		// expected: Empty list, nil error
 		{
 			"UserID Not Exist",
 
@@ -30,8 +43,8 @@ func TestGetWeekOfTasks(t *testing.T) {
 			wantNoErr,
 		},
 
-// case: Empty day
-// expected: Empty list, nil error
+		// case: Empty day
+		// expected: Empty list, nil error
 		{
 			"Empty Day",
 
@@ -42,8 +55,8 @@ func TestGetWeekOfTasks(t *testing.T) {
 			wantNoErr,
 		},
 
-// case: No tasks for the week
-// expected: Empty list, nil error
+		// case: No tasks for the week
+		// expected: Empty list, nil error
 		{
 			"No Tasks For Week",
 
@@ -54,8 +67,8 @@ func TestGetWeekOfTasks(t *testing.T) {
 			wantNoErr,
 		},
 
-// case: Happy path
-// expected: List of tasks, nil error
+		// case: Happy path
+		// expected: List of tasks, nil error
 		{
 			"Happy Path",
 
@@ -64,7 +77,7 @@ func TestGetWeekOfTasks(t *testing.T) {
 
 			[]sqlite.Task{{ID: 1, UserID: 1, Title: "First Task", Category: sql.NullString{String: "go tests", Valid: true}, Description: sql.NullString{String: "First task's description", Valid: true}, DueDate: sql.NullInt64{Int64: 1, Valid: true}}, {ID: 3, UserID: 1, Title: "Empty Description", Category: sql.NullString{String: "general tests", Valid: true}, DueDate: sql.NullInt64{Int64: 1, Valid: true}}},
 			wantNoErr,
-	}}
+		}}
 
 	for _, tc := range cases {
 		sqlite.ResetDB(t, r)
@@ -73,7 +86,10 @@ func TestGetWeekOfTasks(t *testing.T) {
 
 			tc.checkErr(t, gotErr)
 
-	if len(gotTasks) != len(tc.wantTasks) { t.Errorf("wanted tasks: %v, got %v", tc.wantTasks, gotTasks); return }
+			if len(gotTasks) != len(tc.wantTasks) {
+				t.Errorf("wanted tasks: %v, got %v", tc.wantTasks, gotTasks)
+				return
+			}
 			for i := range gotTasks {
 				checkTask(t, tc.wantTasks[i], gotTasks[i])
 			}

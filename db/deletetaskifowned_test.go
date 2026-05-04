@@ -5,6 +5,17 @@ import (
 	"testing"
 )
 
+// DeleteTask deletes the task identified by taskID if it's owned by userID
+//
+// Errors:
+//   - ErrNotOwner
+//     userID doesn't exist
+//     userID isn't the owner
+//   - ErrInternalRepo
+//     transient database error
+//
+// Happy Path:
+//   - task is deleted. If it didn't exist, no-op.
 func TestDeleteTask(t *testing.T) {
 	cases := []struct {
 		name string
@@ -15,9 +26,8 @@ func TestDeleteTask(t *testing.T) {
 		checkErr func(*testing.T, error)
 	}{
 
-
-// case: TaskID doesn't exist
-// expected: no-op. nil error
+		// case: TaskID doesn't exist
+		// expected: no-op. nil error
 		{
 			"TaskID Not Exist",
 
@@ -27,8 +37,8 @@ func TestDeleteTask(t *testing.T) {
 			wantNoErr,
 		},
 
-// case: UserID doesn't exist
-// expected: ErrNotOwner
+		// case: UserID doesn't exist
+		// expected: ErrNotOwner
 		{
 			"UserID Not Exist",
 
@@ -38,8 +48,8 @@ func TestDeleteTask(t *testing.T) {
 			wantErrIs(sqlite.ErrNotOwner),
 		},
 
-// case: UserID not the owner
-// expected: ErrNotOwner
+		// case: UserID not the owner
+		// expected: ErrNotOwner
 		{
 			"UserID Not Owner",
 
@@ -49,9 +59,9 @@ func TestDeleteTask(t *testing.T) {
 			wantErrIs(sqlite.ErrNotOwner),
 		},
 
-// case: Happy path
-// expected: nil error (task no longer there)
-		{ 
+		// case: Happy path
+		// expected: nil error (task no longer there)
+		{
 			"Happy Path",
 
 			3,
@@ -67,4 +77,4 @@ func TestDeleteTask(t *testing.T) {
 			tc.checkErr(t, gotErr)
 		})
 	}
-	}
+}

@@ -51,9 +51,6 @@ func checkTask(t *testing.T, wantedTask, gotTask sqlite.Task) {
 		if wantedTask.Done != gotTask.Done {
 			t.Errorf("TaskDone wanted %t, got %t", wantedTask.Done, gotTask.Done)
 		}
-		if wantedTask.RecurringID != gotTask.RecurringID {
-			t.Errorf("TaskRecurringID wanted %v, got %v", wantedTask.RecurringID, gotTask.RecurringID)
-		}
 		if wantedTask.RecurringPeriod != gotTask.RecurringPeriod {
 			t.Errorf("TaskRecurringPeriod wanted %v, got %v", wantedTask.RecurringPeriod, gotTask.RecurringPeriod)
 		}

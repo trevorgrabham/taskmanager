@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
+	"github.com/mattn/go-sqlite3"
 )
 
 // UpdateTaskIfOwned updates the task identified by task.ID if it is owned by task.UserID.
@@ -15,26 +17,15 @@ import (
 func (r *Repo) UpdateTaskIfOwned(t Task) (updatedTask Task, err error) {
 	var (
 		tx           *sql.Tx
-		recurringID sql.NullInt64
 		res          sql.Result
 		rowsAffected int64
 		row          *sql.Row
+		targetErr    sqlite3.Error
 	)
 	if tx, err = r.db.Begin(); err != nil {
 		return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
 	}
 	defer func() { _ = tx.Rollback() }()
-
-	if t.RecurringPeriod.Valid && t.RecurringPeriod.String != "" {
-		if err = tx.QueryRow(`
-			INSERT INTO recurring(period) 
-			VALUES (?) 
-			ON CONFLICT(period) DO 
-			UPDATE SET period=excluded.period 
-			RETURNING id`, t.RecurringPeriod).Scan(&recurringID); err != nil { 
-			return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
-		}
-	}
 
 	res, err = tx.Exec(`
     UPDATE task 
@@ -43,10 +34,14 @@ func (r *Repo) UpdateTaskIfOwned(t Task) (updatedTask Task, err error) {
       category = ?,
       description = ?,
       due_date = ?,
-      recurring_id = ?
+      recurring_period = ?
     WHERE id = ? AND user_id = ?`,
-		t.Title, t.Category, t.Description, t.DueDate, recurringID, t.ID, t.UserID)
+		t.Title, t.Category, t.Description, t.DueDate, t.RecurringPeriod, t.ID, t.UserID)
 	if err != nil {
+		if errors.As(err, &targetErr) && targetErr.ExtendedCode == sqlite3.ErrConstraintCheck {
+			return Task{}, fmt.Errorf("%w: %s", ErrConstraintFailure, err)
+		}
+
 		return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
 	}
 	if rowsAffected, err = res.RowsAffected(); err != nil {

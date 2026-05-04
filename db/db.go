@@ -3,8 +3,6 @@ package db
 
 import (
 	"database/sql"
-	"strconv"
-	"strings"
 	"time"
 )
 
@@ -12,7 +10,7 @@ var dbFileName = "/home/trevorgrabham/.config/taskmanager/tasks.db"
 
 var sessionExpirationDuration = 30 * 24 * time.Hour
 
-var defaultTaskSelect = "SELECT task.id, title, category, description, due_date, completion_date, done, recurring_id, user_id, period FROM task LEFT JOIN recurring ON task.recurring_id = recurring.id"
+var defaultTaskSelect = "SELECT task.id, title, category, description, due_date, completion_date, done, recurring_period, user_id FROM task"
 var defaultUserSelect = "SELECT id, username, hashed_password, created_at, updated_at FROM user"
 
 type Repo struct {
@@ -36,8 +34,7 @@ type Task struct {
 	DueDate         sql.NullInt64
 	CompletionDate  sql.NullInt64
 	Done            bool
-	RecurringID     sql.NullInt64
-	RecurringPeriod sql.NullString
+	RecurringPeriod sql.NullInt64
 }
 
 type User struct {
@@ -58,62 +55,12 @@ type scannable interface {
 	Scan(...any) error
 }
 
-// parseRecurringPeriod parses the recurringPeriod and adds the parsed period to the current time.
-//
-// If recurringPeriod is empty, an empty time.Time object is returned.
-// If recurringPeriod is not in a recognized format, ErrInvalidRecurringPeriod is returned.
-// If recurring value is not an integer, ErrInvalidRecurringValue is returned.
-// If recurring unit is not one of 'days', 'weeks', 'months', ErrInvalidRecurringUnit is returned.
-func parseRecurringPeriod(recurringPeriod string) (nextDueDate time.Time, err error) {
-	var (
-		split          []string
-		recurringValue int
-		recurringUnit  string
-		today          time.Time
-	)
-	split = strings.Split(recurringPeriod, " ")
-	if len(split) != 2 {
-		return time.Time{}, ErrInvalidRecurringPeriod
-	}
-	if recurringValue, err = strconv.Atoi(split[0]); err != nil {
-		return time.Time{}, ErrInvalidRecurringValue
-	}
-
-	today = time.Now()
-	today = time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, time.Local)
-	recurringUnit = split[1]
-	switch recurringUnit {
-	case "days":
-		nextDueDate = today.AddDate(0, 0, recurringValue)
-	case "weeks":
-		nextDueDate = today.AddDate(0, 0, 7*recurringValue)
-	case "months":
-		nextDueDate = today.AddDate(0, recurringValue, 0)
-	default:
-		return time.Time{}, ErrInvalidRecurringUnit
-	}
-
-	return nextDueDate, nil
-}
-
-// insertRecurringPeriodIfNotExists returns the id of the record matching the 'recurringPeriod'. If no record exists, then one is created and its id is returned.
-//
-// An error is passed through if one occurs while scanning the matched record.
-func insertRecurringPeriodIfNotExists(db dbConn, recurringPeriod string) (recurringID int, err error) {
-	err = db.QueryRow(`INSERT INTO recurring(period) VALUES (?) ON CONFLICT(period) DO UPDATE SET period=excluded.period RETURNING id`, recurringPeriod).Scan(&recurringID)
-	if err != nil {
-		return 0, err
-	}
-
-	return recurringID, nil
-}
-
 // scanRow maps a *sql.Row object to a Task.
 //
-// Assumes the form of task.id, title, category, description, due_date, completion_date, done, recurring_id, user_id, period.
+// Assumes the form of task.id, title, category, description, due_date, completion_date, done, recurring_period, user_id.
 // If an error occurs while scanning the row, it is returned to the caller.
 func scanRow(row scannable) (t Task, err error) {
-	err = row.Scan(&t.ID, &t.Title, &t.Category, &t.Description, &t.DueDate, &t.CompletionDate, &t.Done, &t.RecurringID, &t.UserID, &t.RecurringPeriod)
+	err = row.Scan(&t.ID, &t.Title, &t.Category, &t.Description, &t.DueDate, &t.CompletionDate, &t.Done, &t.RecurringPeriod, &t.UserID)
 	if err != nil {
 		return Task{}, err
 	}
@@ -123,7 +70,7 @@ func scanRow(row scannable) (t Task, err error) {
 
 // scanRows maps a *sql.Rows object to []Task.
 //
-// Assumes the form of task.id, title, category, description, due_date, completion_date, done, recurring_id, user_id, period.
+// Assumes the form of task.id, title, category, description, due_date, completion_date, done, recurring_period, user_id.
 // If an error occurs while scanning the row, it is returned to the caller.
 func scanRows(rows *sql.Rows) (tasks []Task, err error) {
 	var t Task

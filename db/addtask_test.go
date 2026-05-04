@@ -6,6 +6,20 @@ import (
 	"testing"
 )
 
+// AddTask creates a new task owned by the user identified by task.UserID.
+//
+// Errors:
+//   - ErrConstraintFailure
+//     userID does not exist
+//     title is empty
+//   - ErrInternalRepo
+//     transient database error
+//
+// Empty:
+//   - Never
+//
+// Happy Path:
+//   - returns created Task with all fields populated
 func TestAddTask(t *testing.T) {
 	cases := []struct {
 		name string
@@ -17,7 +31,7 @@ func TestAddTask(t *testing.T) {
 	}{
 
 		// case: Empty UserID
-		// expected: ErrInternalRepo (FK Constraint failed)
+		// expected: ErrConstraintFailure (FK Constraint failed)
 		{
 			"Empty UserID",
 
@@ -28,7 +42,7 @@ func TestAddTask(t *testing.T) {
 		},
 
 		// case: Has negative UserID
-		// expected: ErrInternalRepo (FK Constraint failed)
+		// expected: ErrConstraintFailure (FK Constraint failed)
 		{
 			"Negative UserID",
 
@@ -39,7 +53,7 @@ func TestAddTask(t *testing.T) {
 		},
 
 		// case: UserID that doens't exist
-		// expected: ErrInternalRepo (FK Constraint failed)
+		// expected: ErrConstraintFailure (FK Constraint failed)
 		{
 			"UserID Not Exist",
 
@@ -50,7 +64,7 @@ func TestAddTask(t *testing.T) {
 		},
 
 		// case: Empty title
-		// expected: ErrInternalRepo (NOT NULL constraint failed)
+		// expected: ErrConstraintFailure (NOT NULL constraint failed)
 		{
 			"Empty Title",
 
@@ -65,31 +79,20 @@ func TestAddTask(t *testing.T) {
 		{
 			"Empty Category",
 
-			sqlite.Task{UserID: 1, Title: "Empty cateogry"},
+			sqlite.Task{UserID: 1, Title: "Empty category"},
 
-			sqlite.Task{ID: sqlite.NextID, UserID: 1, Title: "Empty cateogry"},
+			sqlite.Task{ID: sqlite.NextID, UserID: 1, Title: "Empty category"},
 			wantNoErr,
 		},
 
 		// case: Recurring period does not exist yet
 		// expected: added task (new RecurringID), nil error.
 		{
-			"New Recurring Period",
+			"With Recurring Period",
 
-			sqlite.Task{UserID: 2, Title: "New recurring period", RecurringPeriod: sql.NullString{String: "1 days", Valid: true}},
+			sqlite.Task{UserID: 2, Title: "New recurring period", RecurringPeriod: sql.NullInt64{Int64: 3600 * 24, Valid: true}},
 
-			sqlite.Task{ID: sqlite.NextID, UserID: 2, Title: "New recurring period", RecurringPeriod: sql.NullString{String: "1 days", Valid: true}, RecurringID: sql.NullInt64{Int64: 3, Valid: true}},
-			wantNoErr,
-		},
-
-		// case: Recurring period already exists
-		// expected: added task (same RecurringID as previous), nil error.
-		{
-			"Recurring Period Exists",
-
-			sqlite.Task{UserID: 1, Title: "Existing recurring period", RecurringPeriod: sql.NullString{String: "2 days", Valid: true}},
-
-			sqlite.Task{ID: sqlite.NextID, UserID: 1, Title: "Existing recurring period", RecurringPeriod: sql.NullString{String: "2 days", Valid: true}, RecurringID: sql.NullInt64{Int64: 1, Valid: true}},
+			sqlite.Task{ID: sqlite.NextID, UserID: 2, Title: "New recurring period", RecurringPeriod: sql.NullInt64{Int64: 3600 * 24, Valid: true}},
 			wantNoErr,
 		},
 
@@ -142,9 +145,9 @@ func TestAddTask(t *testing.T) {
 		{
 			"Happy Path",
 
-			sqlite.Task{UserID: 1, Title: "Happy path", Category: sql.NullString{String: "happy tests", Valid: true}, Description: sql.NullString{String: "So so happy", Valid: true}, RecurringID: sql.NullInt64{Int64: 1, Valid: true}},
+			sqlite.Task{UserID: 1, Title: "Happy path", Category: sql.NullString{String: "happy tests", Valid: true}, Description: sql.NullString{String: "So so happy", Valid: true}, RecurringPeriod: sql.NullInt64{Int64: 3600 * 24 * 5, Valid: true}},
 
-			sqlite.Task{ID: sqlite.NextID, UserID: 1, Title: "Happy path", Category: sql.NullString{String: "happy tests", Valid: true}, Description: sql.NullString{String: "So so happy", Valid: true}, RecurringID: sql.NullInt64{Int64: 1, Valid: true}, RecurringPeriod: sql.NullString{String: "2 days", Valid: true}},
+			sqlite.Task{ID: sqlite.NextID, UserID: 1, Title: "Happy path", Category: sql.NullString{String: "happy tests", Valid: true}, Description: sql.NullString{String: "So so happy", Valid: true}, RecurringPeriod: sql.NullInt64{Int64: 3600 * 24 * 5, Valid: true}},
 			wantNoErr,
 		}}
 

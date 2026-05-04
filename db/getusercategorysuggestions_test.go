@@ -6,6 +6,18 @@ import (
 	"testing"
 )
 
+// GetUserCategorySuggestions retrieves the list of unique categories for userID
+//
+// Errors:
+//   - ErrInternalRepo
+//     transient database error
+//
+// Empty:
+//   - userID doesn't exist
+//   - no categories
+//
+// Happy Path:
+//   - returns the list of unique categories for userID
 func TestGetUserCategorySuggestions(t *testing.T) {
 	cases := []struct {
 		name string
@@ -13,33 +25,33 @@ func TestGetUserCategorySuggestions(t *testing.T) {
 		paramUserID int
 
 		wantCategories []string
-		checkErr func(*testing.T, error)
+		checkErr       func(*testing.T, error)
 	}{
 
-// case: Empty UserID
-// expected: No categories, nil error
+		// case: Empty UserID
+		// expected: No categories, nil error
 		{
 			"Empty UserID",
 
 			0,
 
-			nil, 
+			nil,
 			wantNoErr,
 		},
 
-// case: UserID doesn't exist
-// expected: No categories, nil error
+		// case: UserID doesn't exist
+		// expected: No categories, nil error
 		{
 			"UserID Not Exist",
 
 			199,
 
-			nil, 
+			nil,
 			wantNoErr,
 		},
 
-// case: No category suggestions
-// expected: Empty list, nil error
+		// case: No category suggestions
+		// expected: Empty list, nil error
 		{
 			"No Categories",
 
@@ -49,8 +61,8 @@ func TestGetUserCategorySuggestions(t *testing.T) {
 			wantNoErr,
 		},
 
-// case: Happy path
-// expected: List of categories, nil error
+		// case: Happy path
+		// expected: List of categories, nil error
 		{
 			"Happy Path",
 
@@ -58,8 +70,7 @@ func TestGetUserCategorySuggestions(t *testing.T) {
 
 			[]string{"go tests", "general tests"},
 			wantNoErr,
-			}}
-
+		}}
 
 	for _, tc := range cases {
 		sqlite.ResetDB(t, r)
@@ -77,7 +88,7 @@ func TestGetUserCategorySuggestions(t *testing.T) {
 			slices.Sort(tc.wantCategories)
 
 			for i := range gotCategories {
-				if gotCategories[i] != tc.wantCategories[i] { 
+				if gotCategories[i] != tc.wantCategories[i] {
 					t.Errorf("wanted categories: %v\ngot: %v", tc.wantCategories, gotCategories)
 					break
 				}

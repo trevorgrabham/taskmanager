@@ -6,6 +6,14 @@ import (
 	"testing"
 )
 
+// DeleteSession deletes sessionID
+//
+// Errors:
+//   - ErrInternalRepo
+//     transient database error
+//
+// Happy Path:
+//   - ensures sessionID doesn't exist. If sessionID didn't exist to begin with, no-op
 func TestDeleteSession(t *testing.T) {
 	cases := []struct {
 		name string

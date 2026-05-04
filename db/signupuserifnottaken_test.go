@@ -6,6 +6,20 @@ import (
 	"time"
 )
 
+// SignupUserIfNotTaken creates an account using username and password if username is not already taken
+//
+// Errors:
+//   - ErrUsernameTaken
+//     username already taken
+//   - ErrInternalRepo
+//     transient database error
+//
+// Empty:
+//   - username empty
+//   - password empty
+//
+// Happy Path:
+//   - returns a user with all fields populated for the new user account
 func TestSignupUser(t *testing.T) {
 	cases := []struct {
 		name string

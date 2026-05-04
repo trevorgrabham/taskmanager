@@ -6,6 +6,20 @@ import (
 	"testing"
 )
 
+// GetTaskByID retrieves the task identified by TaskID
+//
+// Errors:
+//   - ErrNotOwner
+//     userID doesn't exist
+//     userID isn't the owner
+//   - ErrInternalRepo
+//     transient database error
+//
+// Empty:
+//   - task doesn't exist
+//
+// Happy Path:
+//   - returns the task with all fields populated
 func TestGetTaskByID(t *testing.T) {
 	cases := []struct {
 		name string

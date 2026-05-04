@@ -6,6 +6,18 @@ import (
 	"testing"
 )
 
+// GetOverdueTasks retrieves all incomplete tasks with a dueDate before time.Now()
+//
+// Errors:
+//   - ErrInternalRepo
+//     transient database error
+//
+// Empty:
+//   - no overdue tasks
+//   - userID doesn't exist
+//
+// Happy Path:
+//   - returns all overdue tasks, or nothing if no tasks are overdue
 func TestGetOverdueTasks(t *testing.T) {
 	cases := []struct {
 		name string

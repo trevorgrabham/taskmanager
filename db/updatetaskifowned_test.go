@@ -6,6 +6,20 @@ import (
 	"testing"
 )
 
+// UpdateTaskIfOwned updates taskID if it is owned by userID
+//
+// Errors:
+//   - ErrNotOwner
+//     userID doesn't exist
+//     userID not the owner
+//   - ErrInternalRepo
+//     transient database error
+//
+// Empty:
+//   - taskID doesn't exist
+//
+// Happy Path:
+//   - returns the updated task with all its fields populated
 func TestUpdateTask(t *testing.T) {
 	cases := []struct {
 		name string
@@ -16,8 +30,8 @@ func TestUpdateTask(t *testing.T) {
 		checkErr func(*testing.T, error)
 	}{
 
-// case: TaskID doesn't exist
-// expected: No-op. Empty task, nil error
+		// case: TaskID doesn't exist
+		// expected: No-op. Empty task, nil error
 		{
 			"TaskID Not Exist",
 
@@ -27,8 +41,8 @@ func TestUpdateTask(t *testing.T) {
 			wantNoErr,
 		},
 
-// case: UserID doesn't exist
-// expected: ErrNotOwner
+		// case: UserID doesn't exist
+		// expected: ErrNotOwner
 		{
 			"UserID Not Exist",
 
@@ -38,8 +52,8 @@ func TestUpdateTask(t *testing.T) {
 			wantErrIs(sqlite.ErrNotOwner),
 		},
 
-// case: UserID not owner
-// expected: ErrNotOwner
+		// case: UserID not owner
+		// expected: ErrNotOwner
 		{
 			"UserID Not Owner",
 
@@ -49,30 +63,30 @@ func TestUpdateTask(t *testing.T) {
 			wantErrIs(sqlite.ErrNotOwner),
 		},
 
-// case: Empty title
-// expected: ErrInternalRepo (CHECK Constraint Failure)
+		// case: Empty title
+		// expected: ErrConstraintFailure (CHECK Constraint Failure)
 		{
 			"Empty Title",
 
 			sqlite.Task{ID: 1, UserID: 1, Category: sql.NullString{String: "This shouldn't work", Valid: true}},
 
 			sqlite.Task{},
-			wantErrIs(sqlite.ErrInternalRepo),
+			wantErrIs(sqlite.ErrConstraintFailure),
 		},
 
-// case: Done is true
-// expected: Done ignored, nil error
+		// case: Done is true
+		// expected: Done ignored, nil error
 		{
 			"Already Done",
 
-			sqlite.Task{ID: 6, UserID: 3, Title: "New Title",Category: sql.NullString{String: "go tests", Valid: true}, Description: sql.NullString{String: "New description", Valid: true}, Done: true},
+			sqlite.Task{ID: 6, UserID: 3, Title: "New Title", Category: sql.NullString{String: "go tests", Valid: true}, Description: sql.NullString{String: "New description", Valid: true}, Done: true},
 
-			sqlite.Task{ID: 6, UserID: 3, Title: "New Title", Category: sql.NullString{String: "go tests", Valid: true}, Description: sql.NullString{String: "New description", Valid: true} },
+			sqlite.Task{ID: 6, UserID: 3, Title: "New Title", Category: sql.NullString{String: "go tests", Valid: true}, Description: sql.NullString{String: "New description", Valid: true}},
 			wantNoErr,
 		},
 
-// case: Completion date is not empty
-// expected: Nil error
+		// case: Completion date is not empty
+		// expected: Nil error
 		{
 			"Already Completed",
 
@@ -82,30 +96,19 @@ func TestUpdateTask(t *testing.T) {
 			wantNoErr,
 		},
 
-// case: Recurring period does not exist yet
-// expected: New recurring_id value, nil error
+		// case: Recurring period does not exist yet
+		// expected: New recurring_id value, nil error
 		{
-			"New RecurringPeriod",
+			"Has RecurringPeriod",
 
-			sqlite.Task{ID: 2, UserID: 2, Title: "Second Task", Category: sql.NullString{String: "go tests", Valid: true}, RecurringPeriod: sql.NullString{String: "5 days", Valid: true}},
+			sqlite.Task{ID: 2, UserID: 2, Title: "Second Task", Category: sql.NullString{String: "go tests", Valid: true}, RecurringPeriod: sql.NullInt64{Int64: 3600* 24 * 5, Valid: true}},
 
-			sqlite.Task{ID: 2, UserID: 2, Title: "Second Task", Category: sql.NullString{String: "go tests", Valid: true}, RecurringPeriod: sql.NullString{String: "5 days", Valid: true}, RecurringID: sql.NullInt64{Int64: 3, Valid: true}},
+			sqlite.Task{ID: 2, UserID: 2, Title: "Second Task", Category: sql.NullString{String: "go tests", Valid: true}, RecurringPeriod: sql.NullInt64{Int64: 3600* 24 * 5, Valid: true} },
 			wantNoErr,
 		},
 
-// case: Recurring period does exist already
-// expected: Old recurring_id value, nil error
-		{
-			"Old RecurringPeriod",
-
-			sqlite.Task{ID: 2, UserID: 2, Title: "Second Task", Category: sql.NullString{String: "go tests", Valid: true}, RecurringPeriod: sql.NullString{String: "2 days", Valid: true}},
-			
-			sqlite.Task{ID: 2, UserID: 2, Title: "Second Task", Category: sql.NullString{String: "go tests", Valid: true}, RecurringPeriod: sql.NullString{String: "2 days", Valid: true}, RecurringID: sql.NullInt64{Int64: 1, Valid: true}},
-			wantNoErr,
-		},
-
-// case: Recurring period is removed
-// expected: No recurring_id value, nil error
+		// case: Recurring period is removed
+		// expected: No recurring_id value, nil error
 		{
 			"RecurringPeriod Removed",
 
@@ -115,15 +118,15 @@ func TestUpdateTask(t *testing.T) {
 			wantNoErr,
 		},
 
-// case: Happy path
-// expected: Updated task, nil error
+		// case: Happy path
+		// expected: Updated task, nil error
 
-	{
+		{
 			"Happy Path",
 
-			sqlite.Task{ID: 1, UserID: 1, Title: "New Title", Category: sql.NullString{String: "New Category", Valid: true}, Description: sql.NullString{String: "New Description", Valid: true}, RecurringPeriod: sql.NullString{String: "1 days", Valid: true}},
+			sqlite.Task{ID: 1, UserID: 1, Title: "New Title", Category: sql.NullString{String: "New Category", Valid: true}, Description: sql.NullString{String: "New Description", Valid: true}, RecurringPeriod: sql.NullInt64{Int64: 3600 * 24, Valid: true}},
 
-			sqlite.Task{ID: 1, UserID: 1, Title: "New Title", Category: sql.NullString{String: "New Category", Valid: true}, Description: sql.NullString{String: "New Description", Valid: true}, RecurringPeriod: sql.NullString{String: "1 days", Valid: true}, RecurringID: sql.NullInt64{Int64: 3, Valid: true}},
+			sqlite.Task{ID: 1, UserID: 1, Title: "New Title", Category: sql.NullString{String: "New Category", Valid: true}, Description: sql.NullString{String: "New Description", Valid: true}, RecurringPeriod: sql.NullInt64{Int64: 3600 * 24, Valid: true}},
 			wantNoErr,
 		}}
 

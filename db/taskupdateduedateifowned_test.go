@@ -10,11 +10,11 @@ import (
 // TaskUpdateDueDateIfOwned changes the dueDate for the task and returns the updated task
 //
 // Errors:
-//		- ErrNotOwner 
-//			userID doesn't exist 
-//			userID not the owner
-//		- ErrInternalRepo
-//			transient database error
+//   - ErrNotOwner
+//     userID doesn't exist
+//     userID not the owner
+//   - ErrInternalRepo
+//     transient database error
 //
 // Empty:
 //   - taskID doesn't exist
@@ -114,11 +114,31 @@ func TestUpdateDueDate(t *testing.T) {
 	for _, tc := range cases {
 		sqlite.ResetDB(t, r)
 		t.Run(tc.name, func(t *testing.T) {
+			beforeUpdate, err := r.GetTaskByID(tc.paramTaskID, tc.paramUserID)
+			if err != nil {
+				tc.checkErr(t, err)
+			}
+
 			gotTask, gotErr := r.TaskUpdateDueDateIfOwned(tc.paramTaskID, tc.paramUserID, tc.paramDay)
 
+			// Check returned error
+			tc.checkErr(t, gotErr)
+
+			// Check returned task
 			checkTask(t, tc.wantTask, gotTask)
 
-			tc.checkErr(t, gotErr)
+			updatedTask, err := r.GetTaskByID(tc.paramTaskID, tc.paramUserID)
+			if err != nil {
+				tc.checkErr(t, err)
+			}
+
+			// Check DB state
+			switch gotErr {
+			case nil:
+				checkTask(t, tc.wantTask, updatedTask)
+			default:
+				checkTask(t, beforeUpdate, updatedTask)
+			}
 		})
 	}
 }

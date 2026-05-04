@@ -101,9 +101,9 @@ func TestUpdateTask(t *testing.T) {
 		{
 			"Has RecurringPeriod",
 
-			sqlite.Task{ID: 2, UserID: 2, Title: "Second Task", Category: sql.NullString{String: "go tests", Valid: true}, RecurringPeriod: sql.NullInt64{Int64: 3600* 24 * 5, Valid: true}},
+			sqlite.Task{ID: 2, UserID: 2, Title: "Second Task", Category: sql.NullString{String: "go tests", Valid: true}, RecurringPeriod: sql.NullInt64{Int64: 3600 * 24 * 5, Valid: true}},
 
-			sqlite.Task{ID: 2, UserID: 2, Title: "Second Task", Category: sql.NullString{String: "go tests", Valid: true}, RecurringPeriod: sql.NullInt64{Int64: 3600* 24 * 5, Valid: true} },
+			sqlite.Task{ID: 2, UserID: 2, Title: "Second Task", Category: sql.NullString{String: "go tests", Valid: true}, RecurringPeriod: sql.NullInt64{Int64: 3600 * 24 * 5, Valid: true}},
 			wantNoErr,
 		},
 
@@ -133,10 +133,31 @@ func TestUpdateTask(t *testing.T) {
 	for _, tc := range cases {
 		sqlite.ResetDB(t, r)
 		t.Run(tc.name, func(t *testing.T) {
+			beforeUpdate, err := r.GetTaskByID(tc.paramTask.ID, tc.paramTask.UserID)
+			if err != nil {
+				tc.checkErr(t, err)
+			}
+
 			gotTask, gotErr := r.UpdateTaskIfOwned(tc.paramTask)
 
-			checkTask(t, tc.wantTask, gotTask)
+			// Check returned error
 			tc.checkErr(t, gotErr)
+
+			// Check returned task
+			checkTask(t, tc.wantTask, gotTask)
+
+			updatedTask, err := r.GetTaskByID(tc.paramTask.ID, tc.paramTask.UserID)
+			if err != nil {
+				tc.checkErr(t, err)
+			}
+
+			// Check DB state
+			switch gotErr {
+			case nil:
+				checkTask(t, tc.wantTask, updatedTask)
+			default:
+				checkTask(t, beforeUpdate, updatedTask)
+			}
 		})
 	}
 }

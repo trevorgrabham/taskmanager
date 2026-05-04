@@ -1,6 +1,7 @@
 package db_test
 
 import (
+	"database/sql"
 	sqlite "local/taskmanager/db"
 	"testing"
 )
@@ -93,6 +94,17 @@ func TestCompleteTask(t *testing.T) {
 			wantNoErr,
 		},
 
+		// case: TaskID is recurring
+		// expected: Task completed, new task inserted, nil error
+		{
+			"Recurring Task Completed",
+
+			4,
+			3,
+
+			wantNoErr,
+		},
+
 		// case: Happy path
 		// expected: nil error (task completed)
 		{
@@ -107,9 +119,47 @@ func TestCompleteTask(t *testing.T) {
 	for _, tc := range cases {
 		sqlite.ResetDB(t, r)
 		t.Run(tc.name, func(t *testing.T) {
+			beforeCompleted, err := r.GetTaskByID(tc.paramTaskID, tc.paramUserID)
+			if err == nil && beforeCompleted == (sqlite.Task{}) {
+				err = sqlite.ErrTaskNotFound
+			}
+			if err != nil {
+				tc.checkErr(t, err)
+			}
+
 			gotErr := r.CompleteTaskIfOwned(tc.paramTaskID, tc.paramUserID)
 
+			// Check returned error
 			tc.checkErr(t, gotErr)
+
+			completedTask, err := r.GetTaskByID(tc.paramTaskID, tc.paramUserID)
+			if err != nil && err != gotErr {
+				t.Errorf("error retrieving completed task: %v", err)
+			}
+
+			// Check DB state
+			switch gotErr {
+			case nil:
+				if !completedTask.Done || !completedTask.CompletionDate.Valid {
+					t.Errorf("database state not updated. Not completed: %v", completedTask)
+				}
+			default:
+				checkTask(t, beforeCompleted, completedTask)
+			}
+
+			if tc.name == "Recurring Task Completed" {
+				// Check next Recurring Task inserted
+				insertedTask, err := r.GetTaskByID(sqlite.NextID, tc.paramUserID)
+				if err != nil {
+					t.Errorf("error retrieving inserted task: %v", err)
+				}
+
+				completedTask.Done = false
+				completedTask.CompletionDate = sql.NullInt64{}
+				completedTask.ID = sqlite.NextID
+
+				checkTask(t, completedTask, insertedTask)
+			}
 		})
 	}
 }

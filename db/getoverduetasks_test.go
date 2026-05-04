@@ -66,11 +66,13 @@ func TestGetOverdueTasks(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			gotTasks, gotErr := r.GetOverdueTasks(tc.paramUserID)
 
+			// Check returned error
+			tc.checkErr(t, gotErr)
+
+			// Check returned tasks
 			for i := range gotTasks {
 				checkTask(t, tc.wantTasks[i], gotTasks[i])
 			}
-
-			tc.checkErr(t, gotErr)
 		})
 	}
 }

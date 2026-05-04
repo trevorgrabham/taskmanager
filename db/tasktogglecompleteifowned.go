@@ -9,7 +9,7 @@ import (
 
 // TaskToggleCompleteIfOwned toggles the completion status for the task identified by taskID if it is owned by userID.
 //
-// If taskID is empty or doesn't exist, no-op.
+// If taskID is empty or doesn't exist, returns ErrTaskNotFound.
 // If userID is empty or not the owner, returns ErrNotOwner.
 // If an error occurs in the Repo, returns an ErrInternalRepo.
 func (r *Repo) TaskToggleCompleteIfOwned(taskID, userID int) (err error) {
@@ -35,7 +35,7 @@ func (r *Repo) TaskToggleCompleteIfOwned(taskID, userID int) (err error) {
 				return err
 			}
 			if task == (Task{}) {
-				return nil
+				return ErrTaskNotFound
 			}
 
 			// Shouldn't ever get here

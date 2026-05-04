@@ -74,7 +74,19 @@ func TestDeleteTask(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			gotErr := r.DeleteTaskIfOwned(tc.paramTaskID, tc.paramUserID)
 
+			// Check returned error
 			tc.checkErr(t, gotErr)
+
+			deletedTask, err := r.GetTaskByID(tc.paramTaskID, tc.paramUserID)
+
+			if err != gotErr {
+				t.Errorf("error retrieving deleted task: %v", err)
+			}
+
+			// Check DB state
+			if deletedTask != (sqlite.Task{}) {
+				t.Errorf("task not deleted, got: %v", deletedTask)
+			}
 		})
 	}
 }

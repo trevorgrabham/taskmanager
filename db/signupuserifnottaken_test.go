@@ -84,10 +84,24 @@ func TestSignupUser(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			gotUser, gotErr := r.SignupUserIfNotTaken(tc.paramUsername, tc.paramPassword)
 
+			// Check returned error
 			tc.checkErr(t, gotErr)
 
+			// Check returned User
 			checkUser(t, gotUser, tc.wantUser)
 
+			newUser, err := r.GetUserByUsername(tc.paramUsername)
+			if err != nil {
+				t.Errorf("error retrieving inserted User: %v", err)
+			}
+
+			if tc.name == "Username Taken" {
+				if newUser == (sqlite.User{}) {
+					t.Errorf("wanted non-empty User, got empty User")
+				}
+			} else {
+				checkUser(t, newUser, tc.wantUser)
+			}
 		})
 	}
 }

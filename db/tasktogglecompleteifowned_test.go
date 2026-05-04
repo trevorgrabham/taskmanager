@@ -8,6 +8,8 @@ import (
 // TaskToggleCompleteIfOwned toggles the completion status of task if userID is the owner
 //
 // Errors:
+//   - ErrTaskNotFound
+//     taskID doesn't exist
 //   - ErrNotOwner
 //     userID doesn't exist
 //     userID not the owner
@@ -23,20 +25,18 @@ func TestToggleComplete(t *testing.T) {
 		paramTaskID int
 		paramUserID int
 
-		wantComplete bool
-		checkErr     func(*testing.T, error)
+		checkErr func(*testing.T, error)
 	}{
 
 		// case: Empty TaskID
-		// expected: No-op. nil error
+		// expected: ErrTaskNotFound
 		{
 			"Empty TaskID",
 
 			0,
 			1,
 
-			false,
-			wantNoErr,
+			wantErrIs(sqlite.ErrTaskNotFound),
 		},
 
 		// case: Empty UserID
@@ -47,7 +47,6 @@ func TestToggleComplete(t *testing.T) {
 			3,
 			0,
 
-			false,
 			wantErrIs(sqlite.ErrNotOwner),
 		},
 
@@ -59,20 +58,18 @@ func TestToggleComplete(t *testing.T) {
 			8,
 			3,
 
-			false,
 			wantErrIs(sqlite.ErrNotOwner),
 		},
 
 		// case: Task doesn't exist
-		// expected: No-op, nil error
+		// expected: ErrTaskNotFound
 		{
 			"TaskID Not Exist",
 
 			35,
 			1,
 
-			false,
-			wantNoErr,
+			wantErrIs(sqlite.ErrTaskNotFound),
 		},
 
 		// case: Task was completed
@@ -83,7 +80,6 @@ func TestToggleComplete(t *testing.T) {
 			9,
 			3,
 
-			false,
 			wantNoErr,
 		},
 
@@ -95,7 +91,6 @@ func TestToggleComplete(t *testing.T) {
 			6,
 			3,
 
-			true,
 			wantNoErr,
 		},
 
@@ -107,7 +102,6 @@ func TestToggleComplete(t *testing.T) {
 			4,
 			3,
 
-			true,
 			wantNoErr,
 		},
 
@@ -119,40 +113,50 @@ func TestToggleComplete(t *testing.T) {
 			9,
 			3,
 
-			false,
 			wantNoErr,
 		}}
 
 	for _, tc := range cases {
 		sqlite.ResetDB(t, r)
 		t.Run(tc.name, func(t *testing.T) {
+			beforeToggle, err := r.GetTaskByID(tc.paramTaskID, tc.paramUserID)
+			if err != nil {
+				tc.checkErr(t, err)
+			}
+
 			gotErr := r.TaskToggleCompleteIfOwned(tc.paramTaskID, tc.paramUserID)
 
+			// Check returned error
 			tc.checkErr(t, gotErr)
-			if gotErr != nil {
-				return
+
+			afterToggle, err := r.GetTaskByID(tc.paramTaskID, tc.paramUserID)
+			if err != nil {
+				tc.checkErr(t, err)
+				// t.Errorf("error retrieving task after toggle: %v", err)
 			}
 
-			gotTask, gotErr := r.GetTaskByID(tc.paramTaskID, tc.paramUserID)
-			if gotErr != nil {
-				t.Errorf("getting task got err %v", gotErr)
-				return
+			// Check DB state
+			switch gotErr {
+			case nil:
+				if afterToggle.Done == beforeToggle.Done || afterToggle.CompletionDate.Valid == beforeToggle.CompletionDate.Valid {
+					t.Errorf("task not toggled.\nbefore toggle: %v\nafter togge: %v", beforeToggle, afterToggle)
+				}
+			default:
+				if afterToggle.Done != beforeToggle.Done || afterToggle.CompletionDate.Valid != beforeToggle.CompletionDate.Valid {
+					t.Errorf("task toggled.\nbefore toggle: %v\nafter togge: %v", beforeToggle, afterToggle)
+				}
 			}
 
-			if tc.wantComplete != gotTask.Done {
-				t.Errorf("wanted Complete: %t, got %t", tc.wantComplete, gotTask.Done)
-			}
-
+			// If we completed a Recurring Task, check DB state for the new task
 			if tc.name == "Completed Recurring Task" {
-				gotTask, gotErr = r.GetTaskByID(sqlite.NextID, tc.paramUserID)
-				if gotErr != nil {
-					t.Errorf("getting task got err %v", gotErr)
+				insertedTask, err := r.GetTaskByID(sqlite.NextID, tc.paramUserID)
+				if err != nil {
+					t.Errorf("retrieving inserted task: %v", err)
 					return
 				}
 
-				if gotTask == (sqlite.Task{}) {
-					t.Errorf("no new recurring task inserted")
-				}
+				beforeToggle.ID = sqlite.NextID
+				checkTask(t, beforeToggle, insertedTask)
 			}
 		})
 	}

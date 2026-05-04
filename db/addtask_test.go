@@ -156,8 +156,19 @@ func TestAddTask(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			gotTask, gotErr := r.AddTask(tc.paramTask)
 
-			checkTask(t, tc.wantTask, gotTask)
+			// Check returned error
 			tc.checkErr(t, gotErr)
+
+			// Check returned value
+			checkTask(t, tc.wantTask, gotTask)
+
+			insertedTask, err := r.GetTaskByID(sqlite.NextID, gotTask.UserID)
+			if err != nil {
+				t.Errorf("error retrieving inserted task: %v", err)
+			}
+
+			// Check DB state
+			checkTask(t, tc.wantTask, insertedTask)
 		})
 	}
 }

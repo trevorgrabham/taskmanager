@@ -57,7 +57,17 @@ func TestDeleteSession(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			gotErr := r.DeleteSession(tc.paramSessionID)
 
+			// Check returned error
 			tc.checkErr(t, gotErr)
+
+			emptyUser, err := r.GetUserBySessionID(tc.paramSessionID)
+			if err != nil {
+				t.Errorf("got error checking DB state: %v", err)
+			}
+
+			if emptyUser != (sqlite.User{}) {
+				t.Errorf("got non-empty user %v", emptyUser)
+			}
 		})
 	}
 }

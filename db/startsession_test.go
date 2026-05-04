@@ -89,19 +89,30 @@ func TestStartSession(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			gotErr := r.StartSession(tc.paramSessionID, tc.paramUserID)
 
+			// Check returned error
 			tc.checkErr(t, gotErr)
 
-			if gotErr != nil {
+			sessionUser, err := r.GetUserBySessionID(tc.paramSessionID)
+			if err != nil {
+				t.Errorf("error retrieving session: %v", gotErr)
+			}
+
+			if tc.name == "SessionID Already Exists" {
+				if sessionUser == (sqlite.User{}) {
+					t.Errorf("wanted non-empty user, got empty user")
+				}
 				return
 			}
 
-			gotUser, gotErr := r.GetUserBySessionID(tc.paramSessionID)
-			if gotErr != nil {
-				t.Errorf("got %v retreiving new session", gotErr)
-			}
-
-			if gotUser.ID != tc.paramUserID {
-				t.Errorf("wanted session UserID: %d, got: %d", tc.paramUserID, gotUser.ID)
+			switch gotErr {
+			case nil:
+				if sessionUser == (sqlite.User{}) {
+					t.Errorf("got empty user, wanted: %v", tc.paramUserID)
+				}
+			default:
+				if sessionUser != (sqlite.User{}) {
+					t.Errorf("got: %v , wanted empty user", sessionUser)
+				}
 			}
 		})
 	}

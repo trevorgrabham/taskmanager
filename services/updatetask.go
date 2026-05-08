@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"fmt"
 	sqlite "local/taskmanager/db"
 )
@@ -15,28 +14,56 @@ import (
 // If task.UserID is not the owner of the task, an ErrNotOwner is returned.
 // If an error occurrs in the Repo, an ErrInternalRepo is returned.
 func (s Service) UpdateTask(t Task) (updatedTask Task, err error) {
-	var (
-		caller   = "UpdateTask"
-		repoTask sqlite.Task
-	)
+	var repoTask sqlite.Task
 	if t.ID < 1 {
-		return Task{}, fmt.Errorf("%s: %w", caller, ErrInvalidTaskID)
+		return Task{}, &ErrTaskValidation{
+			Field:   TaskFieldTaskID,
+			Message: MessageInvalidTaskID,
+		}
 	}
 	if t.UserID < 1 {
-		return Task{}, fmt.Errorf("%s: %w", caller, ErrInvalidUserID)
+		return Task{}, &ErrUserValidation{
+			Field:   UserFieldID,
+			Message: MessageInvalidUserID,
+		}
 	}
 	if t.Title == "" {
-		return Task{}, fmt.Errorf("%s: %w", caller, ErrInvalidTitle)
+		return Task{}, &ErrTaskValidation{
+			Field:   TaskFieldTitle,
+			Message: MessageEmptyTitle,
+		}
+	}
+	if !t.CompletionDate.IsZero() {
+		return Task{}, &ErrTaskValidation{
+			Field: TaskFieldCompletionDate,
+			Message: MessageTaskAlreadyCompleted,
+		}
+	}
+	if t.Done {
+		return Task{}, &ErrTaskValidation{
+			Field: TaskFieldDone,
+			Message: MessageTaskAlreadyCompleted,
+		}
 	}
 	// Consider making Category required. If we do, check t.Category == "" here
-	if err = validateRecurringPeriod(t.RecurringPeriod); err != nil {
-		return Task{}, fmt.Errorf("%s: %w", caller, err)
-	}
 
 	repoTask = parseTaskToRepoTask(t)
-	if repoTask, err = s.repo.UpdateTaskIfOwned(repoTask, t.UserID); err != nil {
-		if errors.Is(err, sqlite.ErrNotOwner) { return Task{}, fmt.Errorf("%s: %w", ErrNotOwner) }
-		return Task{}, fmt.Errorf("%s: %w", caller, err)
+	if repoTask, err = s.repo.UpdateTaskIfOwned(repoTask); err != nil {
+		switch sqlite.MapErrorToTypeName(err) {
+		case "ErrNotOwner":
+			return Task{}, &ErrTaskValidation{
+				Field: TaskFieldTaskID,
+				Message: MessageNotOwner,
+			}
+		default: 
+			return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err) 
+		}
+	}
+	if repoTask == (sqlite.Task{}) { 
+		return Task{}, &ErrTaskValidation{
+			Field: TaskFieldTaskID, 
+			Message: MessageTaskNotFound,
+		} 
 	}
 
 	updatedTask = parseRepoTaskToTask(repoTask)

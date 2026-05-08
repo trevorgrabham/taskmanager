@@ -3,50 +3,24 @@ package services
 import (
 	"database/sql"
 	sqlite "local/taskmanager/db"
-	"strconv"
-	"strings"
 	"time"
 )
 
 type Task struct {
 	ID              int
 	UserID          int
-	RecurringID     int
 	Title           string
 	Category        string
 	Description     string
 	DueDate         time.Time
 	CompletionDate  time.Time
 	Done            bool
-	RecurringPeriod string // n days || n weeks || n months
+	RecurringPeriod int
 }
 type TaskList []Task
 
 func (t Task) IsZero() bool {
-	return t.ID == 0 && t.Title == "" && t.Category == "" && t.Description == "" && t.DueDate.IsZero() && t.CompletionDate.IsZero() && !t.Done && t.RecurringPeriod == "" && t.UserID == 0
-}
-
-// validateRecurringPeriod validates the format of the RecurringPeriod field. The value must be an integer, and the unit must be one of 'days', 'weeks', or 'months'.
-//
-// If recurringPeriod is empty, no error is returned.
-// If the recurringPeriod format is not recognized, returns ErrInvalidRecurringPeriod.
-// If the value is not an integer, returns ErrInvalidRecurringValue.
-// If the unit is not one of 'days', 'weeks', or 'months', returns ErrInvalidRecurringUnit.
-func validateRecurringPeriod(recurringPeriod string) (err error) {
-	if recurringPeriod == "" { return nil }
-	
-	split := strings.Split(recurringPeriod, " ")
-	if len(split) != 2 { return ErrInvalidRecurringPeriod }
-	recurringValue, recurringUnit := split[0], split[1]
-	switch recurringUnit {
-	case "days", "weeks", "months": // happy path: do nothing
-	default:
-		return ErrInvalidRecurringUnit
-	}
-
-	if _, err = strconv.Atoi(recurringValue); err != nil { return ErrInvalidRecurringValue }
-
-	return nil
+	return t.ID == 0 && t.Title == "" && t.Category == "" && t.Description == "" && t.DueDate.IsZero() && t.CompletionDate.IsZero() && !t.Done && t.RecurringPeriod == 0 && t.UserID == 0
 }
 
 // parseRepoTaskToTask maps a repo Task to a Task object.
@@ -67,11 +41,8 @@ func parseRepoTaskToTask(repoTask sqlite.Task) (t Task) {
 	if repoTask.CompletionDate.Valid {
 		t.CompletionDate = time.Unix(repoTask.CompletionDate.Int64, 0)
 	}
-	if repoTask.RecurringID.Valid {
-		t.RecurringID = int(repoTask.RecurringID.Int64)
-	}
 	if repoTask.RecurringPeriod.Valid {
-		t.RecurringPeriod = repoTask.RecurringPeriod.String
+		t.RecurringPeriod = int(repoTask.RecurringPeriod.Int64)
 	}
 
 	return t
@@ -95,8 +66,7 @@ func parseTaskToRepoTask(t Task) (repoTask sqlite.Task) {
 	repoTask.Description = toNullString(t.Description)
 	repoTask.DueDate = unixDateToNullInt64(t.DueDate.Unix())
 	repoTask.CompletionDate = unixDateToNullInt64(t.CompletionDate.Unix())
-	repoTask.RecurringID = toNullInt64(int64(t.RecurringID))
-	repoTask.RecurringPeriod = toNullString(t.RecurringPeriod)
+	repoTask.RecurringPeriod = unixDateToNullInt64(int64(t.RecurringPeriod))
 
 	return repoTask
 }
@@ -104,11 +74,6 @@ func parseTaskToRepoTask(t Task) (repoTask sqlite.Task) {
 // toNullString populates a sql.NullString using a string. It sets the Valid field to true if the string is not empty.
 func toNullString(s string) sql.NullString {
 	return sql.NullString{Valid: s != "", String: s}
-}
-
-// toNullInt64 populates a sql.NullInt64 using an int64. It sets the Valid field to true if the int64 != 0.
-func toNullInt64(n int64) sql.NullInt64 {
-	return sql.NullInt64{Valid: n != 0, Int64: n}
 }
 
 // unixDateToNullInt64 populates a sql.NullInt64 using an int64 representation of a time.Time obejct. It sets the Valid field to true if the int64 > 0.

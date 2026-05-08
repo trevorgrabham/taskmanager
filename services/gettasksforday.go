@@ -11,19 +11,19 @@ import (
 // If userID is empty, an ErrInvalidUserID is returned.
 // If day is empty, an ErrInvalidDate is returned.
 func (s Service) GetTasksForDay(userID int, day time.Time) (tasks TaskList, err error) {
-	var (
-		caller    = "GetTasksForDay"
-		repoTasks []sqlite.Task
-	)
+	var repoTasks []sqlite.Task
 	if userID < 1 {
-		return nil, fmt.Errorf("%s: %w", caller, ErrInvalidUserID)
+		return nil, &ErrUserValidation{
+			Field:   UserFieldID,
+			Message: MessageInvalidUserID,
+		}
 	}
 	if day.IsZero() {
-		return nil, fmt.Errorf("%s: %w", caller, ErrInvalidDate)
+		return nil, ErrEmptyDay
 	}
 
 	if repoTasks, err = s.repo.GetTasksForDay(userID, day); err != nil {
-		return nil, fmt.Errorf("%s: %w", caller, err)
+		return nil, fmt.Errorf("%w: %s", ErrInternalRepo, err)
 	}
 	tasks = parseRepoTaskListToTaskList(repoTasks)
 

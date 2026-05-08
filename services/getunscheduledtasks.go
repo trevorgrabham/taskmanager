@@ -9,16 +9,16 @@ import (
 //
 // If userID is empty, an ErrInvalidUserID is returned.
 func (s Service) GetUnscheduledTasks(userID int) (tasks TaskList, err error) {
-	var (
-		caller    = "GetUnscheduledTasks"
-		repoTasks []sqlite.Task
-	)
+	var repoTasks []sqlite.Task
 	if userID < 1 {
-		return nil, fmt.Errorf("%s: %w", caller, ErrInvalidUserID)
+		return nil, &ErrUserValidation{
+			Field:   UserFieldID,
+			Message: MessageInvalidUserID,
+		}
 	}
 
 	if repoTasks, err = s.repo.GetUnscheduledTasks(userID); err != nil {
-		return nil, fmt.Errorf("%s: %w", caller, err)
+		return nil, fmt.Errorf("%w: %s", ErrInternalRepo, err)
 	}
 
 	tasks = parseRepoTaskListToTaskList(repoTasks)

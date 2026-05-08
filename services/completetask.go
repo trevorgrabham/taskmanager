@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"fmt"
 	sqlite "local/taskmanager/db"
 )
@@ -13,20 +12,35 @@ import (
 // If userID is not the owner of taskID, an ErrNotOwner is returned.
 // If an error occurrs in the Repo, an ErrInternalRepo is returned.
 func (s Service) CompleteTask(taskID, userID int) error {
-	var (
-		caller = "CompleteTask"
-		err    error
-	)
+	var err error
 	if taskID < 1 {
-		return fmt.Errorf("%s: %w", caller, ErrInvalidTaskID)
+		return &ErrTaskValidation{
+			Field: TaskFieldTaskID,
+			Message: MessageInvalidTaskID,
+		}
 	}
 	if userID < 1 {
-		return fmt.Errorf("%s: %w", caller, ErrInvalidUserID)
+		return &ErrUserValidation{
+			Field: UserFieldID,
+			Message: MessageInvalidUserID,
+		}
 	}
 
 	if err = s.repo.CompleteTaskIfOwned(taskID, userID); err != nil {
-		if errors.Is(err, sqlite.ErrNotOwner) { return fmt.Errorf("%s: %w", caller, ErrNotOwner) }
-		return fmt.Errorf("%s: %w", caller, err)
+		switch sqlite.MapErrorToTypeName(err) {
+		case "ErrNotOwner":
+			return &ErrTaskValidation{
+				Field: TaskFieldTaskID,
+				Message: MessageNotOwner,
+			}
+		case "ErrTaskNotFound":
+			return &ErrTaskValidation{
+				Field: TaskFieldTaskID,
+				Message: MessageTaskNotFound,
+			}
+		default:
+			return fmt.Errorf("%w: %s", ErrInternalRepo, err)
+		}
 	}
 
 	return nil

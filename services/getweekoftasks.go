@@ -6,25 +6,25 @@ import (
 	"time"
 )
 
-// GetWeekOfTasks returns the tasks for userID for the range [startDay, startDay+7]. 
+// GetWeekOfTasks returns the tasks for userID for the range [startDay, startDay+7].
 //
 // If userID is empty, an ErrInvalidUserID is returned.
 // If startDay is empty, an ErrInvalidDate is returned.
 func (s Service) GetWeekOfTasks(userID int, startDay time.Time) (tasks TaskList, err error) {
-	var (
-		caller    = "GetWeekOfTasks"
-		repoTasks []sqlite.Task
-	)
+	var repoTasks []sqlite.Task
 	if userID < 1 {
-		return nil, fmt.Errorf("%s: %w", caller, ErrInvalidUserID)
+		return nil, &ErrUserValidation{
+			Field:   UserFieldID,
+			Message: MessageInvalidUserID,
+		}
 	}
 
 	if startDay.IsZero() {
-		return nil, fmt.Errorf("%s: %w", caller, ErrInvalidDate)
+		return nil, ErrEmptyDay
 	}
 
 	if repoTasks, err = s.repo.GetWeekOfTasks(userID, startDay); err != nil {
-		return nil, fmt.Errorf("%s: %w", caller, err)
+		return nil, fmt.Errorf("%w: %s", ErrInternalRepo, err)
 	}
 	tasks = parseRepoTaskListToTaskList(repoTasks)
 

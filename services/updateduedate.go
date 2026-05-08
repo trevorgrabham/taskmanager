@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"fmt"
 	sqlite "local/taskmanager/db"
 	"time"
@@ -14,20 +13,36 @@ import (
 // If userID is not the owner of the task, an ErrNotOwner is returned.
 // If an error occurrs in the Repo, an ErrInternalRepo is returned.
 func (s Service) UpdateDueDate(taskID, userID int, dueDay time.Time) (updatedTask Task, err error) {
-	var (
-		caller = "UpdateDueDate"
-		repoTask sqlite.Task
-	)
+	var repoTask sqlite.Task
 	if taskID < 1 {
-		return Task{}, fmt.Errorf("%s: %w", caller, ErrInvalidTaskID)
+		return Task{}, &ErrTaskValidation{
+			Field:   TaskFieldTaskID,
+			Message: MessageInvalidTaskID,
+		}
 	}
 	if userID < 1 {
-		return Task{}, fmt.Errorf("%s: %w", caller, ErrInvalidUserID)
+		return Task{}, &ErrUserValidation{
+			Field:   UserFieldID,
+			Message: MessageInvalidUserID,
+		}
 	}
 
 	if repoTask, err = s.repo.TaskUpdateDueDateIfOwned(taskID, userID, dueDay); err != nil {
-		if errors.Is(err, sqlite.ErrNotOwner) { return Task{}, fmt.Errorf("%s: %w", caller, ErrNotOwner) }
-		return Task{}, fmt.Errorf("%s: %w", caller, err)
+		switch sqlite.MapErrorToTypeName(err) {
+		case "ErrNotOwner":
+			return Task{}, &ErrTaskValidation{
+				Field:   TaskFieldTaskID,
+				Message: MessageNotOwner,
+			}
+		default:
+			return Task{}, fmt.Errorf("%w: %s", ErrInternalRepo, err)
+		}
+	}
+	if repoTask == (sqlite.Task{}) {
+		return Task{}, &ErrTaskValidation{
+			Field:   TaskFieldTaskID,
+			Message: MessageTaskNotFound,
+		}
 	}
 
 	updatedTask = parseRepoTaskToTask(repoTask)

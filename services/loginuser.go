@@ -12,29 +12,43 @@ import (
 // If an error occurrs in the Repo, an ErrInternalRepo is returned.
 func (s Service) LoginUser(username, password string) (sessionID string, err error) {
 	var (
-		caller        = "LoginUser"
 		repoUser      sqlite.User
 		passwordMatch bool
 	)
 	if username == "" {
-		return "", fmt.Errorf("%s: %w", caller, ErrInvalidUsername)
+		return "", &ErrUserValidation{
+			Field:   UserFieldUsername,
+			Message: MessageInvalidUsernameOrPassword,
+		}
 	}
 	if password == "" {
-		return "", fmt.Errorf("%s: %w", caller, ErrInvalidPassword)
+		return "", &ErrUserValidation{
+			Field:   UserFieldPassword,
+			Message: MessageInvalidUsernameOrPassword,
+		}
 	}
 
 	if repoUser, err = s.repo.GetUserByUsername(username); err != nil {
-		return "", fmt.Errorf("%s: %w", caller, err)
+		return "", fmt.Errorf("%w: %s", ErrInternalRepo, err)
+	}
+	if repoUser == (sqlite.User{}) {
+		return "", &ErrUserValidation{
+			Field:   UserFieldUsername,
+			Message: MessageInvalidUsernameOrPassword,
+		}
 	}
 
 	if passwordMatch = checkPassword(password, repoUser.Password); !passwordMatch {
-		return "", fmt.Errorf("%s: %w", caller, ErrInvalidPassword)
+		return "", &ErrUserValidation{
+			Field:   UserFieldPassword,
+			Message: MessageInvalidUsernameOrPassword,
+		}
 	}
 
 	sessionID = GenerateSessionID()
 
 	if err = s.repo.StartSession(sessionID, repoUser.ID); err != nil {
-		return "", fmt.Errorf("%s: %w", caller, err)
+		return "", fmt.Errorf("%w: %s", ErrInternalRepo, err)
 	}
 
 	return sessionID, nil

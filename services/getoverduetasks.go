@@ -9,14 +9,16 @@ import (
 //
 // If userID is empty, an ErrInvalidUserID is returned.
 func (s Service) GetOverdueTasks(userID int) (tasks TaskList, err error) {
-	var (
-		caller    = "GetOverdueTasks"
-		repoTasks []sqlite.Task
-	)
-	if userID < 1 { return nil, fmt.Errorf("%s: %w", caller, ErrInvalidUserID) }
+	var repoTasks []sqlite.Task
+	if userID < 1 {
+		return nil, &ErrUserValidation{
+			Field:   UserFieldID,
+			Message: MessageInvalidUserID,
+		}
+	}
 
 	if repoTasks, err = s.repo.GetOverdueTasks(userID); err != nil {
-		return nil, fmt.Errorf("%s: %w", caller, err)
+		return nil, fmt.Errorf("%w: %s", ErrInternalRepo, err)
 	}
 	tasks = parseRepoTaskListToTaskList(repoTasks)
 

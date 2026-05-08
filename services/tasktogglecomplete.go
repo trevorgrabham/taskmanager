@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"fmt"
 	sqlite "local/taskmanager/db"
 )
@@ -12,26 +11,36 @@ import (
 // If userID is empty, an ErrInvalidUserID is returned.
 // If userID is not the owner of taskID, an ErrNotOwner is returned.
 // If an error occurrs in the Repo, an ErrInternalRepo is returned.
-func (s Service) TaskToggleComplete(taskID, userID int) (updatedTask Task, err error) {
-	var (
-		caller   = "TaskToggleComplete"
-		repoTask sqlite.Task
-	)
+func (s Service) TaskToggleComplete(taskID, userID int) (err error) {
 	if taskID < 1 {
-		return Task{}, fmt.Errorf("%s: %w", caller, ErrInvalidTaskID)
+		return &ErrTaskValidation{
+			Field:   TaskFieldTaskID,
+			Message: MessageInvalidTaskID,
+		}
 	}
 	if userID < 1 {
-		return Task{}, fmt.Errorf("%s: %w", caller, ErrInvalidUserID)
-	}
-
-	if repoTask, err = s.repo.TaskToggleCompleteIfOwned(taskID, userID); err != nil {
-		if errors.Is(err, sqlite.ErrNotOwner) {
-			return Task{}, fmt.Errorf("%s: %w", caller, ErrNotOwner)
+		return &ErrUserValidation{
+			Field:   UserFieldID,
+			Message: MessageInvalidUserID,
 		}
-		return Task{}, fmt.Errorf("%s: %w", caller, err)
 	}
 
-	updatedTask = parseRepoTaskToTask(repoTask)
+	if err = s.repo.TaskToggleCompleteIfOwned(taskID, userID); err != nil {
+		switch sqlite.MapErrorToTypeName(err) {
+		case "ErrTaskNotFound":
+			return &ErrTaskValidation{
+				Field: TaskFieldTaskID,
+				Message: MessageTaskNotFound,
+			}
+		case "ErrNotOwner":
+			return &ErrTaskValidation{
+				Field: TaskFieldTaskID,
+				Message: MessageNotOwner,
+			}
+		default:
+			return fmt.Errorf("%w: %s", ErrInternalRepo, err) 
+		}
+	}
 
-	return updatedTask, nil
+	return nil
 }
